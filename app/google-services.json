@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "8889622960",
+    "project_id": "drawingapptest",
+    "storage_bucket": "drawingapptest.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:8889622960:android:1cd45fc29dd0cd92e8f675",
+        "android_client_info": {
+          "package_name": "il.ghostdog.drawingapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "8889622960-7r7s14hrj6l5jj6bnun56dh37e5d8h2k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIYHXY9XEOkHYNXjLpJ3HyDBgcAqPfx9E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "8889622960-7r7s14hrj6l5jj6bnun56dh37e5d8h2k.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
