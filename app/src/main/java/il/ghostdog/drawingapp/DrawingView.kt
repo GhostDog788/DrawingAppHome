@@ -61,23 +61,14 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         for(path in mPaths){
             mDrawPaint!!.strokeWidth = path.bs
             mDrawPaint!!.color = path.c
-            //canvas.drawPath(path, mDrawPaint!!)
             path.drawCustomPath(canvas, mDrawPaint!!)
         }
 
         if(!mDrawPath!!.isEmpty()) {
             mDrawPaint!!.strokeWidth = mDrawPath!!.bs
             mDrawPaint!!.color = mDrawPath!!.c
-            //canvas.drawPath(mDrawPath!!, mDrawPaint!!)
             mDrawPath!!.drawCustomPath(canvas, mDrawPaint!!)
         }
-
-        //if(circleCount > 7) {
-        //    circleCount = 1
-        //    mOnDrawChange.invoke("str")
-        //}else{
-        //    circleCount++
-        //}
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
@@ -92,20 +83,29 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
                 if(touchX != null && touchY != null)
                 {
                     mDrawPath!!.addPoint(touchX, touchY)
+                    mPaths.add(mDrawPath!!)
                 }
             }
             MotionEvent.ACTION_MOVE ->{
                 if(touchX != null && touchY != null)
                 {
+                    mPaths.removeAt(mPaths.size - 1)
                     mDrawPath!!.addPoint(touchX, touchY)
+                    mPaths.add(mDrawPath!!)
                 }
             }
             MotionEvent.ACTION_UP ->{
-                mPaths.add(mDrawPath!!)
+                //mPaths.add(mDrawPath!!)
                 mOnDrawChange.invoke("str")
                 mDrawPath = CustomPath(color, mBrushSize)
             }
             else -> return false
+        }
+        if(circleCount > 10) {
+            circleCount = 1
+            mOnDrawChange.invoke("str")
+        }else{
+            circleCount++
         }
         invalidate()
 
