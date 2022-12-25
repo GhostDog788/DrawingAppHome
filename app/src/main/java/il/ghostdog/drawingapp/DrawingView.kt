@@ -59,15 +59,15 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         canvas.drawBitmap(mCanvasBitmap!!, 0f, 0f, mCanvasPaint)
 
         for(path in mPaths){
-            mDrawPaint!!.strokeWidth = path.brushThickness
-            mDrawPaint!!.color = path.color
+            mDrawPaint!!.strokeWidth = path.bs
+            mDrawPaint!!.color = path.c
             //canvas.drawPath(path, mDrawPaint!!)
             path.drawCustomPath(canvas, mDrawPaint!!)
         }
 
         if(!mDrawPath!!.isEmpty()) {
-            mDrawPaint!!.strokeWidth = mDrawPath!!.brushThickness
-            mDrawPaint!!.color = mDrawPath!!.color
+            mDrawPaint!!.strokeWidth = mDrawPath!!.bs
+            mDrawPaint!!.color = mDrawPath!!.c
             //canvas.drawPath(mDrawPath!!, mDrawPaint!!)
             mDrawPath!!.drawCustomPath(canvas, mDrawPaint!!)
         }
@@ -86,8 +86,8 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
         when(event?.action){
             MotionEvent.ACTION_DOWN ->{
-                mDrawPath!!.color = color
-                mDrawPath!!.brushThickness = mBrushSize
+                mDrawPath!!.c = color
+                mDrawPath!!.bs = mBrushSize
                 mDrawPath!!.reset()
                 if(touchX != null && touchY != null)
                 {
@@ -126,28 +126,28 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     }
 
     @kotlinx.serialization.Serializable
-    class CustomPath(var color: Int, var brushThickness: Float) { //need to make internal inner
+    class CustomPath(var c: Int, var bs: Float) { //need to make internal inner
 
-        private val points : ArrayList<Vector2> = ArrayList<Vector2>()
+        private val ps : ArrayList<Vector2> = ArrayList<Vector2>() //name - point
 
         fun isEmpty() : Boolean{
-            return points.isEmpty()
+            return ps.isEmpty()
         }
 
         fun reset(){
-            points.clear()
+            ps.clear()
         }
 
         fun addPoint(x : Float, y : Float){
             val vector = Vector2(x.toInt() , y.toInt())
-            points.add(vector)
+            ps.add(vector)
         }
 
         fun drawCustomPath(canvas: Canvas, paint: Paint) {
             var count = 0
-            while(count < points.size - 1){
-                canvas.drawLine(points[count].x.toFloat(), points[count].y.toFloat()
-                    , points[count+1].x.toFloat(), points[count+1].y.toFloat(), paint)
+            while(count < ps.size - 1){
+                canvas.drawLine(ps[count].x.toFloat(), ps[count].y.toFloat()
+                    , ps[count+1].x.toFloat(), ps[count+1].y.toFloat(), paint)
                 count++
             }
         }

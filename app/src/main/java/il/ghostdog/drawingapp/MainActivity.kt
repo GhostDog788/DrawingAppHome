@@ -35,6 +35,9 @@ import kotlinx.serialization.json.Json
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
+import java.nio.charset.StandardCharsets.UTF_8
+import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
 
 class MainActivity : AppCompatActivity() {
 
@@ -141,7 +144,8 @@ class MainActivity : AppCompatActivity() {
                     startListening = false
                     return
                 }
-                drawingView!!.mPaths = Json.decodeFromString(encoded)
+                val data = ungzip(encoded)
+                drawingView!!.mPaths = Json.decodeFromString(data)
                 drawingView!!.invalidate()
             }
 
@@ -156,9 +160,23 @@ class MainActivity : AppCompatActivity() {
         count++
         mDatabaseInstance!!.getReference("count").setValue(count)
         val data = Json.encodeToString(drawingView!!.mPaths)
-        Toast.makeText(applicationContext, "Length: " + data.length.toString(), Toast.LENGTH_SHORT).show()
-        mDatabase!!.setValue(data)
+        val compressedData = gzip(data)
+
+        Toast.makeText(applicationContext, "Length json: " + data.length.toString(), Toast.LENGTH_SHORT).show()
+        Toast.makeText(applicationContext, "Length gzip: " + compressedData.length.toString(), Toast.LENGTH_SHORT).show()
+
+        mDatabase!!.setValue(compressedData)
     }
+
+    fun gzip(content: String): String {
+        val bos = ByteArrayOutputStream()
+        GZIPOutputStream(bos).bufferedWriter(UTF_8).use { it.write(content) }
+        val b = bos.toByteArray()
+        return Base64.encodeToString(b, Base64.DEFAULT)
+    }
+
+    fun ungzip(content: String): String =
+        GZIPInputStream(Base64.decode(content, Base64.DEFAULT).inputStream()).bufferedReader(UTF_8).use { it.readText() }
 
     private fun BitMapToString(bitmap: Bitmap): String {
         val baos = ByteArrayOutputStream()
