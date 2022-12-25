@@ -50,6 +50,7 @@ class MainActivity : AppCompatActivity() {
     var mflDrawingView: FrameLayout? = null
     private var count : Int = 0
     private var startListening = true
+    private var dbPathsCount : Int = 0
 
     val openGalleryLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
@@ -91,7 +92,9 @@ class MainActivity : AppCompatActivity() {
         mDatabaseInstance = FirebaseDatabase.getInstance()
         mDatabase = mDatabaseInstance!!.getReference("picture")
         mflDrawingView = findViewById(R.id.flDrawingViewContainer)
-        addPictureValueListener()
+        setupGame() //have to be before listeners
+        //addPictureValueListener()
+        addPathsCountListener()
 
         val linearLayoutPaintColors = findViewById<LinearLayout>(R.id.llPaintColors)
         mImageButtonCurrentPaint = linearLayoutPaintColors.findViewWithTag("#ff000000") as ImageButton
@@ -131,6 +134,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupGame() {
+        mDatabase!!.setValue("")
+        mDatabase!!.child("PathsCount").setValue(0)
+    }
+
     private fun addPictureValueListener() {
         mDatabase!!.addValueEventListener(object : ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -155,17 +163,57 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    private fun handleDrawChange(str : String) : Unit{
-        //getBitmapFromView(mflDrawingView!!) - value
+    private fun addPathsCountListener() {
+        mDatabase!!.child("PathsCount").addValueEventListener(object : ValueEventListener{
+            override fun onDataChange(snapshot: DataSnapshot) {
+                dbPathsCount = snapshot.getValue(Long::class.java)!!.toInt()
+
+                if(dbPathsCount == null)
+                {
+                    Toast.makeText(applicationContext, "Error: paths count is null", Toast.LENGTH_SHORT).show()
+                    dbPathsCount = 0
+                    return
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                TODO("Not yet implemented")
+            }
+        })
+    }
+
+    private fun handleDrawChange(myPathsCount : Int) : Unit{
         count++
         mDatabaseInstance!!.getReference("count").setValue(count)
-        val data = Json.encodeToString(drawingView!!.mPaths)
-        val compressedData = gzip(data)
 
-        Toast.makeText(applicationContext, "Length json: " + data.length.toString(), Toast.LENGTH_SHORT).show()
-        Toast.makeText(applicationContext, "Length gzip: " + compressedData.length.toString(), Toast.LENGTH_SHORT).show()
+        if(dbPathsCount < myPathsCount){
+            var counter = dbPathsCount
+            while(counter < myPathsCount){
+                val data = Json.encodeToString(drawingView!!.mPaths[counter])
+                val compressedData = gzip(data)
 
-        mDatabase!!.setValue(compressedData)
+                mDatabase!!.child(counter.toString()).setValue(compressedData)
+                counter++
+            }
+        }else if(dbPathsCount > myPathsCount){
+            var counter = myPathsCount
+            while(counter < dbPathsCount) {
+                mDatabase!!.child(counter.toString()).removeValue()
+                counter++
+            }
+        }else{
+            val data = Json.encodeToString(drawingView!!.mPaths[myPathsCount - 1])
+            val compressedData = gzip(data)
+
+            mDatabase!!.child((myPathsCount - 1).toString()).setValue(compressedData)
+        }
+
+        mDatabase!!.child("PathsCount").setValue(myPathsCount)
+
+        //val data = Json.encodeToString(drawingView!!.mPaths)
+        //val compressedData = gzip(data)
+
+        //mDatabase!!.setValue(compressedData)
     }
 
     fun gzip(content: String): String {

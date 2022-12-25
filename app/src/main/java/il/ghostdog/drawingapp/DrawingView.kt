@@ -23,7 +23,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
     private var circleCount : Int = 1
 
-    val mOnDrawChange : Event<String> = Event()
+    val mOnDrawChange : Event<Int> = Event()
 
     init {
         this.context1 = context
@@ -33,7 +33,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     fun onClickUndo(){
         if(mPaths.size > 0){
             mPaths.removeAt(mPaths.size -1)
-            mOnDrawChange.invoke("str")
+            mOnDrawChange.invoke(mPaths.size)
             invalidate()
         }
     }
@@ -96,14 +96,14 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             }
             MotionEvent.ACTION_UP ->{
                 //mPaths.add(mDrawPath!!)
-                mOnDrawChange.invoke("str")
+                mOnDrawChange.invoke(mPaths.size)
                 mDrawPath = CustomPath(color, mBrushSize)
             }
             else -> return false
         }
         if(circleCount > 10) {
             circleCount = 1
-            mOnDrawChange.invoke("str")
+            mOnDrawChange.invoke(mPaths.size)
         }else{
             circleCount++
         }
