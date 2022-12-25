@@ -58,8 +58,6 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         super.onDraw(canvas)
         canvas.drawBitmap(mCanvasBitmap!!, 0f, 0f, mCanvasPaint)
 
-
-        Toast.makeText(context1, mPaths.size.toString(), Toast.LENGTH_SHORT).show()
         for(path in mPaths){
             mDrawPaint!!.strokeWidth = path.brushThickness
             mDrawPaint!!.color = path.color
@@ -140,14 +138,15 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         }
 
         fun addPoint(x : Float, y : Float){
-            val vector = Vector2(x , y)
+            val vector = Vector2(x.toInt() , y.toInt())
             points.add(vector)
         }
 
         fun drawCustomPath(canvas: Canvas, paint: Paint) {
             var count = 0
             while(count < points.size - 1){
-                canvas.drawLine(points[count].x, points[count].y, points[count+1].x, points[count+1].y, paint)
+                canvas.drawLine(points[count].x.toFloat(), points[count].y.toFloat()
+                    , points[count+1].x.toFloat(), points[count+1].y.toFloat(), paint)
                 count++
             }
         }

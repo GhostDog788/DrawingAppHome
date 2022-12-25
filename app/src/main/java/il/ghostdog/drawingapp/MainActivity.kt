@@ -142,7 +142,6 @@ class MainActivity : AppCompatActivity() {
                     return
                 }
                 drawingView!!.mPaths = Json.decodeFromString(encoded)
-                Toast.makeText(applicationContext, "some how this was called", Toast.LENGTH_SHORT).show()
                 drawingView!!.invalidate()
             }
 
@@ -156,8 +155,8 @@ class MainActivity : AppCompatActivity() {
         //getBitmapFromView(mflDrawingView!!) - value
         count++
         mDatabaseInstance!!.getReference("count").setValue(count)
-        Toast.makeText(applicationContext, "Time to change", Toast.LENGTH_SHORT).show()
         val data = Json.encodeToString(drawingView!!.mPaths)
+        Toast.makeText(applicationContext, "Length: " + data.length.toString(), Toast.LENGTH_SHORT).show()
         mDatabase!!.setValue(data)
     }
 
