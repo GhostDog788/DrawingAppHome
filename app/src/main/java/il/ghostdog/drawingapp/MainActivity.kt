@@ -6,12 +6,14 @@ import android.app.Dialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.media.MediaScannerConnection
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Base64
 import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
@@ -27,18 +29,28 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.get
 import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
+import kotlin.math.log
 
 class MainActivity : AppCompatActivity() {
 
     private var drawingView: DrawingView? = null
     private var mImageButtonCurrentPaint: ImageButton? = null
     var customProgressDialog: Dialog? = null
+
+    private var mDatabaseInstance: FirebaseDatabase? = null
+    private var mDatabase: DatabaseReference? = null
+    var mflDrawingView: FrameLayout? = null
+    private var count : Int = 0
 
     val openGalleryLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
@@ -76,6 +88,12 @@ class MainActivity : AppCompatActivity() {
         drawingView = findViewById(R.id.dvDrawingView)
         drawingView?.setSizeForBrush(12.toFloat())
 
+        drawingView?.mOnDrawChange!!.plusAssign(::handleDrawChange)
+        mDatabaseInstance = FirebaseDatabase.getInstance()
+        mDatabase = mDatabaseInstance!!.getReference("picture")
+        mflDrawingView = findViewById(R.id.flDrawingViewContainer)
+        addPictureValueListener()
+
         val linearLayoutPaintColors = findViewById<LinearLayout>(R.id.llPaintColors)
         mImageButtonCurrentPaint = linearLayoutPaintColors.findViewWithTag("#ff000000") as ImageButton
         mImageButtonCurrentPaint!!.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.pallet_selected))
@@ -90,6 +108,15 @@ class MainActivity : AppCompatActivity() {
         }
         val ibUndo: ImageButton = findViewById(R.id.ibUndo)
         ibUndo.setOnClickListener{
+            //Log.i("Bitmap:", BitMapToString(getBitmapFromView(mflDrawingView!!)).toString())
+            //mDatabase!!.setValue(BitMapToString(getBitmapFromView(mflDrawingView!!)))
+
+            Log.i("Bitmap length:",BitMapToString(getBitmapFromView(mflDrawingView!!)).length.toString())
+            var data = Json.encodeToString(drawingView!!.mPaths)
+            Log.i("Paths length:", data)
+
+            drawingView!!.mPaths = Json.decodeFromString(data)
+
             drawingView?.onClickUndo()
         }
         val ibSave: ImageButton = findViewById(R.id.ibSave)
@@ -103,7 +130,37 @@ class MainActivity : AppCompatActivity() {
             }
 
         }
+    }
 
+    private fun addPictureValueListener() {
+        mDatabase!!.addValueEventListener(object : ValueEventListener{
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val encoded = snapshot.getValue(String::class.java)
+                if(encoded == null) return
+                val imageBytes = Base64.decode(encoded, 0)
+                val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                val imageBackground: ImageView = findViewById(R.id.ivBackground)
+                imageBackground.setImageBitmap(bitmap)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                TODO("Not yet implemented")
+            }
+        })
+    }
+
+    private fun handleDrawChange(str : String) : Unit{
+        //getBitmapFromView(mflDrawingView!!) - value
+        count++
+        mDatabaseInstance!!.getReference("count").setValue(count)
+        mDatabase!!.setValue(BitMapToString(getBitmapFromView(mflDrawingView!!)))
+    }
+
+    private fun BitMapToString(bitmap: Bitmap): String {
+        val baos = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 70, baos)
+        val b = baos.toByteArray()
+        return Base64.encodeToString(b, Base64.DEFAULT)
     }
 
     private fun isReadStorageAllowed(): Boolean{

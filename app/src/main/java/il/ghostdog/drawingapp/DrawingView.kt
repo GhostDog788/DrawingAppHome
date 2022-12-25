@@ -16,7 +16,11 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     private var mBrushSize: Float = 0.toFloat()
     private var color = Color.BLACK
     private var canvas: Canvas? = null
-    private val mPaths = ArrayList<CustomPath>()
+    var mPaths = ArrayList<CustomPath>() //need to make private and val
+
+    private var circleCount : Int = 1
+
+    val mOnDrawChange : Event<String> = Event()
 
     init {
         setUpDrawing()
@@ -59,6 +63,13 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             mDrawPaint!!.strokeWidth = mDrawPath!!.brushThickness
             mDrawPaint!!.color = mDrawPath!!.color
             canvas.drawPath(mDrawPath!!, mDrawPaint!!)
+        }
+
+        if(circleCount > 7) {
+            circleCount = 1
+            mOnDrawChange.invoke("str")
+        }else{
+            circleCount++
         }
     }
 
@@ -106,7 +117,8 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         mDrawPaint!!.color = color
     }
 
-    internal inner class CustomPath(var color: Int, var brushThickness: Float) : Path() {
+    @kotlinx.serialization.Serializable
+    class CustomPath(var color: Int, var brushThickness: Float) : Path() { //need to make internal inner
 
     }
 }
