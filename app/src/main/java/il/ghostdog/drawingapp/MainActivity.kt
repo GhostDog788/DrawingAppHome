@@ -6,7 +6,6 @@ import android.app.Dialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.media.MediaScannerConnection
@@ -22,13 +21,10 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.view.get
 import androidx.lifecycle.lifecycleScope
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -39,7 +35,6 @@ import kotlinx.serialization.json.Json
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
-import kotlin.math.log
 
 class MainActivity : AppCompatActivity() {
 
@@ -51,6 +46,7 @@ class MainActivity : AppCompatActivity() {
     private var mDatabase: DatabaseReference? = null
     var mflDrawingView: FrameLayout? = null
     private var count : Int = 0
+    private var startListening = true
 
     val openGalleryLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
@@ -137,10 +133,17 @@ class MainActivity : AppCompatActivity() {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val encoded = snapshot.getValue(String::class.java)
                 if(encoded == null) return
-                val imageBytes = Base64.decode(encoded, 0)
-                val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                val imageBackground: ImageView = findViewById(R.id.ivBackground)
-                imageBackground.setImageBitmap(bitmap)
+                //val imageBytes = Base64.decode(encoded, 0)
+                //val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                //val imageBackground: ImageView = findViewById(R.id.ivBackground)
+                //imageBackground.setImageBitmap(bitmap)
+                if(startListening) {
+                    startListening = false
+                    return
+                }
+                drawingView!!.mPaths = Json.decodeFromString(encoded)
+                Toast.makeText(applicationContext, "some how this was called", Toast.LENGTH_SHORT).show()
+                drawingView!!.invalidate()
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -153,7 +156,9 @@ class MainActivity : AppCompatActivity() {
         //getBitmapFromView(mflDrawingView!!) - value
         count++
         mDatabaseInstance!!.getReference("count").setValue(count)
-        mDatabase!!.setValue(BitMapToString(getBitmapFromView(mflDrawingView!!)))
+        Toast.makeText(applicationContext, "Time to change", Toast.LENGTH_SHORT).show()
+        val data = Json.encodeToString(drawingView!!.mPaths)
+        mDatabase!!.setValue(data)
     }
 
     private fun BitMapToString(bitmap: Bitmap): String {
