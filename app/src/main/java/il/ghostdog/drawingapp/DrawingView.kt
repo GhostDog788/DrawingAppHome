@@ -72,12 +72,12 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             mDrawPath!!.drawCustomPath(canvas, mDrawPaint!!)
         }
 
-        if(circleCount > 7) {
-            circleCount = 1
-            mOnDrawChange.invoke("str")
-        }else{
-            circleCount++
-        }
+        //if(circleCount > 7) {
+        //    circleCount = 1
+        //    mOnDrawChange.invoke("str")
+        //}else{
+        //    circleCount++
+        //}
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
@@ -102,6 +102,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             }
             MotionEvent.ACTION_UP ->{
                 mPaths.add(mDrawPath!!)
+                mOnDrawChange.invoke("str")
                 mDrawPath = CustomPath(color, mBrushSize)
             }
             else -> return false
