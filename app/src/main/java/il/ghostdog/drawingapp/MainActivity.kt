@@ -49,8 +49,43 @@ class MainActivity : AppCompatActivity() {
     private var mDatabase: DatabaseReference? = null
     var mflDrawingView: FrameLayout? = null
     private var count : Int = 0
-    private var startListening = true
     private var dbPathsCount : Int = 0
+
+    val pathsChildListener = object  : ChildEventListener{
+        override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+            val encoded = snapshot.getValue(String::class.java) ?: return
+            val data = ungzip(encoded)
+            val path : DrawingView.CustomPath = Json.decodeFromString(data)
+
+            drawingView!!.mPaths.add(path)
+
+            drawingView!!.invalidate()
+        }
+
+        override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+            val encoded = snapshot.getValue(String::class.java) ?: return
+            val data = ungzip(encoded)
+            val path : DrawingView.CustomPath = Json.decodeFromString(data)
+
+            drawingView!!.mPaths[snapshot.key!!.toInt()] = path
+
+            drawingView!!.invalidate()
+        }
+
+        override fun onChildRemoved(snapshot: DataSnapshot) {
+            drawingView!!.mPaths.removeAt(snapshot.key!!.toInt())
+
+            drawingView!!.invalidate()
+        }
+
+        override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
+            TODO("Not yet implemented")
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            TODO("Not yet implemented")
+        }
+    }
 
     val openGalleryLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
@@ -90,10 +125,20 @@ class MainActivity : AppCompatActivity() {
 
         drawingView?.mOnDrawChange!!.plusAssign(::handleDrawChange)
         mDatabaseInstance = FirebaseDatabase.getInstance()
-        mDatabase = mDatabaseInstance!!.getReference("picture")
+        mDatabase = mDatabaseInstance!!.getReference("paths")
         mflDrawingView = findViewById(R.id.flDrawingViewContainer)
         setupGame() //have to be before listeners
-        //addPictureValueListener()
+        //addPathsValueListener()
+
+        //left to add auth to have uid foreach device
+        //there will be a variable that holds the uid of the drawing user
+        //the variable will change to the latest user that touched the screen
+        //add listener to the variable that holds the uid of the drawer
+        //on uid of drawer changed:
+        //if the uid on the db is equal to the uid of the current user -> removePathsValueListener
+        //if the uid on the db is not equal to the uid of the current user -> addPathsValueListener
+        //limitations: can't draw on two screens at once
+
         addPathsCountListener()
 
         val linearLayoutPaintColors = findViewById<LinearLayout>(R.id.llPaintColors)
@@ -136,35 +181,51 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupGame() {
         mDatabase!!.setValue("")
-        mDatabase!!.child("PathsCount").setValue(0)
+        mDatabaseInstance!!.getReference("PathsCount").setValue(0)
     }
 
-    private fun addPictureValueListener() {
-        mDatabase!!.addValueEventListener(object : ValueEventListener{
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val encoded = snapshot.getValue(String::class.java)
-                if(encoded == null) return
-                //val imageBytes = Base64.decode(encoded, 0)
-                //val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                //val imageBackground: ImageView = findViewById(R.id.ivBackground)
-                //imageBackground.setImageBitmap(bitmap)
-                if(startListening) {
-                    startListening = false
-                    return
-                }
+    private fun addPathsValueListener() {
+        mDatabase!!.addChildEventListener(pathsChildListener)
+
+        /*mDatabase!!.addChildEventListener(object  : ChildEventListener{
+            override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                val encoded = snapshot.getValue(String::class.java) ?: return
                 val data = ungzip(encoded)
-                drawingView!!.mPaths = Json.decodeFromString(data)
+                val path : DrawingView.CustomPath = Json.decodeFromString(data)
+
+                drawingView!!.mPaths.add(path)
+
                 drawingView!!.invalidate()
+            }
+
+            override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+                val encoded = snapshot.getValue(String::class.java) ?: return
+                val data = ungzip(encoded)
+                val path : DrawingView.CustomPath = Json.decodeFromString(data)
+
+                drawingView!!.mPaths[snapshot.key!!.toInt()] = path
+
+                drawingView!!.invalidate()
+            }
+
+            override fun onChildRemoved(snapshot: DataSnapshot) {
+                drawingView!!.mPaths.removeAt(snapshot.key!!.toInt())
+
+                drawingView!!.invalidate()
+            }
+
+            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
+                TODO("Not yet implemented")
             }
 
             override fun onCancelled(error: DatabaseError) {
                 TODO("Not yet implemented")
             }
-        })
+        })*/
     }
 
     private fun addPathsCountListener() {
-        mDatabase!!.child("PathsCount").addValueEventListener(object : ValueEventListener{
+        mDatabaseInstance!!.getReference("PathsCount").addValueEventListener(object : ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
                 dbPathsCount = snapshot.getValue(Long::class.java)!!.toInt()
 
@@ -208,7 +269,7 @@ class MainActivity : AppCompatActivity() {
             mDatabase!!.child((myPathsCount - 1).toString()).setValue(compressedData)
         }
 
-        mDatabase!!.child("PathsCount").setValue(myPathsCount)
+        mDatabaseInstance!!.getReference("PathsCount").setValue(myPathsCount)
 
         //val data = Json.encodeToString(drawingView!!.mPaths)
         //val compressedData = gzip(data)

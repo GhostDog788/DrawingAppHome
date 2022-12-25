@@ -101,7 +101,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             }
             else -> return false
         }
-        if(circleCount > 10) {
+        if(circleCount > 3) {
             circleCount = 1
             mOnDrawChange.invoke(mPaths.size)
         }else{
