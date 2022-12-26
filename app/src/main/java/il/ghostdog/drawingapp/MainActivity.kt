@@ -25,6 +25,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -50,16 +52,20 @@ class MainActivity : AppCompatActivity() {
     var mflDrawingView: FrameLayout? = null
     private var count : Int = 0
     private var dbPathsCount : Int = 0
+    private var mAuth : FirebaseAuth? = null
+    private var mDrawerUid: String? = null
 
     val pathsChildListener = object  : ChildEventListener{
         override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
-            val encoded = snapshot.getValue(String::class.java) ?: return
-            val data = ungzip(encoded)
-            val path : DrawingView.CustomPath = Json.decodeFromString(data)
+            if(dbPathsCount > drawingView!!.mPaths.size) {
+                val encoded = snapshot.getValue(String::class.java) ?: return
+                val data = ungzip(encoded)
+                val path: DrawingView.CustomPath = Json.decodeFromString(data)
 
-            drawingView!!.mPaths.add(path)
+                drawingView!!.mPaths.add(path)
 
-            drawingView!!.invalidate()
+                drawingView!!.invalidate()
+            }
         }
 
         override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
@@ -73,9 +79,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onChildRemoved(snapshot: DataSnapshot) {
-            drawingView!!.mPaths.removeAt(snapshot.key!!.toInt())
+            if(dbPathsCount < drawingView!!.mPaths.size) {
+                drawingView!!.mPaths.removeAt(snapshot.key!!.toInt())
 
-            drawingView!!.invalidate()
+                drawingView!!.invalidate()
+            }
         }
 
         override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
@@ -123,12 +131,14 @@ class MainActivity : AppCompatActivity() {
         drawingView = findViewById(R.id.dvDrawingView)
         drawingView?.setSizeForBrush(12.toFloat())
 
+        mAuth = FirebaseAuth.getInstance()
         drawingView?.mOnDrawChange!!.plusAssign(::handleDrawChange)
         mDatabaseInstance = FirebaseDatabase.getInstance()
         mDatabase = mDatabaseInstance!!.getReference("paths")
         mflDrawingView = findViewById(R.id.flDrawingViewContainer)
         setupGame() //have to be before listeners
-        //addPathsValueListener()
+        addDrawerIdListener()
+        addPathsValueListener()
 
         //left to add auth to have uid foreach device
         //there will be a variable that holds the uid of the drawing user
@@ -186,42 +196,29 @@ class MainActivity : AppCompatActivity() {
 
     private fun addPathsValueListener() {
         mDatabase!!.addChildEventListener(pathsChildListener)
+    }
+    private fun removePathsValueListener() {
+        mDatabase!!.removeEventListener(pathsChildListener)
+    }
 
-        /*mDatabase!!.addChildEventListener(object  : ChildEventListener{
-            override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
-                val encoded = snapshot.getValue(String::class.java) ?: return
-                val data = ungzip(encoded)
-                val path : DrawingView.CustomPath = Json.decodeFromString(data)
+    private fun addDrawerIdListener() {
+        mDatabaseInstance!!.getReference("drawerID").addValueEventListener(object : ValueEventListener{
+            override fun onDataChange(snapshot: DataSnapshot) {
+                mDrawerUid = snapshot.getValue(String::class.java)
 
-                drawingView!!.mPaths.add(path)
-
-                drawingView!!.invalidate()
-            }
-
-            override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
-                val encoded = snapshot.getValue(String::class.java) ?: return
-                val data = ungzip(encoded)
-                val path : DrawingView.CustomPath = Json.decodeFromString(data)
-
-                drawingView!!.mPaths[snapshot.key!!.toInt()] = path
-
-                drawingView!!.invalidate()
-            }
-
-            override fun onChildRemoved(snapshot: DataSnapshot) {
-                drawingView!!.mPaths.removeAt(snapshot.key!!.toInt())
-
-                drawingView!!.invalidate()
-            }
-
-            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
-                TODO("Not yet implemented")
+                if(mAuth!!.currentUser!!.uid == mDrawerUid)
+                {
+                    removePathsValueListener()
+                    return
+                }else{
+                    addPathsValueListener()
+                }
             }
 
             override fun onCancelled(error: DatabaseError) {
                 TODO("Not yet implemented")
             }
-        })*/
+        })
     }
 
     private fun addPathsCountListener() {
@@ -247,6 +244,14 @@ class MainActivity : AppCompatActivity() {
         count++
         mDatabaseInstance!!.getReference("count").setValue(count)
 
+        if(mAuth!!.currentUser!!.uid != mDrawerUid) {
+            mDatabaseInstance!!.getReference("drawerID").setValue(mAuth!!.currentUser!!.uid)
+        }
+
+        if(dbPathsCount != myPathsCount){
+            mDatabaseInstance!!.getReference("PathsCount").setValue(myPathsCount)
+        }
+
         if(dbPathsCount < myPathsCount){
             var counter = dbPathsCount
             while(counter < myPathsCount){
@@ -268,13 +273,6 @@ class MainActivity : AppCompatActivity() {
 
             mDatabase!!.child((myPathsCount - 1).toString()).setValue(compressedData)
         }
-
-        mDatabaseInstance!!.getReference("PathsCount").setValue(myPathsCount)
-
-        //val data = Json.encodeToString(drawingView!!.mPaths)
-        //val compressedData = gzip(data)
-
-        //mDatabase!!.setValue(compressedData)
     }
 
     fun gzip(content: String): String {
