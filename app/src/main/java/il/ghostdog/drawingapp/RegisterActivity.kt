@@ -41,7 +41,7 @@ class RegisterActivity : AppCompatActivity() {
         mAuth!!.createUserWithEmailAndPassword(etEmail.text.toString(), etPassword.text.toString())
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
-                        startActivity(Intent(this, MainActivity::class.java))
+                        startActivity(Intent(this, MainMenu::class.java))
                         finish()
                     }else{
                         Toast.makeText(this, "Authentication Failed", Toast.LENGTH_SHORT).show()

@@ -3,10 +3,13 @@ package il.ghostdog.drawingapp
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
+import android.util.Log
 import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import kotlin.math.log
 
 class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
@@ -27,6 +30,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
     init {
         this.context1 = context
+
         setUpDrawing()
     }
 
@@ -59,14 +63,14 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         canvas.drawBitmap(mCanvasBitmap!!, 0f, 0f, mCanvasPaint)
 
         for(path in mPaths){
-            mDrawPaint!!.strokeWidth = path.bs
-            mDrawPaint!!.color = path.c
+            mDrawPaint!!.strokeWidth = path.brushSize
+            mDrawPaint!!.color = path.color
             path.drawCustomPath(canvas, mDrawPaint!!)
         }
 
         if(!mDrawPath!!.isEmpty()) {
-            mDrawPaint!!.strokeWidth = mDrawPath!!.bs
-            mDrawPaint!!.color = mDrawPath!!.c
+            mDrawPaint!!.strokeWidth = mDrawPath!!.brushSize
+            mDrawPaint!!.color = mDrawPath!!.color
             mDrawPath!!.drawCustomPath(canvas, mDrawPaint!!)
         }
     }
@@ -77,8 +81,8 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
         when(event?.action){
             MotionEvent.ACTION_DOWN ->{
-                mDrawPath!!.c = color
-                mDrawPath!!.bs = mBrushSize
+                mDrawPath!!.color = color
+                mDrawPath!!.brushSize = mBrushSize
                 mDrawPath!!.reset()
                 if(touchX != null && touchY != null)
                 {
@@ -87,7 +91,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
                 }
             }
             MotionEvent.ACTION_MOVE ->{
-                if(touchX != null && touchY != null)
+                if(touchX != null && touchY != null && pointOnView(touchX, touchY))
                 {
                     mPaths.removeAt(mPaths.size - 1)
                     mDrawPath!!.addPoint(touchX, touchY)
@@ -112,6 +116,13 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         return true
     }
 
+    private fun pointOnView(touchX: Float, touchY: Float): Boolean {
+        return touchX >= 0 &&
+                touchX <= this.width &&
+                touchY >= 0 &&
+                touchY <= this.height
+    }
+
     fun setSizeForBrush(newSize: Float){
         mBrushSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
             newSize,
@@ -125,31 +136,67 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         mDrawPaint!!.color = color
     }
 
-    @kotlinx.serialization.Serializable
-    class CustomPath(var c: Int, var bs: Float) { //need to make internal inner
+    //@kotlinx.serialization.Serializable
+    class CustomPath(var color: Int, var brushSize: Float) { //need to make internal inner
 
-        private val ps : ArrayList<Vector2> = ArrayList<Vector2>() //name - point
+        private val points : ArrayList<Vector2> = ArrayList<Vector2>()
+
+        constructor(standardPath: StandardPath) : this(standardPath.c, standardPath.bs) {
+            val multiplier : Float = Constants.viewWidth.toFloat() / Constants.defaultWidth.toFloat()
+            Log.i("multiplier", multiplier.toString())
+            Log.i("viewWidth", Constants.viewWidth.toString())
+            Log.i("defaultWidth",Constants.defaultWidth.toString())
+
+            for (point in standardPath.ps){
+                val vector = Vector2(point.x, point.y)
+                vector.x = (multiplier * vector.x).toInt()
+                vector.y = (multiplier * vector.y).toInt()
+                points.add(vector)
+            }
+        }
 
         fun isEmpty() : Boolean{
-            return ps.isEmpty()
+            return points.isEmpty()
         }
 
         fun reset(){
-            ps.clear()
+            points.clear()
         }
 
         fun addPoint(x : Float, y : Float){
             val vector = Vector2(x.toInt() , y.toInt())
-            ps.add(vector)
+            points.add(vector)
         }
 
         fun drawCustomPath(canvas: Canvas, paint: Paint) {
             var count = 0
-            while(count < ps.size - 1){
-                canvas.drawLine(ps[count].x.toFloat(), ps[count].y.toFloat()
-                    , ps[count+1].x.toFloat(), ps[count+1].y.toFloat(), paint)
+            while(count < points.size - 1){
+                canvas.drawLine(points[count].x.toFloat(), points[count].y.toFloat()
+                    , points[count+1].x.toFloat(), points[count+1].y.toFloat(), paint)
                 count++
             }
         }
+
+        fun toStandardPath() : StandardPath{
+            val standardPath = StandardPath(color, brushSize)
+            val multiplier : Float = Constants.defaultWidth.toFloat() / Constants.viewWidth.toFloat()
+
+            Log.i("multiplier", multiplier.toString())
+            Log.i("viewWidth", Constants.viewWidth.toString())
+            Log.i("defaultWidth",Constants.defaultWidth.toString())
+
+            for (point in points){
+                val vector = Vector2(point.x, point.y)
+                vector.x = (multiplier * vector.x).toInt()
+                vector.y = (multiplier * vector.y).toInt()
+                standardPath.ps.add(vector)
+            }
+
+            return standardPath
+        }
+    }
+    @kotlinx.serialization.Serializable
+    class StandardPath(var c: Int, var bs: Float) {
+        val ps : ArrayList<Vector2> = ArrayList<Vector2>() //name - point
     }
 }

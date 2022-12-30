@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Base64
+import android.util.DisplayMetrics
 import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
@@ -24,6 +25,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -60,9 +62,9 @@ class MainActivity : AppCompatActivity() {
             if(dbPathsCount > drawingView!!.mPaths.size) {
                 val encoded = snapshot.getValue(String::class.java) ?: return
                 val data = ungzip(encoded)
-                val path: DrawingView.CustomPath = Json.decodeFromString(data)
-
-                drawingView!!.mPaths.add(path)
+                val path: DrawingView.StandardPath = Json.decodeFromString(data)
+                val customPath = DrawingView.CustomPath(path)
+                drawingView!!.mPaths.add(customPath)
 
                 drawingView!!.invalidate()
             }
@@ -71,9 +73,9 @@ class MainActivity : AppCompatActivity() {
         override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
             val encoded = snapshot.getValue(String::class.java) ?: return
             val data = ungzip(encoded)
-            val path : DrawingView.CustomPath = Json.decodeFromString(data)
-
-            drawingView!!.mPaths[snapshot.key!!.toInt()] = path
+            val path: DrawingView.StandardPath = Json.decodeFromString(data)
+            val customPath = DrawingView.CustomPath(path)
+            drawingView!!.mPaths[snapshot.key!!.toInt()] = customPath
 
             drawingView!!.invalidate()
         }
@@ -129,6 +131,16 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         drawingView = findViewById(R.id.dvDrawingView)
+
+        val displayMetrics = DisplayMetrics()
+        windowManager.defaultDisplay.getMetrics(displayMetrics)
+        val widthR = displayMetrics.widthPixels
+        (drawingView!!.parent as View).updateLayoutParams{
+            height = (widthR * 1.47).toInt()
+            width = (widthR - widthR * 0.02).toInt()
+            Constants.viewWidth = width
+            Toast.makeText(applicationContext, widthR.toString(), Toast.LENGTH_SHORT).show()
+        }
         drawingView?.setSizeForBrush(12.toFloat())
 
         mAuth = FirebaseAuth.getInstance()
@@ -165,15 +177,6 @@ class MainActivity : AppCompatActivity() {
         }
         val ibUndo: ImageButton = findViewById(R.id.ibUndo)
         ibUndo.setOnClickListener{
-            //Log.i("Bitmap:", BitMapToString(getBitmapFromView(mflDrawingView!!)).toString())
-            //mDatabase!!.setValue(BitMapToString(getBitmapFromView(mflDrawingView!!)))
-
-            Log.i("Bitmap length:",BitMapToString(getBitmapFromView(mflDrawingView!!)).length.toString())
-            var data = Json.encodeToString(drawingView!!.mPaths)
-            Log.i("Paths length:", data)
-
-            drawingView!!.mPaths = Json.decodeFromString(data)
-
             drawingView?.onClickUndo()
         }
         val ibSave: ImageButton = findViewById(R.id.ibSave)
@@ -255,7 +258,9 @@ class MainActivity : AppCompatActivity() {
         if(dbPathsCount < myPathsCount){
             var counter = dbPathsCount
             while(counter < myPathsCount){
-                val data = Json.encodeToString(drawingView!!.mPaths[counter])
+                val path = drawingView!!.mPaths[counter]
+                val standardPath = path.toStandardPath()
+                val data = Json.encodeToString(standardPath)
                 val compressedData = gzip(data)
 
                 mDatabase!!.child(counter.toString()).setValue(compressedData)
@@ -268,8 +273,11 @@ class MainActivity : AppCompatActivity() {
                 counter++
             }
         }else{
-            val data = Json.encodeToString(drawingView!!.mPaths[myPathsCount - 1])
+            val path = drawingView!!.mPaths[myPathsCount - 1]
+            val standardPath = path.toStandardPath()
+            val data = Json.encodeToString(standardPath)
             val compressedData = gzip(data)
+
 
             mDatabase!!.child((myPathsCount - 1).toString()).setValue(compressedData)
         }
