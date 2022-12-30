@@ -20,7 +20,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     private var mBrushSize: Float = 0.toFloat()
     private var color = Color.BLACK
     private var canvas: Canvas? = null
-    var mPaths = ArrayList<CustomPath>() //need to make private and val
+    var mPaths = ArrayList<CustomPath>()
 
     private var context1 : Context? = null
 
@@ -32,14 +32,6 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         this.context1 = context
 
         setUpDrawing()
-    }
-
-    fun onClickUndo(){
-        if(mPaths.size > 0){
-            mPaths.removeAt(mPaths.size -1)
-            mOnDrawChange.invoke(mPaths.size)
-            invalidate()
-        }
     }
 
     private fun setUpDrawing() {
@@ -99,7 +91,6 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
                 }
             }
             MotionEvent.ACTION_UP ->{
-                //mPaths.add(mDrawPath!!)
                 mOnDrawChange.invoke(mPaths.size)
                 mDrawPath = CustomPath(color, mBrushSize)
             }
@@ -114,6 +105,14 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         invalidate()
 
         return true
+    }
+
+    fun onClickUndo(){
+        if(mPaths.size > 0){
+            mPaths.removeAt(mPaths.size -1)
+            mOnDrawChange.invoke(mPaths.size)
+            invalidate()
+        }
     }
 
     private fun pointOnView(touchX: Float, touchY: Float): Boolean {
@@ -136,18 +135,13 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         mDrawPaint!!.color = color
     }
 
-    //@kotlinx.serialization.Serializable
-    class CustomPath(var color: Int, var brushSize: Float) { //need to make internal inner
+    class CustomPath(var color: Int, var brushSize: Float) {
 
         private val points : ArrayList<Vector2> = ArrayList<Vector2>()
 
         constructor(standardPath: StandardPath) : this(standardPath.c, standardPath.bs) {
             val multiplier : Float = Constants.viewWidth.toFloat() / Constants.defaultWidth.toFloat()
-
             brushSize *= multiplier
-            Log.i("multiplier", multiplier.toString())
-            Log.i("viewWidth", Constants.viewWidth.toString())
-            Log.i("defaultWidth",Constants.defaultWidth.toString())
 
             for (point in standardPath.ps){
                 val vector = Vector2(point.x, point.y)
@@ -183,9 +177,6 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             val multiplier : Float = Constants.defaultWidth.toFloat() / Constants.viewWidth.toFloat()
 
             val standardPath = StandardPath(color, brushSize * multiplier)
-            Log.i("multiplier", multiplier.toString())
-            Log.i("viewWidth", Constants.viewWidth.toString())
-            Log.i("defaultWidth",Constants.defaultWidth.toString())
 
             for (point in points){
                 val vector = Vector2(point.x, point.y)

@@ -14,7 +14,6 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Base64
 import android.util.DisplayMetrics
-import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageButton
@@ -28,7 +27,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -43,25 +41,26 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 
+@Suppress("DEPRECATION")
 class MainActivity : AppCompatActivity() {
 
     private var drawingView: DrawingView? = null
     private var mImageButtonCurrentPaint: ImageButton? = null
-    var customProgressDialog: Dialog? = null
+    private var customProgressDialog: Dialog? = null
 
     private var mDatabaseInstance: FirebaseDatabase? = null
-    private var mDatabase: DatabaseReference? = null
-    var mflDrawingView: FrameLayout? = null
+    private var mPathDatabase: DatabaseReference? = null
+    private var mflDrawingView: FrameLayout? = null
     private var count : Int = 0
     private var dbPathsCount : Int = 0
     private var mAuth : FirebaseAuth? = null
     private var mDrawerUid: String? = null
 
-    val pathsChildListener = object  : ChildEventListener{
+    private val pathsChildListener = object  : ChildEventListener{
         override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
             if(dbPathsCount > drawingView!!.mPaths.size) {
                 val encoded = snapshot.getValue(String::class.java) ?: return
-                val data = ungzip(encoded)
+                val data = unGzip(encoded)
                 val path: DrawingView.StandardPath = Json.decodeFromString(data)
                 val customPath = DrawingView.CustomPath(path)
                 drawingView!!.mPaths.add(customPath)
@@ -72,7 +71,7 @@ class MainActivity : AppCompatActivity() {
 
         override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
             val encoded = snapshot.getValue(String::class.java) ?: return
-            val data = ungzip(encoded)
+            val data = unGzip(encoded)
             val path: DrawingView.StandardPath = Json.decodeFromString(data)
             val customPath = DrawingView.CustomPath(path)
             drawingView!!.mPaths[snapshot.key!!.toInt()] = customPath
@@ -97,7 +96,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    val openGalleryLauncher: ActivityResultLauncher<Intent> =
+    private val openGalleryLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
             result ->
                 if (result.resultCode == RESULT_OK && result.data != null){
@@ -106,7 +105,7 @@ class MainActivity : AppCompatActivity() {
                 }
         }
 
-    val requestPermission: ActivityResultLauncher<Array<String>> =
+    private val requestPermission: ActivityResultLauncher<Array<String>> =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){
             permissions ->
                 permissions.entries.forEach{
@@ -114,10 +113,18 @@ class MainActivity : AppCompatActivity() {
                     val isGranted =it.value
 
                     if(isGranted){
-                        Toast.makeText(this, "Permission granted to read files", Toast.LENGTH_SHORT).show()
-                        val pickIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-                        openGalleryLauncher.launch(pickIntent)
-
+                        if(permissionName == Manifest.permission.READ_EXTERNAL_STORAGE) {
+                            Toast.makeText(
+                                this,
+                                "Permission granted to read files",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            val pickIntent = Intent(
+                                Intent.ACTION_PICK,
+                                MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                            )
+                            openGalleryLauncher.launch(pickIntent)
+                        }
                     }else{
                         if(permissionName == Manifest.permission.READ_EXTERNAL_STORAGE){
                             Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
@@ -146,21 +153,12 @@ class MainActivity : AppCompatActivity() {
         mAuth = FirebaseAuth.getInstance()
         drawingView?.mOnDrawChange!!.plusAssign(::handleDrawChange)
         mDatabaseInstance = FirebaseDatabase.getInstance()
-        mDatabase = mDatabaseInstance!!.getReference("paths")
+        mPathDatabase = mDatabaseInstance!!.getReference("paths")
         mflDrawingView = findViewById(R.id.flDrawingViewContainer)
+
         setupGame() //have to be before listeners
         addDrawerIdListener()
         addPathsValueListener()
-
-        //left to add auth to have uid foreach device
-        //there will be a variable that holds the uid of the drawing user
-        //the variable will change to the latest user that touched the screen
-        //add listener to the variable that holds the uid of the drawer
-        //on uid of drawer changed:
-        //if the uid on the db is equal to the uid of the current user -> removePathsValueListener
-        //if the uid on the db is not equal to the uid of the current user -> addPathsValueListener
-        //limitations: can't draw on two screens at once
-
         addPathsCountListener()
 
         val linearLayoutPaintColors = findViewById<LinearLayout>(R.id.llPaintColors)
@@ -176,16 +174,17 @@ class MainActivity : AppCompatActivity() {
             requestStoragePermission()
         }
         val ibUndo: ImageButton = findViewById(R.id.ibUndo)
-        ibUndo.setOnClickListener{
-            drawingView?.onClickUndo()
+        ibUndo.setOnClickListener {
+            if (mAuth!!.currentUser!!.uid == mDrawerUid){
+                drawingView?.onClickUndo()
+            }
         }
         val ibSave: ImageButton = findViewById(R.id.ibSave)
         ibSave.setOnClickListener{
             if(isReadStorageAllowed()){
                 showProgressDialog()
                 lifecycleScope.launch{
-                    val flDrawingView: FrameLayout = findViewById(R.id.flDrawingViewContainer)
-                    saveBitmapFile(getBitmapFromView(flDrawingView))
+                    saveBitmapFile(getBitmapFromView(mflDrawingView!!))
                 }
             }
 
@@ -193,15 +192,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupGame() {
-        mDatabase!!.setValue("")
-        mDatabaseInstance!!.getReference("PathsCount").setValue(0)
+        mPathDatabase!!.setValue("")
+        mDatabaseInstance!!.getReference("pathsCount").setValue(0)
     }
 
     private fun addPathsValueListener() {
-        mDatabase!!.addChildEventListener(pathsChildListener)
+        mPathDatabase!!.addChildEventListener(pathsChildListener)
     }
     private fun removePathsValueListener() {
-        mDatabase!!.removeEventListener(pathsChildListener)
+        mPathDatabase!!.removeEventListener(pathsChildListener)
     }
 
     private fun addDrawerIdListener() {
@@ -225,16 +224,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun addPathsCountListener() {
-        mDatabaseInstance!!.getReference("PathsCount").addValueEventListener(object : ValueEventListener{
+        mDatabaseInstance!!.getReference("pathsCount").addValueEventListener(object : ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
                 dbPathsCount = snapshot.getValue(Long::class.java)!!.toInt()
-
-                if(dbPathsCount == null)
-                {
-                    Toast.makeText(applicationContext, "Error: paths count is null", Toast.LENGTH_SHORT).show()
-                    dbPathsCount = 0
-                    return
-                }
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -243,7 +235,7 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    private fun handleDrawChange(myPathsCount : Int) : Unit{
+    private fun handleDrawChange(myPathsCount : Int){
         count++
         mDatabaseInstance!!.getReference("count").setValue(count)
 
@@ -252,7 +244,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         if(dbPathsCount != myPathsCount){
-            mDatabaseInstance!!.getReference("PathsCount").setValue(myPathsCount)
+            mDatabaseInstance!!.getReference("pathsCount").setValue(myPathsCount)
         }
 
         if(dbPathsCount < myPathsCount){
@@ -263,13 +255,13 @@ class MainActivity : AppCompatActivity() {
                 val data = Json.encodeToString(standardPath)
                 val compressedData = gzip(data)
 
-                mDatabase!!.child(counter.toString()).setValue(compressedData)
+                mPathDatabase!!.child(counter.toString()).setValue(compressedData)
                 counter++
             }
         }else if(dbPathsCount > myPathsCount){
             var counter = myPathsCount
             while(counter < dbPathsCount) {
-                mDatabase!!.child(counter.toString()).removeValue()
+                mPathDatabase!!.child(counter.toString()).removeValue()
                 counter++
             }
         }else{
@@ -279,26 +271,19 @@ class MainActivity : AppCompatActivity() {
             val compressedData = gzip(data)
 
 
-            mDatabase!!.child((myPathsCount - 1).toString()).setValue(compressedData)
+            mPathDatabase!!.child((myPathsCount - 1).toString()).setValue(compressedData)
         }
     }
 
-    fun gzip(content: String): String {
+    private fun gzip(content: String): String {
         val bos = ByteArrayOutputStream()
         GZIPOutputStream(bos).bufferedWriter(UTF_8).use { it.write(content) }
         val b = bos.toByteArray()
         return Base64.encodeToString(b, Base64.DEFAULT)
     }
 
-    fun ungzip(content: String): String =
+    private fun unGzip(content: String): String =
         GZIPInputStream(Base64.decode(content, Base64.DEFAULT).inputStream()).bufferedReader(UTF_8).use { it.readText() }
-
-    private fun BitMapToString(bitmap: Bitmap): String {
-        val baos = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 70, baos)
-        val b = baos.toByteArray()
-        return Base64.encodeToString(b, Base64.DEFAULT)
-    }
 
     private fun isReadStorageAllowed(): Boolean{
         val result = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -397,7 +382,7 @@ class MainActivity : AppCompatActivity() {
                     val bytes = ByteArrayOutputStream()
                     mBitmap.compress(Bitmap.CompressFormat.PNG, 90, bytes)
 
-                    var f = File(externalCacheDir?.absoluteFile.toString()
+                    val f = File(externalCacheDir?.absoluteFile.toString()
                             + File.separator + "DrawingApp" + System.currentTimeMillis() / 1000 + ".png")
 
                     val fo = FileOutputStream(f)
