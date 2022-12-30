@@ -143,6 +143,8 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
         constructor(standardPath: StandardPath) : this(standardPath.c, standardPath.bs) {
             val multiplier : Float = Constants.viewWidth.toFloat() / Constants.defaultWidth.toFloat()
+
+            brushSize *= multiplier
             Log.i("multiplier", multiplier.toString())
             Log.i("viewWidth", Constants.viewWidth.toString())
             Log.i("defaultWidth",Constants.defaultWidth.toString())
@@ -178,9 +180,9 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         }
 
         fun toStandardPath() : StandardPath{
-            val standardPath = StandardPath(color, brushSize)
             val multiplier : Float = Constants.defaultWidth.toFloat() / Constants.viewWidth.toFloat()
 
+            val standardPath = StandardPath(color, brushSize * multiplier)
             Log.i("multiplier", multiplier.toString())
             Log.i("viewWidth", Constants.viewWidth.toString())
             Log.i("defaultWidth",Constants.defaultWidth.toString())
