@@ -234,6 +234,11 @@ class MainActivity : AppCompatActivity() {
         mDatabaseLobby!!.child("pathsCount").addValueEventListener(object : ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
                 dbPathsCount = snapshot.getValue(Long::class.java)!!.toInt()
+
+                if(dbPathsCount == 0){
+                    drawingView!!.mPaths.clear()
+                    drawingView!!.invalidate()
+                }
             }
 
             override fun onCancelled(error: DatabaseError) {

@@ -7,6 +7,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 
 class RegisterActivity : AppCompatActivity() {
 
@@ -23,12 +24,13 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun onRegisterClicked() {
+        val etNickname = findViewById<EditText>(R.id.etNickname)
         val etEmail = findViewById<EditText>(R.id.etEmail)
         val etPassword = findViewById<EditText>(R.id.etPassword)
 
-        if(etEmail.text.isEmpty() || etPassword.text.isEmpty())
+        if(etEmail.text.isEmpty() || etPassword.text.isEmpty() || etNickname.text.isEmpty())
         {
-            Toast.makeText(this, "Password or Email fields are empty", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Nickname, Password or Email fields are empty", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -38,9 +40,17 @@ class RegisterActivity : AppCompatActivity() {
             return
         }
 
+        if(etNickname.text.length > 16){
+            Toast.makeText(this, "Nickname is too long", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         mAuth!!.createUserWithEmailAndPassword(etEmail.text.toString(), etPassword.text.toString())
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
+                        val databaseUsers = FirebaseDatabase.getInstance().getReference("users")
+                        databaseUsers.child(mAuth!!.currentUser!!.uid).setValue(
+                            UserData(etNickname.text.toString(), etEmail.text.toString()))
                         startActivity(Intent(this, MainMenuActivity::class.java))
                         finish()
                     }else{

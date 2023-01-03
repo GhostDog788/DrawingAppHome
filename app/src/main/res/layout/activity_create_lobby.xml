@@ -16,10 +16,11 @@
         android:textSize="40dp"/>
 
     <Button
-        android:id="@+id/btnCreateLobby"
+        android:id="@+id/btnStartGame"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Create"
-        android:textSize="30dp"/>
+        android:text="Start Game"
+        android:textSize="30dp"
+        android:visibility="invisible"/>
 
 </LinearLayout>

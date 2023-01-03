@@ -4,6 +4,10 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
+import android.widget.Toast
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
+import java.util.*
 
 class MainMenuActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -15,6 +19,9 @@ class MainMenuActivity : AppCompatActivity() {
 
         val btnCreateLobby = findViewById<Button>(R.id.btnCreateLobby)
         btnCreateLobby.setOnClickListener{ onCreateLobbyClicked()}
+
+        val btnSignOut = findViewById<Button>(R.id.btnSignOut)
+        btnSignOut.setOnClickListener{ onSignOut()}
     }
 
     private fun onJoinLobbyClicked() {
@@ -23,7 +30,22 @@ class MainMenuActivity : AppCompatActivity() {
     }
 
     private fun onCreateLobbyClicked() {
-        startActivity(Intent(this, CreateLobbyActivity::class.java))
+        val dataBaseInstance = FirebaseDatabase.getInstance()
+        val databaseLobbies = dataBaseInstance.getReference("lobbies")
+        val lobbyId = UUID.randomUUID().toString().substring(0,8) //unique id of the lobby and join code
+
+        Toast.makeText(applicationContext, lobbyId, Toast.LENGTH_LONG).show()
+
+        databaseLobbies.child(lobbyId)
+        val intent = Intent(this, CreateLobbyActivity::class.java)
+        intent.putExtra("lobbyId", lobbyId)
+        startActivity(intent)
+        finish()
+    }
+
+    private fun onSignOut(){
+        FirebaseAuth.getInstance().signOut()
+        startActivity(Intent(this, LoginActivity::class.java))
         finish()
     }
 }

@@ -16,10 +16,10 @@
         android:layout_margin="20dp"/>
 
     <EditText
-        android:id="@+id/etName"
+        android:id="@+id/etNickname"
         android:layout_width="match_parent"
         android:layout_height="70dp"
-        android:hint="Name (e.g jon jonson)"
+        android:hint="Nickname (e.g smiling ball)"
         android:layout_margin="30dp"/>
 
     <EditText

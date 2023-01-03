@@ -35,18 +35,35 @@ class JoinLobbyActivity : AppCompatActivity() {
         val databaseLobbies = dataBaseInstance.getReference("lobbies")
 
         showProgressDialog()
-        checkIfChildExists(databaseLobbies, mLobbyId!!)
+        checkIfLobbyExists(databaseLobbies, mLobbyId!!)
     }
 
     private fun JoinLobby(){
         cancelProgressDialog()
-        val intent = Intent(this, MainActivity::class.java)
-        intent.putExtra("lobbyId", mLobbyId!!.toString())
-        startActivity(intent)
-        finish()
+
+        FirebaseDatabase.getInstance().getReference("lobbies").child(mLobbyId!!).child("status").addListenerForSingleValueEvent(object : ValueEventListener{
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val gameStatus = snapshot.getValue(String::class.java)
+
+                val intent = Intent()
+                intent.putExtra("lobbyId", mLobbyId!!)
+                if (gameStatus == GameStatus.active.toString()){
+                    intent.setClass(this@JoinLobbyActivity, MainActivity::class.java)
+                }else if(gameStatus == GameStatus.preparing.toString()){
+                    intent.setClass(this@JoinLobbyActivity, CreateLobbyActivity::class.java)
+                }
+                cancelProgressDialog()
+                startActivity(intent)
+                finish()
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                TODO("Not yet implemented")
+            }
+        })
     }
 
-    private fun checkIfChildExists(ref: DatabaseReference, child: String){
+    private fun checkIfLobbyExists(ref: DatabaseReference, child: String){
         ref.addListenerForSingleValueEvent(object: ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 if(dataSnapshot.hasChild(child)){
