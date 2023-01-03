@@ -48,7 +48,10 @@ class MainActivity : AppCompatActivity() {
     private var mImageButtonCurrentPaint: ImageButton? = null
     private var customProgressDialog: Dialog? = null
 
+    private var lobbyId: String? = null
+
     private var mDatabaseInstance: FirebaseDatabase? = null
+    private var mDatabaseLobby: DatabaseReference? = null
     private var mPathDatabase: DatabaseReference? = null
     private var mflDrawingView: FrameLayout? = null
     private var count : Int = 0
@@ -137,6 +140,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        lobbyId = intent.getStringExtra("lobbyId")
+
         drawingView = findViewById(R.id.dvDrawingView)
 
         val displayMetrics = DisplayMetrics()
@@ -152,8 +157,10 @@ class MainActivity : AppCompatActivity() {
 
         mAuth = FirebaseAuth.getInstance()
         drawingView?.mOnDrawChange!!.plusAssign(::handleDrawChange)
+
         mDatabaseInstance = FirebaseDatabase.getInstance()
-        mPathDatabase = mDatabaseInstance!!.getReference("paths")
+        mDatabaseLobby = mDatabaseInstance!!.getReference("lobbies").child(lobbyId!!)
+        mPathDatabase = mDatabaseLobby!!.child("paths")
         mflDrawingView = findViewById(R.id.flDrawingViewContainer)
 
         setupGame() //have to be before listeners
@@ -193,7 +200,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupGame() {
         mPathDatabase!!.setValue("")
-        mDatabaseInstance!!.getReference("pathsCount").setValue(0)
+        mDatabaseLobby!!.child("pathsCount").setValue(0)
     }
 
     private fun addPathsValueListener() {
@@ -204,7 +211,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun addDrawerIdListener() {
-        mDatabaseInstance!!.getReference("drawerID").addValueEventListener(object : ValueEventListener{
+        mDatabaseLobby!!.child("drawerID").addValueEventListener(object : ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
                 mDrawerUid = snapshot.getValue(String::class.java)
 
@@ -224,7 +231,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun addPathsCountListener() {
-        mDatabaseInstance!!.getReference("pathsCount").addValueEventListener(object : ValueEventListener{
+        mDatabaseLobby!!.child("pathsCount").addValueEventListener(object : ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
                 dbPathsCount = snapshot.getValue(Long::class.java)!!.toInt()
             }
@@ -237,14 +244,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleDrawChange(myPathsCount : Int){
         count++
-        mDatabaseInstance!!.getReference("count").setValue(count)
+        mDatabaseLobby!!.child("count").setValue(count)
 
         if(mAuth!!.currentUser!!.uid != mDrawerUid) {
-            mDatabaseInstance!!.getReference("drawerID").setValue(mAuth!!.currentUser!!.uid)
+            mDatabaseLobby!!.child("drawerID").setValue(mAuth!!.currentUser!!.uid)
         }
 
         if(dbPathsCount != myPathsCount){
-            mDatabaseInstance!!.getReference("pathsCount").setValue(myPathsCount)
+            mDatabaseLobby!!.child("pathsCount").setValue(myPathsCount)
         }
 
         if(dbPathsCount < myPathsCount){
@@ -261,7 +268,11 @@ class MainActivity : AppCompatActivity() {
         }else if(dbPathsCount > myPathsCount){
             var counter = myPathsCount
             while(counter < dbPathsCount) {
-                mPathDatabase!!.child(counter.toString()).removeValue()
+                if(myPathsCount == 0){
+                    mPathDatabase!!.setValue("")
+                }else {
+                    mPathDatabase!!.child(counter.toString()).removeValue()
+                }
                 counter++
             }
         }else{
