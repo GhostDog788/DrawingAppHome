@@ -15,6 +15,11 @@
         android:text="Create Lobby"
         android:textSize="40dp"/>
 
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvPlayers"
+        android:layout_width="match_parent"
+        android:layout_height="300dp" />
+
     <Button
         android:id="@+id/btnStartGame"
         android:layout_width="wrap_content"
