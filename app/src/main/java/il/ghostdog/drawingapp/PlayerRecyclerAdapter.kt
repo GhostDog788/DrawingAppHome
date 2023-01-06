@@ -7,12 +7,24 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-class PlayerRecyclerAdapter(private var data: ArrayList<PlayerRViewData>) : RecyclerView.Adapter<PlayerRecyclerAdapter.ItemViewHolder>() {
+class PlayerRecyclerAdapter(private var data: ArrayList<PlayerRViewData>, private var listener: RecyclerViewEvent) : RecyclerView.Adapter<PlayerRecyclerAdapter.ItemViewHolder>() {
 
-    inner class ItemViewHolder(view: View): RecyclerView.ViewHolder(view) {
+    inner class ItemViewHolder(view: View): RecyclerView.ViewHolder(view), View.OnLongClickListener {
         val name: TextView = view.findViewById(R.id.tvName)
         val profilePic: ImageView = view.findViewById(R.id.ivProfilePic)
         val leaderIcon: ImageView = view.findViewById(R.id.ivLeaderIcon)
+
+        init {
+            view.setOnLongClickListener(this)
+        }
+
+        override fun onLongClick(p0: View?): Boolean {
+            val position = adapterPosition
+            if(position != RecyclerView.NO_POSITION){
+                listener.onItemClicked(position)
+            }
+            return true
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
@@ -36,5 +48,9 @@ class PlayerRecyclerAdapter(private var data: ArrayList<PlayerRViewData>) : Recy
 
     override fun getItemCount(): Int {
         return data.size
+    }
+
+    interface RecyclerViewEvent{
+        fun onItemClicked(position: Int)
     }
 }

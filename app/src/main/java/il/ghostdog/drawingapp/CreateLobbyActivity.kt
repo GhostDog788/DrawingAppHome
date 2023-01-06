@@ -1,5 +1,6 @@
 package il.ghostdog.drawingapp
 
+import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
@@ -18,8 +19,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.collections.LinkedHashMap
 
-class CreateLobbyActivity : AppCompatActivity() {
+class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerViewEvent {
 
     private var lobbyId: String? = null
 
@@ -33,7 +35,7 @@ class CreateLobbyActivity : AppCompatActivity() {
     private lateinit var rvPlayers: RecyclerView
     private var playerRViewDataList : ArrayList<PlayerRViewData> = ArrayList()
 
-    private var playersList: ArrayList<PlayerData> = ArrayList()
+    private var playersMap: LinkedHashMap<String, PlayerData> = LinkedHashMap()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,7 +51,7 @@ class CreateLobbyActivity : AppCompatActivity() {
         mAuth = FirebaseAuth.getInstance()
 
         rvPlayers = findViewById(R.id.rvPlayers)
-        rvPlayers.adapter = PlayerRecyclerAdapter(playerRViewDataList)
+        rvPlayers.adapter = PlayerRecyclerAdapter(playerRViewDataList, this)
         rvPlayers.layoutManager = LinearLayoutManager(this@CreateLobbyActivity)
 
         lifecycleScope.launch {
@@ -109,28 +111,38 @@ class CreateLobbyActivity : AppCompatActivity() {
 
             override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
                 val playerData = snapshot.getValue(PlayerData::class.java)!!
-                playersList.add(playerData)
-                playerRViewDataList.add(PlayerRViewData(playerData, snapshot.key == partyLeader))
+                playersMap[snapshot.key!!] = playerData
+                playerRViewDataList.add(PlayerRViewData(snapshot.key!!, playerData, snapshot.key == partyLeader))
                 val index: Int
                 if(snapshot.key == partyLeader){
                     index = 0
                     val temp = playerRViewDataList[0]
                     playerRViewDataList[0] = playerRViewDataList[playerRViewDataList.size - 1]
                     playerRViewDataList[playerRViewDataList.size - 1] = temp
-
-                    val temp2 = playersList[0]
-                    playersList[0] = playersList[playersList.size - 1]
-                    playersList[playersList.size - 1] = temp2
                 }else{
                     index = playerRViewDataList.size - 1
                 }
-                Toast.makeText(applicationContext, "index $index name: ${playerData.name}", Toast.LENGTH_SHORT).show()
                 rvPlayers.adapter!!.notifyItemInserted(index)
             }
 
             override fun onChildRemoved(snapshot: DataSnapshot) {
-                val removed = playersList.remove(snapshot.getValue(PlayerData::class.java)!!)
-                Toast.makeText(applicationContext, "Removed: $removed", Toast.LENGTH_SHORT).show()
+                if(snapshot.key == mAuth!!.currentUser!!.uid){
+                    //player have been kicked
+                    Toast.makeText(applicationContext, "you have been kicked", Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this@CreateLobbyActivity, MainMenuActivity::class.java))
+                    finish()
+                }
+
+                playersMap.remove(snapshot.key)
+                var index = 0
+                while(index < playerRViewDataList.size) {
+                    if(playerRViewDataList[index].userId == snapshot.key!!){
+                        break
+                    }
+                    index++
+                }
+                playerRViewDataList.removeAt(index)
+                rvPlayers.adapter!!.notifyItemRemoved(index)
             }
 
             override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
@@ -181,6 +193,30 @@ class CreateLobbyActivity : AppCompatActivity() {
         val btnCreate = findViewById<Button>(R.id.btnStartGame)
         btnCreate.visibility = View.VISIBLE
         btnCreate.setOnClickListener{ onStartGame()}
+    }
+
+    override fun onItemClicked(position: Int) {
+        val player = playerRViewDataList[position]
+
+        if(player.isLeader || mAuth!!.currentUser!!.uid != partyLeader) return
+
+        val alertDialogBuilder = AlertDialog.Builder(this)
+        alertDialogBuilder.setTitle("Kick player")
+        alertDialogBuilder.setMessage("Do you want to kick the player from the lobby?")
+        alertDialogBuilder.setPositiveButton("Kick") { dialog, _ ->
+            Toast.makeText(applicationContext, "Player Kicked!", Toast.LENGTH_SHORT).show()
+            kickPlayer(player)
+            dialog.dismiss()
+        }
+        alertDialogBuilder.setNegativeButton("No"){ dialog, _ ->
+            Toast.makeText(applicationContext, "Canceled", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
+        }
+        alertDialogBuilder.show()
+    }
+
+    private fun kickPlayer(player: PlayerRViewData) {
+        databaseMyLobby!!.child("players").child(player.userId).removeValue()
     }
 
 
