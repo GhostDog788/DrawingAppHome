@@ -32,7 +32,7 @@ class MainMenuActivity : AppCompatActivity() {
     private fun onCreateLobbyClicked() {
         val dataBaseInstance = FirebaseDatabase.getInstance()
         val databaseLobbies = dataBaseInstance.getReference("lobbies")
-        val lobbyId = UUID.randomUUID().toString().substring(0,8) //unique id of the lobby and join code
+        val lobbyId = UUID.randomUUID().toString().substring(0,4) //unique id of the lobby and join code
 
         Toast.makeText(applicationContext, lobbyId, Toast.LENGTH_LONG).show()
 

@@ -32,6 +32,13 @@
     </FrameLayout>
 
 
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/drawersTools"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="visible"
+        app:constraint_referenced_ids="llPaintColors,llActionButtons"/>
+
     <LinearLayout
         android:id="@+id/llPaintColors"
         android:layout_width="wrap_content"

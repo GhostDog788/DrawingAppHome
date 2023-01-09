@@ -22,6 +22,7 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.constraintlayout.widget.Group
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.updateLayoutParams
@@ -29,6 +30,7 @@ import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.android.awaitFrame
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
@@ -58,6 +60,11 @@ class MainActivity : AppCompatActivity() {
     private var dbPathsCount : Int = 0
     private var mAuth : FirebaseAuth? = null
     private var mDrawerUid: String? = null
+    private var mPartyLeader: String? = null
+    private var mPlayersMap: LinkedHashMap<String, PlayerData> = LinkedHashMap()
+    private var mHaveNotDrawnList: ArrayList<String> = ArrayList()
+
+    private lateinit var vgDrawersTools: Group
 
     private val pathsChildListener = object  : ChildEventListener{
         override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
@@ -143,6 +150,7 @@ class MainActivity : AppCompatActivity() {
         lobbyId = intent.getStringExtra("lobbyId")
 
         drawingView = findViewById(R.id.dvDrawingView)
+        vgDrawersTools = findViewById(R.id.drawersTools)
 
         val displayMetrics = DisplayMetrics()
         windowManager.defaultDisplay.getMetrics(displayMetrics)
@@ -163,10 +171,13 @@ class MainActivity : AppCompatActivity() {
         mPathDatabase = mDatabaseLobby!!.child("paths")
         mflDrawingView = findViewById(R.id.flDrawingViewContainer)
 
-        setupGame() //have to be before listeners
-        addDrawerIdListener()
-        addPathsValueListener()
-        addPathsCountListener()
+        lifecycleScope.launch {
+            addPlayersListener()
+            addDrawerIdListener()
+            setupGame() //have to be before listeners
+            addPathsValueListener()
+            addPathsCountListener()
+        }
 
         val linearLayoutPaintColors = findViewById<LinearLayout>(R.id.llPaintColors)
         mImageButtonCurrentPaint = linearLayoutPaintColors.findViewWithTag("#ff000000") as ImageButton
@@ -198,9 +209,52 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupGame() {
+    private suspend fun setupGame() {
         mPathDatabase!!.setValue("")
         mDatabaseLobby!!.child("pathsCount").setValue(0)
+
+        mDatabaseLobby!!.child("leader").addListenerForSingleValueEvent(object: ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                mPartyLeader = dataSnapshot.getValue(String::class.java)!! //had to be initialized
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                // An error occurred
+                Toast.makeText(applicationContext, "Error in setting up party leader", Toast.LENGTH_SHORT).show()
+            }
+        })
+        withContext(Dispatchers.IO){
+            while(mPartyLeader == null)
+            {
+                awaitFrame()
+            }
+        }
+        nextTurn()
+    }
+
+    private fun nextTurn() {
+        if(mAuth!!.currentUser!!.uid != mPartyLeader) return
+        //playersMap is set
+
+        val selectedPlayerKey = mHaveNotDrawnList[0]
+        mHaveNotDrawnList.removeAt(0)
+
+        mDatabaseLobby!!.child("drawerID").setValue(selectedPlayerKey)
+        mDatabaseLobby!!.child("guessWord").setValue("password")
+    }
+
+    private fun setUpGuesser() {
+        drawingView!!.canDraw = false
+        addPathsValueListener()
+        vgDrawersTools.visibility = View.GONE
+        Toast.makeText(applicationContext, "You are a guesser", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun setUpDrawer() {
+        removePathsValueListener()
+        drawingView!!.canDraw = true
+        vgDrawersTools.visibility = View.VISIBLE
+        Toast.makeText(applicationContext, "You are a Drawer", Toast.LENGTH_SHORT).show()
     }
 
     private fun addPathsValueListener() {
@@ -214,13 +268,13 @@ class MainActivity : AppCompatActivity() {
         mDatabaseLobby!!.child("drawerID").addValueEventListener(object : ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
                 mDrawerUid = snapshot.getValue(String::class.java)
+                if(mDrawerUid == null) return
 
                 if(mAuth!!.currentUser!!.uid == mDrawerUid)
                 {
-                    removePathsValueListener()
-                    return
+                    setUpDrawer()
                 }else{
-                    addPathsValueListener()
+                    setUpGuesser()
                 }
             }
 
@@ -247,13 +301,37 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    private fun addPlayersListener() {
+        mDatabaseLobby!!.child("players").addChildEventListener(object : ChildEventListener{
+            override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+                TODO("Not yet implemented")
+            }
+
+            override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                val playerData = snapshot.getValue(PlayerData::class.java)!!
+                mPlayersMap[snapshot.key!!] = playerData
+                mHaveNotDrawnList.add(snapshot.key!!)
+            }
+
+            override fun onChildRemoved(snapshot: DataSnapshot) {
+                mPlayersMap.remove(snapshot.key)
+                mHaveNotDrawnList.remove(snapshot.key!!)
+            }
+
+            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
+                TODO("Not yet implemented")
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                TODO("Not yet implemented")
+            }
+        })
+    }
+
     private fun handleDrawChange(myPathsCount : Int){
         count++
         mDatabaseLobby!!.child("count").setValue(count)
 
-        if(mAuth!!.currentUser!!.uid != mDrawerUid) {
-            mDatabaseLobby!!.child("drawerID").setValue(mAuth!!.currentUser!!.uid)
-        }
 
         if(dbPathsCount != myPathsCount){
             mDatabaseLobby!!.child("pathsCount").setValue(myPathsCount)

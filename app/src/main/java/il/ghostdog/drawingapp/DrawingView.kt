@@ -23,6 +23,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     var mPaths = ArrayList<CustomPath>()
 
     private var context1 : Context? = null
+    var canDraw : Boolean = false
 
     private var circleCount : Int = 1
 
@@ -68,6 +69,8 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
+        if(!canDraw) return true
+
         val touchX = event?.x
         val touchY = event?.y
 

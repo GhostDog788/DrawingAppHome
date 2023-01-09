@@ -9,6 +9,7 @@ data class PlayerRViewData(
     val isLeader: Boolean
 ) {
     constructor(userId: String, playerData: PlayerData, isLeader: Boolean) : this(
-        userId, playerData.name, R.drawable.ic_brush, isLeader
+        userId,
+        playerData.name, R.drawable.ic_brush, isLeader
     )
 }
