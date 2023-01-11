@@ -9,6 +9,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
@@ -52,7 +53,7 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
 
         rvPlayers = findViewById(R.id.rvPlayers)
         rvPlayers.adapter = PlayerRecyclerAdapter(playerRViewDataList, this)
-        rvPlayers.layoutManager = LinearLayoutManager(this@CreateLobbyActivity)
+        rvPlayers.layoutManager = GridLayoutManager(this@CreateLobbyActivity, 2)
 
         lifecycleScope.launch {
             setUpLobby()
