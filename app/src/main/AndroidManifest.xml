@@ -40,6 +40,8 @@
         <activity
             android:name=".MainActivity"
             android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+            android:windowSoftInputMode="adjustPan"
             android:screenOrientation="portrait">
             <meta-data
                 android:name="android.app.lib_name"

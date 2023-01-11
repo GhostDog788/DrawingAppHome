@@ -156,11 +156,12 @@ class MainActivity : AppCompatActivity() {
         windowManager.defaultDisplay.getMetrics(displayMetrics)
         val widthR = displayMetrics.widthPixels
         (drawingView!!.parent as View).updateLayoutParams{
-            height = (widthR * 1.47).toInt()
+            height = (widthR * 1.2).toInt()
             width = (widthR - widthR * 0.02).toInt()
             Constants.viewWidth = width
             Toast.makeText(applicationContext, widthR.toString(), Toast.LENGTH_SHORT).show()
         }
+
         drawingView?.setSizeForBrush(12.toFloat())
 
         mAuth = FirebaseAuth.getInstance()
