@@ -9,8 +9,7 @@
     <LinearLayout
         android:id="@+id/llChatAndPlayers"
         android:layout_width="match_parent"
-        android:layout_height="120dp"
-        android:background="@color/teal_700"
+        android:layout_height="130dp"
         android:orientation="horizontal"
         app:layout_constraintBottom_toTopOf="@+id/flDrawingViewContainer"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -21,33 +20,35 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="1"
+            android:layout_weight="6"
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/tvGuessWord"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:autoSizeMaxTextSize="25dp"
+                android:layout_weight="5"
+                android:autoSizeMaxTextSize="30dp"
                 android:autoSizeMinTextSize="2dp"
                 android:autoSizeTextType="uniform"
-                android:gravity="center_horizontal"
+                android:gravity="center"
+                android:padding="5dp"
                 android:maxLines="1"
-                android:text="Guess Word" />
+                android:text="Guess Word"
+                android:background="@color/teal_700"/>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvPlayers"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="#7676FF" />
+                android:layout_weight="2"/>
 
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="1"
+            android:layout_weight="5"
             android:orientation="vertical">
 
             <androidx.recyclerview.widget.RecyclerView
@@ -58,28 +59,36 @@
                 android:background="#7676FF" />
 
             <LinearLayout
+                android:id="@+id/llGuessField"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_weight="2"
-                android:background="#ECBD78">
+                android:background="#ECBD78"
+                android:visibility="visible">
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_weight="2"
-                    android:autoSizeMaxTextSize="30dp"
+                    android:autoSizeMaxTextSize="20dp"
                     android:autoSizeMinTextSize="2dp"
                     android:autoSizeTextType="uniform"
                     android:gravity="center_vertical"
                     android:maxLines="1"
-                    android:text="123456789" />
+                    android:text="121324324" />
 
                 <EditText
+                    android:id="@+id/etGuessField"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:hint="Enter your guess"
-                    android:textSize="10dp" />
+                    android:inputType="text"
+                    android:autoSizeMaxTextSize="30dp"
+                    android:autoSizeMinTextSize="2dp"
+                    android:autoSizeTextType="uniform"
+                    android:gravity="center_vertical"
+                    android:maxLines="1"/>
 
             </LinearLayout>
 
@@ -93,7 +102,6 @@
         android:layout_height="200dp"
         android:layout_margin="5dp"
         android:background="@drawable/background_drawing_view_layout"
-        app:layout_constraintBottom_toTopOf="@+id/llPaintColors"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@id/llChatAndPlayers">
@@ -103,7 +111,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="centerCrop"
-            tools:src="@drawable/mountains"/>
+            tools:src="@drawable/mountains" />
 
         <il.ghostdog.drawingapp.DrawingView
             android:id="@+id/dvDrawingView"
@@ -111,7 +119,6 @@
             android:layout_height="match_parent" />
 
     </FrameLayout>
-
 
     <androidx.constraintlayout.widget.Group
         android:id="@+id/drawersTools"
@@ -124,92 +131,99 @@
         android:id="@+id/llPaintColors"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/llActionButtons"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/flDrawingViewContainer"
-        app:layout_constraintBottom_toTopOf="@+id/llActionButtons">
+        app:layout_constraintRight_toRightOf="parent">
 
         <ImageButton
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_margin="4dp"
-            android:src="@drawable/pallet_normal"
-            android:tag="@color/yellow"
+            android:background="@color/yellow"
             android:onClick="paintClicked"
-            android:background="@color/yellow"/>
+            android:src="@drawable/pallet_normal"
+            android:tag="@color/yellow" />
+
         <ImageButton
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_margin="4dp"
-            android:src="@drawable/pallet_normal"
-            android:tag="@color/black"
+            android:background="@color/black"
             android:onClick="paintClicked"
-            android:background="@color/black"/>
+            android:src="@drawable/pallet_normal"
+            android:tag="@color/black" />
+
         <ImageButton
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_margin="4dp"
-            android:src="@drawable/pallet_normal"
-            android:tag="@color/blue"
+            android:background="@color/blue"
             android:onClick="paintClicked"
-            android:background="@color/blue"/>
+            android:src="@drawable/pallet_normal"
+            android:tag="@color/blue" />
+
         <ImageButton
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_margin="4dp"
-            android:src="@drawable/pallet_normal"
-            android:tag="@color/azure"
+            android:background="@color/azure"
             android:onClick="paintClicked"
-            android:background="@color/azure"/>
+            android:src="@drawable/pallet_normal"
+            android:tag="@color/azure" />
+
         <ImageButton
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_margin="4dp"
-            android:src="@drawable/pallet_normal"
-            android:tag="@color/green"
+            android:background="@color/green"
             android:onClick="paintClicked"
-            android:background="@color/green"/>
+            android:src="@drawable/pallet_normal"
+            android:tag="@color/green" />
+
         <ImageButton
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_margin="4dp"
-            android:src="@drawable/pallet_normal"
-            android:tag="@color/red"
+            android:background="@color/red"
             android:onClick="paintClicked"
-            android:background="@color/red"/>
+            android:src="@drawable/pallet_normal"
+            android:tag="@color/red" />
+
         <ImageButton
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_margin="4dp"
-            android:src="@drawable/pallet_normal"
-            android:tag="@color/orange"
+            android:background="@color/orange"
             android:onClick="paintClicked"
-            android:background="@color/orange"/>
+            android:src="@drawable/pallet_normal"
+            android:tag="@color/orange" />
+
         <ImageButton
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_margin="4dp"
-            android:src="@drawable/pallet_normal"
-            android:tag="@color/brown"
+            android:background="@color/brown"
             android:onClick="paintClicked"
-            android:background="@color/brown"/>
+            android:src="@drawable/pallet_normal"
+            android:tag="@color/brown" />
+
         <ImageButton
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_margin="4dp"
-            android:src="@drawable/pallet_normal"
-            android:tag="@color/pink"
+            android:background="@color/pink"
             android:onClick="paintClicked"
-            android:background="@color/pink"/>
+            android:src="@drawable/pallet_normal"
+            android:tag="@color/pink" />
+
         <ImageButton
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_margin="4dp"
-            android:src="@drawable/pallet_normal"
-            android:tag="@color/purple"
+            android:background="@color/purple"
             android:onClick="paintClicked"
-            android:background="@color/purple"/>
+            android:src="@drawable/pallet_normal"
+            android:tag="@color/purple" />
 
     </LinearLayout>
 
@@ -218,48 +232,48 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="3dp"
-        android:orientation="horizontal"
         android:gravity="center"
+        android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/llPaintColors">
+        app:layout_constraintRight_toRightOf="parent">
 
         <ImageButton
             android:id="@+id/ibBrush"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:layout_margin="5dp"
-            android:src="@drawable/ic_brush"
+            android:background="@color/teal_200"
             android:scaleType="fitXY"
-            android:background="@color/teal_200"/>
+            android:src="@drawable/ic_brush" />
 
         <ImageButton
             android:id="@+id/ibGallery"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:layout_margin="5dp"
-            android:src="@drawable/ic_gallery"
+            android:background="@color/purple_200"
             android:scaleType="fitXY"
-            android:background="@color/purple_200"/>
+            android:src="@drawable/ic_gallery" />
 
         <ImageButton
             android:id="@+id/ibUndo"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:layout_margin="5dp"
-            android:src="@drawable/ic_undo"
+            android:background="@color/yellow"
             android:scaleType="fitXY"
-            android:background="@color/yellow"/>
+            android:src="@drawable/ic_undo" />
 
         <ImageButton
             android:id="@+id/ibSave"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:layout_margin="5dp"
-            android:src="@drawable/ic_save"
+            android:background="@color/blue"
             android:scaleType="fitXY"
-            android:background="@color/blue"/>
+            android:src="@drawable/ic_save" />
 
     </LinearLayout>
 

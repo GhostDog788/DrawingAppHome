@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="3dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/player_game_card"
+        android:padding="2dp">
+
+
+        <TextView
+            android:id="@+id/tvName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:autoSizeMaxTextSize="15dp"
+            android:autoSizeMinTextSize="2dp"
+            android:autoSizeTextType="uniform"
+            android:gravity="center"
+            android:maxLines="1"
+            android:text="MobDor"
+            android:textColor="@color/black"
+            android:layout_marginStart="1dp"
+            android:layout_marginEnd="1dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/tvTwoDots"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tvTwoDots"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="15dp"
+            android:gravity="center"
+            android:text=":"
+            android:textColor="@color/black"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/tvPoints"
+            app:layout_constraintStart_toEndOf="@id/tvName"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tvPoints"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="1dp"
+            android:layout_marginEnd="1dp"
+            android:autoSizeMaxTextSize="15dp"
+            android:autoSizeMinTextSize="2dp"
+            android:autoSizeTextType="uniform"
+            android:gravity="center"
+            android:maxLines="1"
+            android:text="5436233"
+            android:textColor="@color/black"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/ivDrawerIcon"
+            app:layout_constraintStart_toEndOf="@id/tvTwoDots"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/ivDrawerIcon"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_marginEnd="2dp"
+            android:src="@drawable/ic_brush"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/tvPoints"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+</androidx.cardview.widget.CardView>

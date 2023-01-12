@@ -3,7 +3,7 @@ package il.ghostdog.drawingapp
 class PlayerData {
 
     lateinit var name: String
-    var points: Int = 0
+    var points: Int = 1234567890
 
     constructor() {}
 

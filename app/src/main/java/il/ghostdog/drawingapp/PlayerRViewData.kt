@@ -6,7 +6,7 @@ data class PlayerRViewData(
     val userId: String,
     val name: String,
     @DrawableRes val profilePic: Int,
-    val isLeader: Boolean
+    var isLeader: Boolean
 ) {
     constructor(userId: String, playerData: PlayerData, isLeader: Boolean) : this(
         userId,

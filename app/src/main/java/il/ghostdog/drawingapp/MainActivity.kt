@@ -14,11 +14,15 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Base64
 import android.util.DisplayMetrics
+import android.view.KeyEvent
 import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -27,6 +31,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import kotlinx.coroutines.Dispatchers
@@ -61,10 +67,15 @@ class MainActivity : AppCompatActivity() {
     private var mAuth : FirebaseAuth? = null
     private var mDrawerUid: String? = null
     private var mPartyLeader: String? = null
+    private var mGuessWord: String? = null
     private var mPlayersMap: LinkedHashMap<String, PlayerData> = LinkedHashMap()
+    private var mPlayerRDataList: ArrayList<PlayerRGameViewData> = ArrayList()
     private var mHaveNotDrawnList: ArrayList<String> = ArrayList()
-
+    private lateinit var rvPlayers: RecyclerView
+    private lateinit var llGuessField: LinearLayout
     private lateinit var vgDrawersTools: Group
+    private lateinit var tvGuessWord: TextView
+    private lateinit var etGuessField: EditText
 
     private val pathsChildListener = object  : ChildEventListener{
         override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
@@ -151,6 +162,13 @@ class MainActivity : AppCompatActivity() {
 
         drawingView = findViewById(R.id.dvDrawingView)
         vgDrawersTools = findViewById(R.id.drawersTools)
+        llGuessField = findViewById(R.id.llGuessField)
+        tvGuessWord = findViewById(R.id.tvGuessWord)
+        etGuessField = findViewById(R.id.etGuessField)
+        rvPlayers = findViewById(R.id.rvPlayers)
+        rvPlayers.adapter = PlayerGameHUDAdapter(mPlayerRDataList)
+        rvPlayers.layoutManager = GridLayoutManager(this, 1)
+
 
         val displayMetrics = DisplayMetrics()
         windowManager.defaultDisplay.getMetrics(displayMetrics)
@@ -175,9 +193,22 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             addPlayersListener()
             addDrawerIdListener()
+            addGuessWordListener()
             setupGame() //have to be before listeners
             addPathsValueListener()
             addPathsCountListener()
+        }
+
+
+        etGuessField.setOnEditorActionListener {view, actionId, keyEvent ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE ||
+                keyEvent == null ||
+                keyEvent.keyCode == KeyEvent.KEYCODE_ENTER) {
+                //User finished typing
+                onSubmitGuess()
+                true
+            }
+            false
         }
 
         val linearLayoutPaintColors = findViewById<LinearLayout>(R.id.llPaintColors)
@@ -210,6 +241,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun onSubmitGuess() {
+        val guess = etGuessField.text.toString()
+        etGuessField.text.clear()
+
+        if (guess == mGuessWord){
+            Toast.makeText(applicationContext, "You are Right!!!!", Toast.LENGTH_SHORT).show()
+        }else{
+            Toast.makeText(applicationContext, "try again...", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private suspend fun setupGame() {
         mPathDatabase!!.setValue("")
         mDatabaseLobby!!.child("pathsCount").setValue(0)
@@ -233,7 +275,7 @@ class MainActivity : AppCompatActivity() {
         nextTurn()
     }
 
-    private fun nextTurn() {
+    private suspend fun nextTurn() {
         if(mAuth!!.currentUser!!.uid != mPartyLeader) return
         //playersMap is set
 
@@ -241,13 +283,20 @@ class MainActivity : AppCompatActivity() {
         mHaveNotDrawnList.removeAt(0)
 
         mDatabaseLobby!!.child("drawerID").setValue(selectedPlayerKey)
-        mDatabaseLobby!!.child("guessWord").setValue("password")
+        withContext(Dispatchers.IO){
+            while(mDrawerUid == null)
+            {
+                awaitFrame()
+            }
+            mDatabaseLobby!!.child("guessWord").setValue("pass word")
+        }
     }
 
     private fun setUpGuesser() {
         drawingView!!.canDraw = false
         addPathsValueListener()
         vgDrawersTools.visibility = View.GONE
+        llGuessField.visibility = View.VISIBLE
         Toast.makeText(applicationContext, "You are a guesser", Toast.LENGTH_SHORT).show()
     }
 
@@ -255,6 +304,7 @@ class MainActivity : AppCompatActivity() {
         removePathsValueListener()
         drawingView!!.canDraw = true
         vgDrawersTools.visibility = View.VISIBLE
+        llGuessField.visibility = View.GONE
         Toast.makeText(applicationContext, "You are a Drawer", Toast.LENGTH_SHORT).show()
     }
 
@@ -265,11 +315,43 @@ class MainActivity : AppCompatActivity() {
         mPathDatabase!!.removeEventListener(pathsChildListener)
     }
 
+    private fun addGuessWordListener() {
+        mDatabaseLobby!!.child("guessWord").addValueEventListener(object : ValueEventListener{
+            override fun onDataChange(snapshot: DataSnapshot) {
+                mGuessWord = snapshot.getValue(String::class.java)
+                if(mGuessWord != null){ // means set drawerId
+                    if(mDrawerUid == mAuth!!.currentUser!!.uid){
+                        tvGuessWord.text = mGuessWord
+                    }else{
+                        var str = ""
+                        for (char in mGuessWord!!){
+                            if(char != ' '){
+                                str += "_ "
+                            }else{
+                                str += " "
+                            }
+                        }
+                        tvGuessWord.text = str
+                    }
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                TODO("Not yet implemented")
+            }
+        })
+    }
+
     private fun addDrawerIdListener() {
         mDatabaseLobby!!.child("drawerID").addValueEventListener(object : ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
                 mDrawerUid = snapshot.getValue(String::class.java)
                 if(mDrawerUid == null) return
+
+                val index = mPlayerRDataList.indexOf(mPlayerRDataList.find { pD -> pD.userId == mDrawerUid})
+
+                mPlayerRDataList[index].isDrawer = true
+                rvPlayers.adapter!!.notifyItemChanged(index)
 
                 if(mAuth!!.currentUser!!.uid == mDrawerUid)
                 {
@@ -312,11 +394,33 @@ class MainActivity : AppCompatActivity() {
                 val playerData = snapshot.getValue(PlayerData::class.java)!!
                 mPlayersMap[snapshot.key!!] = playerData
                 mHaveNotDrawnList.add(snapshot.key!!)
+
+                mPlayerRDataList.add(PlayerRGameViewData(snapshot.key!!, playerData, snapshot.key == mDrawerUid))
+                val index: Int
+                if(snapshot.key == mPartyLeader){
+                    index = 0
+                    val temp = mPlayerRDataList[0]
+                    mPlayerRDataList[0] = mPlayerRDataList[mPlayerRDataList.size - 1]
+                    mPlayerRDataList[mPlayerRDataList.size - 1] = temp
+                }else{
+                    index = mPlayerRDataList.size - 1
+                }
+                rvPlayers.adapter!!.notifyItemInserted(index)
             }
 
             override fun onChildRemoved(snapshot: DataSnapshot) {
                 mPlayersMap.remove(snapshot.key)
                 mHaveNotDrawnList.remove(snapshot.key!!)
+
+                var index = 0
+                while(index < mPlayerRDataList.size) {
+                    if(mPlayerRDataList[index].userId == snapshot.key!!){
+                        break
+                    }
+                    index++
+                }
+                mPlayerRDataList.removeAt(index)
+                rvPlayers.adapter!!.notifyItemRemoved(index)
             }
 
             override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
