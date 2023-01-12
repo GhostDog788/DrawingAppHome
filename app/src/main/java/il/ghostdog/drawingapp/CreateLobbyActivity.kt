@@ -107,7 +107,7 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
         //calls to all players at start + new ones
         databaseMyLobby!!.child("players").addChildEventListener(object : ChildEventListener{
             override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
-                TODO("Not yet implemented")
+                Toast.makeText(applicationContext, "How this was called again?", Toast.LENGTH_SHORT).show()
             }
 
             override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {

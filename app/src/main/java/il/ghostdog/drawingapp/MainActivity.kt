@@ -32,6 +32,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
@@ -61,6 +62,7 @@ class MainActivity : AppCompatActivity() {
     private var mDatabaseInstance: FirebaseDatabase? = null
     private var mDatabaseLobby: DatabaseReference? = null
     private var mPathDatabase: DatabaseReference? = null
+    private var mChatDatabase: DatabaseReference? = null
     private var mflDrawingView: FrameLayout? = null
     private var count : Int = 0
     private var dbPathsCount : Int = 0
@@ -70,8 +72,10 @@ class MainActivity : AppCompatActivity() {
     private var mGuessWord: String? = null
     private var mPlayersMap: LinkedHashMap<String, PlayerData> = LinkedHashMap()
     private var mPlayerRDataList: ArrayList<PlayerRGameViewData> = ArrayList()
+    private var mChatRDataList: ArrayList<GuessMessageRData> = ArrayList()
     private var mHaveNotDrawnList: ArrayList<String> = ArrayList()
     private lateinit var rvPlayers: RecyclerView
+    private lateinit var rvChat: RecyclerView
     private lateinit var llGuessField: LinearLayout
     private lateinit var vgDrawersTools: Group
     private lateinit var tvGuessWord: TextView
@@ -169,6 +173,12 @@ class MainActivity : AppCompatActivity() {
         rvPlayers.adapter = PlayerGameHUDAdapter(mPlayerRDataList)
         rvPlayers.layoutManager = GridLayoutManager(this, 1)
 
+        rvChat = findViewById(R.id.rvChat)
+        rvChat.adapter = GuessChatAdapter(mChatRDataList)
+        val linearLayoutManager = LinearLayoutManager(this);
+        linearLayoutManager.stackFromEnd = true
+        rvChat.layoutManager = linearLayoutManager
+
 
         val displayMetrics = DisplayMetrics()
         windowManager.defaultDisplay.getMetrics(displayMetrics)
@@ -188,12 +198,14 @@ class MainActivity : AppCompatActivity() {
         mDatabaseInstance = FirebaseDatabase.getInstance()
         mDatabaseLobby = mDatabaseInstance!!.getReference("lobbies").child(lobbyId!!)
         mPathDatabase = mDatabaseLobby!!.child("paths")
+        mChatDatabase = mDatabaseLobby!!.child("guessChat")
         mflDrawingView = findViewById(R.id.flDrawingViewContainer)
 
         lifecycleScope.launch {
             addPlayersListener()
             addDrawerIdListener()
             addGuessWordListener()
+            addGuessChatListener()
             setupGame() //have to be before listeners
             addPathsValueListener()
             addPathsCountListener()
@@ -246,8 +258,18 @@ class MainActivity : AppCompatActivity() {
         etGuessField.text.clear()
 
         if (guess == mGuessWord){
+            val playerData = mPlayersMap[mAuth!!.currentUser!!.uid]
+            if(playerData!!.answeredCorrectly) return
+
+            playerData!!.answeredCorrectly = true
+            playerData!!.points += 100
+            mDatabaseLobby!!.child("players").child(mAuth!!.currentUser!!.uid)
+                .setValue(playerData)
             Toast.makeText(applicationContext, "You are Right!!!!", Toast.LENGTH_SHORT).show()
         }else{
+            val name = mPlayersMap[mAuth!!.currentUser!!.uid]!!.name
+            val guessMessageRData = GuessMessageRData(name, guess)
+            mChatDatabase!!.push().setValue(guessMessageRData)
             Toast.makeText(applicationContext, "try again...", Toast.LENGTH_SHORT).show()
         }
     }
@@ -272,6 +294,10 @@ class MainActivity : AppCompatActivity() {
                 awaitFrame()
             }
         }
+
+        //set name in tvUserName
+        findViewById<TextView>(R.id.tvUserName).text = mPlayersMap[mAuth!!.currentUser!!.uid]!!.name
+
         nextTurn()
     }
 
@@ -348,10 +374,12 @@ class MainActivity : AppCompatActivity() {
                 mDrawerUid = snapshot.getValue(String::class.java)
                 if(mDrawerUid == null) return
 
-                val index = mPlayerRDataList.indexOf(mPlayerRDataList.find { pD -> pD.userId == mDrawerUid})
-
-                mPlayerRDataList[index].isDrawer = true
-                rvPlayers.adapter!!.notifyItemChanged(index)
+                var i = 0
+                while(i < mPlayerRDataList.size){
+                    mPlayerRDataList[i].isDrawer = mPlayerRDataList[i].userId == mDrawerUid
+                    rvPlayers.adapter!!.notifyItemChanged(i)
+                    i++
+                }
 
                 if(mAuth!!.currentUser!!.uid == mDrawerUid)
                 {
@@ -387,7 +415,17 @@ class MainActivity : AppCompatActivity() {
     private fun addPlayersListener() {
         mDatabaseLobby!!.child("players").addChildEventListener(object : ChildEventListener{
             override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
-                TODO("Not yet implemented")
+                val playerData = snapshot.getValue(PlayerData::class.java)!!
+                mPlayersMap[snapshot.key!!] = playerData
+
+                val index = mPlayerRDataList.indexOf(mPlayerRDataList.find
+                { playerRGameViewData ->  playerRGameViewData.userId == snapshot.key!!})
+
+                mPlayerRDataList[index] = PlayerRGameViewData(snapshot.key!!, playerData, snapshot.key == mDrawerUid)
+                rvPlayers.adapter!!.notifyItemChanged(index)
+
+                Toast.makeText(applicationContext, "I definitely know how this was called", Toast.LENGTH_SHORT).show()
+
             }
 
             override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
@@ -432,6 +470,35 @@ class MainActivity : AppCompatActivity() {
             }
         })
     }
+
+    private fun addGuessChatListener() {
+        mChatDatabase!!.addChildEventListener(object : ChildEventListener{
+            override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                val messageData = snapshot.getValue(GuessMessageRData::class.java)!!
+
+                mChatRDataList.add(messageData)
+                rvChat.adapter!!.notifyItemInserted(mChatRDataList.size)
+                rvChat.scrollToPosition(mChatRDataList.size - 1)
+            }
+
+            override fun onChildRemoved(snapshot: DataSnapshot) {
+                //no need
+            }
+
+            override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+                TODO("Not yet implemented")
+            }
+
+            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
+                TODO("Not yet implemented")
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                TODO("Not yet implemented")
+            }
+        })
+    }
+
 
     private fun handleDrawChange(myPathsCount : Int){
         count++

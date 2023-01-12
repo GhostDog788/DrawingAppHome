@@ -7,6 +7,7 @@
     android:layout_marginBottom="3dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/clMain"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/player_game_card"

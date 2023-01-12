@@ -1,8 +1,8 @@
 package il.ghostdog.drawingapp
 
-class GuessMessageRData(
+data class GuessMessageRData(
     val name: String,
     val guess: String
 ) {
-
+    constructor() : this("", ""){}
 }
