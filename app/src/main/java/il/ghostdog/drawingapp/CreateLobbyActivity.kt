@@ -38,6 +38,56 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
 
     private var playersMap: LinkedHashMap<String, PlayerData> = LinkedHashMap()
 
+    private val playersChildListener = object : ChildEventListener{
+        override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+            Toast.makeText(applicationContext, "How this was called again?", Toast.LENGTH_SHORT).show()
+        }
+
+        override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+            val playerData = snapshot.getValue(PlayerData::class.java)!!
+            playersMap[snapshot.key!!] = playerData
+            playerRViewDataList.add(PlayerRViewData(snapshot.key!!, playerData, snapshot.key == partyLeader))
+            val index: Int
+            if(snapshot.key == partyLeader){
+                index = 0
+                val temp = playerRViewDataList[0]
+                playerRViewDataList[0] = playerRViewDataList[playerRViewDataList.size - 1]
+                playerRViewDataList[playerRViewDataList.size - 1] = temp
+            }else{
+                index = playerRViewDataList.size - 1
+            }
+            rvPlayers.adapter!!.notifyItemInserted(index)
+        }
+
+        override fun onChildRemoved(snapshot: DataSnapshot) {
+            if(snapshot.key == mAuth!!.currentUser!!.uid){
+                //player have been kicked
+                Toast.makeText(applicationContext, "you have been kicked", Toast.LENGTH_SHORT).show()
+                startActivity(Intent(this@CreateLobbyActivity, MainMenuActivity::class.java))
+                finish()
+            }
+
+            playersMap.remove(snapshot.key)
+            var index = 0
+            while(index < playerRViewDataList.size) {
+                if(playerRViewDataList[index].userId == snapshot.key!!){
+                    break
+                }
+                index++
+            }
+            playerRViewDataList.removeAt(index)
+            rvPlayers.adapter!!.notifyItemRemoved(index)
+        }
+
+        override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
+            TODO("Not yet implemented")
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            TODO("Not yet implemented")
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_create_lobby)
@@ -66,6 +116,7 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
         if(mAuth!!.currentUser!!.uid == partyLeader) {
             databaseMyLobby!!.child("status").setValue(GameStatus.active.toString())
         }
+        databaseMyLobby!!.child("players").removeEventListener(playersChildListener)
         startActivity(intent)
         finish()
     }
@@ -105,55 +156,7 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
             }
         })
         //calls to all players at start + new ones
-        databaseMyLobby!!.child("players").addChildEventListener(object : ChildEventListener{
-            override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
-                Toast.makeText(applicationContext, "How this was called again?", Toast.LENGTH_SHORT).show()
-            }
-
-            override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
-                val playerData = snapshot.getValue(PlayerData::class.java)!!
-                playersMap[snapshot.key!!] = playerData
-                playerRViewDataList.add(PlayerRViewData(snapshot.key!!, playerData, snapshot.key == partyLeader))
-                val index: Int
-                if(snapshot.key == partyLeader){
-                    index = 0
-                    val temp = playerRViewDataList[0]
-                    playerRViewDataList[0] = playerRViewDataList[playerRViewDataList.size - 1]
-                    playerRViewDataList[playerRViewDataList.size - 1] = temp
-                }else{
-                    index = playerRViewDataList.size - 1
-                }
-                rvPlayers.adapter!!.notifyItemInserted(index)
-            }
-
-            override fun onChildRemoved(snapshot: DataSnapshot) {
-                if(snapshot.key == mAuth!!.currentUser!!.uid){
-                    //player have been kicked
-                    Toast.makeText(applicationContext, "you have been kicked", Toast.LENGTH_SHORT).show()
-                    startActivity(Intent(this@CreateLobbyActivity, MainMenuActivity::class.java))
-                    finish()
-                }
-
-                playersMap.remove(snapshot.key)
-                var index = 0
-                while(index < playerRViewDataList.size) {
-                    if(playerRViewDataList[index].userId == snapshot.key!!){
-                        break
-                    }
-                    index++
-                }
-                playerRViewDataList.removeAt(index)
-                rvPlayers.adapter!!.notifyItemRemoved(index)
-            }
-
-            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
-                TODO("Not yet implemented")
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
-            }
-        })
+        databaseMyLobby!!.child("players").addChildEventListener(playersChildListener)
 
         cancelProgressDialog()
     }

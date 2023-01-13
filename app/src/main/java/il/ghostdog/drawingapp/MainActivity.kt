@@ -49,6 +49,7 @@ import java.io.FileOutputStream
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
+import kotlin.random.Random
 
 @Suppress("DEPRECATION")
 class MainActivity : AppCompatActivity() {
@@ -74,6 +75,7 @@ class MainActivity : AppCompatActivity() {
     private var mPlayerRDataList: ArrayList<PlayerRGameViewData> = ArrayList()
     private var mChatRDataList: ArrayList<GuessMessageRData> = ArrayList()
     private var mHaveNotDrawnList: ArrayList<String> = ArrayList()
+    private var mHaveNotGuessedList: ArrayList<String> = ArrayList()
     private lateinit var rvPlayers: RecyclerView
     private lateinit var rvChat: RecyclerView
     private lateinit var llGuessField: LinearLayout
@@ -263,15 +265,11 @@ class MainActivity : AppCompatActivity() {
 
             playerData!!.answeredCorrectly = true
             playerData!!.points += 100
-            mDatabaseLobby!!.child("players").child(mAuth!!.currentUser!!.uid)
-                .setValue(playerData)
-            Toast.makeText(applicationContext, "You are Right!!!!", Toast.LENGTH_SHORT).show()
+            updatePlayerData(mAuth!!.currentUser!!.uid, playerData)
         }else{
             val name = mPlayersMap[mAuth!!.currentUser!!.uid]!!.name
             val guessMessageRData = GuessMessageRData(name, guess)
-            mChatDatabase!!.push().setValue(guessMessageRData)
-            Toast.makeText(applicationContext, "try again...", Toast.LENGTH_SHORT).show()
-        }
+            mChatDatabase!!.push().setValue(guessMessageRData) }
     }
 
     private suspend fun setupGame() {
@@ -302,11 +300,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     private suspend fun nextTurn() {
-        if(mAuth!!.currentUser!!.uid != mPartyLeader) return
+        if(mAuth!!.currentUser!!.uid != mPartyLeader) return //runs exclusively on the leader
         //playersMap is set
+
+        if (mHaveNotDrawnList.isEmpty()){
+            Toast.makeText(applicationContext, "Round Ended", Toast.LENGTH_SHORT).show()
+            return
+        }
 
         val selectedPlayerKey = mHaveNotDrawnList[0]
         mHaveNotDrawnList.removeAt(0)
+
+        for(playerId in mPlayersMap.keys){
+            if(playerId != selectedPlayerKey){
+                mHaveNotGuessedList.add(playerId)
+            }
+        }
 
         mDatabaseLobby!!.child("drawerID").setValue(selectedPlayerKey)
         withContext(Dispatchers.IO){
@@ -314,7 +323,7 @@ class MainActivity : AppCompatActivity() {
             {
                 awaitFrame()
             }
-            mDatabaseLobby!!.child("guessWord").setValue("pass word")
+            mDatabaseLobby!!.child("guessWord").setValue("pass word" + (Random.nextInt()%10).toString())
         }
     }
 
@@ -323,7 +332,10 @@ class MainActivity : AppCompatActivity() {
         addPathsValueListener()
         vgDrawersTools.visibility = View.GONE
         llGuessField.visibility = View.VISIBLE
-        Toast.makeText(applicationContext, "You are a guesser", Toast.LENGTH_SHORT).show()
+
+        val playerData = mPlayersMap[mAuth!!.currentUser!!.uid]
+        playerData!!.answeredCorrectly = false
+        updatePlayerData(mAuth!!.currentUser!!.uid, playerData)
     }
 
     private fun setUpDrawer() {
@@ -331,7 +343,10 @@ class MainActivity : AppCompatActivity() {
         drawingView!!.canDraw = true
         vgDrawersTools.visibility = View.VISIBLE
         llGuessField.visibility = View.GONE
-        Toast.makeText(applicationContext, "You are a Drawer", Toast.LENGTH_SHORT).show()
+
+        val playerData = mPlayersMap[mAuth!!.currentUser!!.uid]
+        playerData!!.answeredCorrectly = false
+        updatePlayerData(mAuth!!.currentUser!!.uid, playerData)
     }
 
     private fun addPathsValueListener() {
@@ -359,6 +374,7 @@ class MainActivity : AppCompatActivity() {
                         }
                         tvGuessWord.text = str
                     }
+                    clearChat()
                 }
             }
 
@@ -418,14 +434,21 @@ class MainActivity : AppCompatActivity() {
                 val playerData = snapshot.getValue(PlayerData::class.java)!!
                 mPlayersMap[snapshot.key!!] = playerData
 
+                if(playerData.answeredCorrectly){
+                    mHaveNotGuessedList.remove(snapshot.key)
+                    if(mHaveNotGuessedList.isEmpty()){
+                        lifecycleScope.launch {
+                            nextTurn()
+                        }
+                    }
+                }
+
                 val index = mPlayerRDataList.indexOf(mPlayerRDataList.find
                 { playerRGameViewData ->  playerRGameViewData.userId == snapshot.key!!})
-
                 mPlayerRDataList[index] = PlayerRGameViewData(snapshot.key!!, playerData, snapshot.key == mDrawerUid)
                 rvPlayers.adapter!!.notifyItemChanged(index)
 
-                Toast.makeText(applicationContext, "I definitely know how this was called", Toast.LENGTH_SHORT).show()
-
+                if(mAuth!!.currentUser!!.uid == snapshot.key!!){ }
             }
 
             override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
@@ -499,6 +522,17 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    private fun updatePlayerData(playerId: String, newData: PlayerData){
+        mDatabaseLobby!!.child("players").child(playerId)
+            .setValue(newData)
+    }
+
+    private fun clearChat(){
+        //clears chat
+        mChatDatabase!!.removeValue()
+        mChatRDataList.clear()
+        rvChat.adapter!!.notifyDataSetChanged()
+    }
 
     private fun handleDrawChange(myPathsCount : Int){
         count++
