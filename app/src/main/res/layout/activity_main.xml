@@ -34,7 +34,7 @@
                 android:gravity="center"
                 android:padding="5dp"
                 android:maxLines="1"
-                android:text="Guess Word"
+                android:text=""
                 android:background="@color/teal_700"/>
 
             <androidx.recyclerview.widget.RecyclerView

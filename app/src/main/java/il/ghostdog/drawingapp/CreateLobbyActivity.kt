@@ -7,6 +7,9 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.RadioButton
+import android.widget.RadioGroup
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
@@ -34,7 +37,10 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
     private var partyLeader : String? = null
 
     private lateinit var rvPlayers: RecyclerView
+    private lateinit var rgLanguage: RadioGroup
     private var playerRViewDataList : ArrayList<PlayerRViewData> = ArrayList()
+
+    private var gamePreferences: GamePreferences = GamePreferences()
 
     private var playersMap: LinkedHashMap<String, PlayerData> = LinkedHashMap()
 
@@ -99,6 +105,19 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
         databaseUsers = dataBaseInstance.getReference("users")
         databaseMyLobby = databaseLobbies.child(lobbyId!!)
 
+        rgLanguage = findViewById(R.id.rgLanguage)
+
+        rgLanguage.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.rbEnglish -> {
+                    gamePreferences.language = "english"
+                }
+                R.id.rbHebrew -> {
+                    gamePreferences.language = "hebrew"
+                }
+            }
+        }
+
         mAuth = FirebaseAuth.getInstance()
 
         rvPlayers = findViewById(R.id.rvPlayers)
@@ -114,8 +133,10 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
         val intent = Intent(this, MainActivity::class.java)
         intent.putExtra("lobbyId", lobbyId)
         if(mAuth!!.currentUser!!.uid == partyLeader) {
-            databaseMyLobby!!.child("status").setValue(GameStatus.active.toString())
+            gamePreferences.status = GameStatus.active
+            databaseMyLobby!!.child("gamePreferences").setValue(gamePreferences)
         }
+        intent.putExtra("language", gamePreferences.language)
         databaseMyLobby!!.child("players").removeEventListener(playersChildListener)
         startActivity(intent)
         finish()
@@ -173,11 +194,12 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
             }
         })
 
-        databaseMyLobby!!.child("status").addValueEventListener(object : ValueEventListener{
+        databaseMyLobby!!.child("gamePreferences").addValueEventListener(object : ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
-                val gameStatus = snapshot.getValue(String::class.java)
+                val data = snapshot.getValue(GamePreferences::class.java) ?: return
+                gamePreferences = data
 
-                if (gameStatus == GameStatus.active.toString()){
+                if (gamePreferences.status == GameStatus.active){
                     onStartGame()
                 }
             }
@@ -193,6 +215,8 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
         databaseMyLobby!!.child("status").setValue(GameStatus.preparing.toString())
 
         partyLeader = mAuth!!.currentUser!!.uid
+
+        findViewById<LinearLayout>(R.id.llGamePreferences).visibility = View.VISIBLE
 
         val btnCreate = findViewById<Button>(R.id.btnStartGame)
         btnCreate.visibility = View.VISIBLE

@@ -17,13 +17,7 @@ import android.util.DisplayMetrics
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
-import android.widget.EditText
-import android.widget.FrameLayout
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.constraintlayout.widget.Group
@@ -71,6 +65,7 @@ class MainActivity : AppCompatActivity() {
     private var mDrawerUid: String? = null
     private var mPartyLeader: String? = null
     private var mGuessWord: String? = null
+    private lateinit var mLanguage: String
     private var mPlayersMap: LinkedHashMap<String, PlayerData> = LinkedHashMap()
     private var mPlayerRDataList: ArrayList<PlayerRGameViewData> = ArrayList()
     private var mChatRDataList: ArrayList<GuessMessageRData> = ArrayList()
@@ -165,6 +160,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         lobbyId = intent.getStringExtra("lobbyId")
+        mLanguage = intent.getStringExtra("language")!!
 
         drawingView = findViewById(R.id.dvDrawingView)
         vgDrawersTools = findViewById(R.id.drawersTools)
@@ -300,6 +296,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private suspend fun nextTurn() {
+        clearCanvas()//clears canvas for all
         if(mAuth!!.currentUser!!.uid != mPartyLeader) return //runs exclusively on the leader
         //playersMap is set
 
@@ -307,6 +304,9 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(applicationContext, "Round Ended", Toast.LENGTH_SHORT).show()
             return
         }
+
+        mPathDatabase!!.setValue("")
+        mDatabaseLobby!!.child("pathsCount").setValue(0)
 
         val selectedPlayerKey = mHaveNotDrawnList[0]
         mHaveNotDrawnList.removeAt(0)
@@ -319,11 +319,54 @@ class MainActivity : AppCompatActivity() {
 
         mDatabaseLobby!!.child("drawerID").setValue(selectedPlayerKey)
         withContext(Dispatchers.IO){
-            while(mDrawerUid == null)
-            {
+            while(mDrawerUid == null) {
                 awaitFrame()
             }
-            mDatabaseLobby!!.child("guessWord").setValue("pass word" + (Random.nextInt()%10).toString())
+        }
+    }
+
+    private fun chooseWord() {
+        val dialog = Dialog(this)
+        dialog.setContentView(R.layout.word_chooser_dialog)
+        dialog.setTitle("Custom Dialog")
+        dialog.setCancelable(false)
+        val firstButton = dialog.findViewById<Button>(R.id.btnOne)
+        val secondButton = dialog.findViewById<Button>(R.id.btnTwo)
+        val thirdButton = dialog.findViewById<Button>(R.id.btnThree)
+
+        val usedIndexes = ArrayList<Int>()
+        var index = 0
+        do {
+            index = Random.nextInt(0, Constants.GUESS_WORDS_MAP[mLanguage]!!.size)
+        }while(usedIndexes.contains(index))
+        firstButton.text = Constants.GUESS_WORDS_MAP[mLanguage]!![index]
+        usedIndexes.add(index)
+        do {
+            index = Random.nextInt(0, Constants.GUESS_WORDS_MAP[mLanguage]!!.size)
+        }while(usedIndexes.contains(index))
+        secondButton.text = Constants.GUESS_WORDS_MAP[mLanguage]!![index]
+        usedIndexes.add(index)
+        do {
+            index = Random.nextInt(0, Constants.GUESS_WORDS_MAP[mLanguage]!!.size)
+        }while(usedIndexes.contains(index))
+        thirdButton.text = Constants.GUESS_WORDS_MAP[mLanguage]!![index]
+        usedIndexes.add(index)
+
+        firstButton.setOnClickListener {
+            setGuessWord(((it as Button).text.toString()), dialog)
+        }
+        secondButton.setOnClickListener {
+            setGuessWord(((it as Button).text.toString()), dialog)
+        }
+        thirdButton.setOnClickListener {
+            setGuessWord(((it as Button).text.toString()), dialog)
+        }
+        dialog.show()
+    }
+
+    private fun setGuessWord(word: String, dialog: Dialog) {
+        mDatabaseLobby!!.child("guessWord").setValue(word).addOnCompleteListener{
+            dialog.dismiss()
         }
     }
 
@@ -347,6 +390,8 @@ class MainActivity : AppCompatActivity() {
         val playerData = mPlayersMap[mAuth!!.currentUser!!.uid]
         playerData!!.answeredCorrectly = false
         updatePlayerData(mAuth!!.currentUser!!.uid, playerData)
+
+        chooseWord()
     }
 
     private fun addPathsValueListener() {
@@ -525,6 +570,11 @@ class MainActivity : AppCompatActivity() {
     private fun updatePlayerData(playerId: String, newData: PlayerData){
         mDatabaseLobby!!.child("players").child(playerId)
             .setValue(newData)
+    }
+
+    private fun clearCanvas(){
+        drawingView!!.mPaths.clear()
+        drawingView!!.invalidate()
     }
 
     private fun clearChat(){
