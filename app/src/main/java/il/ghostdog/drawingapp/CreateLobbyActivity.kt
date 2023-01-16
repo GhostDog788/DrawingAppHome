@@ -10,6 +10,7 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.RadioButton
 import android.widget.RadioGroup
+import android.widget.TextView
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
@@ -37,8 +38,15 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
     private var partyLeader : String? = null
 
     private lateinit var rvPlayers: RecyclerView
-    private lateinit var rgLanguage: RadioGroup
     private var playerRViewDataList : ArrayList<PlayerRViewData> = ArrayList()
+
+    private lateinit var tvRounds: TextView
+    private lateinit var tvTime: TextView
+    private var minRounds: Int = 2
+    private var maxRounds: Int = 9
+    private var minTime: Int = 30
+    private var maxTime: Int = 150
+    private var timeJumps: Int = 10
 
     private var gamePreferences: GamePreferences = GamePreferences()
 
@@ -105,18 +113,17 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
         databaseUsers = dataBaseInstance.getReference("users")
         databaseMyLobby = databaseLobbies.child(lobbyId!!)
 
-        rgLanguage = findViewById(R.id.rgLanguage)
+        tvRounds = findViewById(R.id.tvRounds)
+        findViewById<Button>(R.id.btnMinusRounds)
+            .setOnClickListener{ onAdditiveButtonClicked(minRounds, maxRounds, -1, tvRounds)}
+        findViewById<Button>(R.id.btnPlusRounds)
+            .setOnClickListener{ onAdditiveButtonClicked(minRounds, maxRounds, 1, tvRounds)}
 
-        rgLanguage.setOnCheckedChangeListener { _, checkedId ->
-            when (checkedId) {
-                R.id.rbEnglish -> {
-                    gamePreferences.language = "english"
-                }
-                R.id.rbHebrew -> {
-                    gamePreferences.language = "hebrew"
-                }
-            }
-        }
+        tvTime = findViewById(R.id.tvTime)
+        findViewById<Button>(R.id.btnMinusTime)
+            .setOnClickListener{ onAdditiveButtonClicked(minTime, maxTime, -timeJumps, tvTime)}
+        findViewById<Button>(R.id.btnPlusTime)
+            .setOnClickListener{ onAdditiveButtonClicked(minTime, maxTime, timeJumps, tvTime)}
 
         mAuth = FirebaseAuth.getInstance()
 
@@ -131,15 +138,31 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
 
     private fun onStartGame() {
         val intent = Intent(this, MainActivity::class.java)
-        intent.putExtra("lobbyId", lobbyId)
         if(mAuth!!.currentUser!!.uid == partyLeader) {
-            gamePreferences.status = GameStatus.active
+            updateGamePreferences()
             databaseMyLobby!!.child("gamePreferences").setValue(gamePreferences)
         }
+        intent.putExtra("lobbyId", lobbyId)
         intent.putExtra("language", gamePreferences.language)
+        intent.putExtra("rounds", gamePreferences.rounds)
+        intent.putExtra("turnTime", gamePreferences.turnTime)
         databaseMyLobby!!.child("players").removeEventListener(playersChildListener)
         startActivity(intent)
         finish()
+    }
+
+    private fun updateGamePreferences() {
+        gamePreferences.status = GameStatus.active
+        when (findViewById<RadioGroup>(R.id.rgLanguage).checkedRadioButtonId) {
+            R.id.rbEnglish -> {
+                gamePreferences.language = "english"
+            }
+            R.id.rbHebrew -> {
+                gamePreferences.language = "hebrew"
+            }
+        }
+        gamePreferences.rounds = findViewById<TextView>(R.id.tvRounds).text.toString().toInt()
+        gamePreferences.turnTime = findViewById<TextView>(R.id.tvTime).text.toString().toInt()
     }
 
     private suspend fun setUpLobby(){
@@ -217,6 +240,8 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
         partyLeader = mAuth!!.currentUser!!.uid
 
         findViewById<LinearLayout>(R.id.llGamePreferences).visibility = View.VISIBLE
+        tvRounds.text = gamePreferences.rounds.toString()
+        tvTime.text = gamePreferences.turnTime.toString()
 
         val btnCreate = findViewById<Button>(R.id.btnStartGame)
         btnCreate.visibility = View.VISIBLE
@@ -247,6 +272,13 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
         databaseMyLobby!!.child("players").child(player.userId).removeValue()
     }
 
+    private fun onAdditiveButtonClicked(minRange: Int, maxRange: Int, amount: Int, display: TextView?) {
+        var value = display!!.text.toString().toInt()
+        if(value + amount > maxRange || value + amount < minRange) return
+
+        value += amount
+        display!!.text = value.toString()
+    }
 
     private fun showProgressDialog(){
         customProgressDialog = Dialog(this)

@@ -161,6 +161,11 @@ class MainActivity : AppCompatActivity() {
 
         lobbyId = intent.getStringExtra("lobbyId")
         mLanguage = intent.getStringExtra("language")!!
+        val rounds = intent.getIntExtra("rounds", GamePreferences().rounds)
+        val turnTime = intent.getIntExtra("turnTime", GamePreferences().turnTime)
+
+        Toast.makeText(applicationContext, "rounds: $rounds", Toast.LENGTH_SHORT).show()
+        Toast.makeText(applicationContext, "turnTime: $turnTime", Toast.LENGTH_SHORT).show()
 
         drawingView = findViewById(R.id.dvDrawingView)
         vgDrawersTools = findViewById(R.id.drawersTools)
