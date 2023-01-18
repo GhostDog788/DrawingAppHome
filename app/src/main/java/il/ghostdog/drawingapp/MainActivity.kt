@@ -9,7 +9,6 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.media.MediaScannerConnection
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Base64
@@ -20,6 +19,7 @@ import android.view.inputmethod.EditorInfo
 import android.widget.*
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.Group
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -77,6 +77,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var vgDrawersTools: Group
     private lateinit var tvGuessWord: TextView
     private lateinit var etGuessField: EditText
+    private var mRounds: Int = -1
+    private var mCurrentRound: Int = 1
 
     private val pathsChildListener = object  : ChildEventListener{
         override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
@@ -161,10 +163,10 @@ class MainActivity : AppCompatActivity() {
 
         lobbyId = intent.getStringExtra("lobbyId")
         mLanguage = intent.getStringExtra("language")!!
-        val rounds = intent.getIntExtra("rounds", GamePreferences().rounds)
+        mRounds = intent.getIntExtra("rounds", GamePreferences().rounds)
         val turnTime = intent.getIntExtra("turnTime", GamePreferences().turnTime)
 
-        Toast.makeText(applicationContext, "rounds: $rounds", Toast.LENGTH_SHORT).show()
+        Toast.makeText(applicationContext, "rounds: $mRounds", Toast.LENGTH_SHORT).show()
         Toast.makeText(applicationContext, "turnTime: $turnTime", Toast.LENGTH_SHORT).show()
 
         drawingView = findViewById(R.id.dvDrawingView)
@@ -264,8 +266,8 @@ class MainActivity : AppCompatActivity() {
             val playerData = mPlayersMap[mAuth!!.currentUser!!.uid]
             if(playerData!!.answeredCorrectly) return
 
-            playerData!!.answeredCorrectly = true
-            playerData!!.points += 100
+            playerData.answeredCorrectly = true
+            playerData.points += 100
             updatePlayerData(mAuth!!.currentUser!!.uid, playerData)
         }else{
             val name = mPlayersMap[mAuth!!.currentUser!!.uid]!!.name
@@ -306,8 +308,15 @@ class MainActivity : AppCompatActivity() {
         //playersMap is set
 
         if (mHaveNotDrawnList.isEmpty()){
+            mCurrentRound++
+            if(mCurrentRound > mRounds){
+                endGame()
+                return
+            }
             Toast.makeText(applicationContext, "Round Ended", Toast.LENGTH_SHORT).show()
-            return
+            for (key in mPlayersMap.keys){
+                mHaveNotDrawnList.add(key)
+            }
         }
 
         mPathDatabase!!.setValue("")
@@ -328,6 +337,17 @@ class MainActivity : AppCompatActivity() {
                 awaitFrame()
             }
         }
+    }
+
+    private fun endGame() {
+        Toast.makeText(applicationContext, "Game Ended", Toast.LENGTH_SHORT).show()
+        val intent = Intent()
+        intent.putExtra("leaderId", mPartyLeader)
+        intent.putExtra("players", mPlayersMap)
+
+        intent.setClass(this@MainActivity, EndGameActivity::class.java)
+        startActivity(intent)
+        finish()
     }
 
     private fun chooseWord() {
