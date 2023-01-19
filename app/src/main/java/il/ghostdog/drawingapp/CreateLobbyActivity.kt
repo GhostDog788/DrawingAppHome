@@ -54,7 +54,7 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
 
     private val playersChildListener = object : ChildEventListener{
         override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
-            Toast.makeText(applicationContext, "How this was called again?", Toast.LENGTH_SHORT).show()
+            //some time called for some reason
         }
 
         override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
@@ -137,6 +137,11 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
     }
 
     private fun onStartGame() {
+        if(playersMap.size < 2){
+            Toast.makeText(applicationContext, "Need at least two players", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val intent = Intent(this, MainActivity::class.java)
         if(mAuth!!.currentUser!!.uid == partyLeader) {
             updateGamePreferences()
@@ -167,19 +172,12 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
 
     private suspend fun setUpLobby(){
         showProgressDialog()
-        //before adding player to db for the listener to activate on the player arrival
-        databaseMyLobby!!.addListenerForSingleValueEvent(object: ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                if(dataSnapshot.hasChild("leader")){
-                    setUpPlayer()
-                }else{
-                    setUpLeader()
-                }
+        databaseMyLobby!!.child("leader").addListenerForSingleValueEvent(object : ValueEventListener{
+            override fun onDataChange(snapshot: DataSnapshot) {
+                partyLeader = snapshot.getValue(String::class.java)
             }
-
             override fun onCancelled(error: DatabaseError) {
-                // An error occurred
-                Toast.makeText(applicationContext, "Error in setting up lobby", Toast.LENGTH_SHORT).show()
+                TODO("Not yet implemented")
             }
         })
         withContext(Dispatchers.IO){
@@ -187,6 +185,11 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
             {
                 awaitFrame()
             }
+        }
+        if(partyLeader == mAuth!!.currentUser!!.uid){
+            setUpLeader()
+        }else{
+            setUpPlayer()
         }
         databaseUsers!!.child(mAuth!!.currentUser!!.uid).addListenerForSingleValueEvent(object : ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -234,7 +237,7 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
     }
 
     private fun setUpLeader() {
-        databaseMyLobby!!.child("leader").setValue(mAuth!!.currentUser!!.uid)
+        //databaseMyLobby!!.child("leader").setValue(mAuth!!.currentUser!!.uid)
         gamePreferences.status = GameStatus.preparing
         databaseMyLobby!!.child("gamePreferences").setValue(gamePreferences)
 
@@ -258,12 +261,10 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
         alertDialogBuilder.setTitle("Kick player")
         alertDialogBuilder.setMessage("Do you want to kick the player from the lobby?")
         alertDialogBuilder.setPositiveButton("Kick") { dialog, _ ->
-            Toast.makeText(applicationContext, "Player Kicked!", Toast.LENGTH_SHORT).show()
             kickPlayer(player)
             dialog.dismiss()
         }
         alertDialogBuilder.setNegativeButton("No"){ dialog, _ ->
-            Toast.makeText(applicationContext, "Canceled", Toast.LENGTH_SHORT).show()
             dialog.dismiss()
         }
         alertDialogBuilder.show()

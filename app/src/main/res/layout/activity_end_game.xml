@@ -1,14 +1,177 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".EndGameActivity">
+    tools:context=".EndGameActivity"
+    android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/tvLeader"
+    <LinearLayout
+        android:id="@+id/linearLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
-</LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:layout_marginTop="80dp"
+            android:layout_marginEnd="5dp"
+            android:layout_weight="1"
+            android:background="#DCFFF9"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="#3"
+                android:textColor="@color/bronze"
+                android:textSize="50dp" />
+
+            <TextView
+                android:id="@+id/tvName3"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:autoSizeMaxTextSize="40dp"
+                android:autoSizeMinTextSize="20dp"
+                android:autoSizeTextType="uniform"
+                android:gravity="center"
+                android:maxLines="1"
+                android:text="-Dr.saingrrer-"
+                android:textColor="@color/bronze"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvPoints3"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:autoSizeMaxTextSize="40dp"
+                android:autoSizeMinTextSize="20dp"
+                android:autoSizeTextType="uniform"
+                android:gravity="center"
+                android:maxLines="1"
+                android:text="-1234546-"
+                android:textColor="@color/bronze" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:layout_weight="1"
+            android:background="#DCFFF9"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="#1"
+                android:textColor="@color/gold"
+                android:textSize="50dp" />
+
+            <TextView
+                android:id="@+id/tvName1"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:autoSizeMaxTextSize="40dp"
+                android:autoSizeMinTextSize="20dp"
+                android:autoSizeTextType="uniform"
+                android:gravity="center"
+                android:maxLines="1"
+                android:text="-Dr.saingrrer-"
+                android:textColor="@color/gold"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvPoints1"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:autoSizeMaxTextSize="40dp"
+                android:autoSizeMinTextSize="20dp"
+                android:autoSizeTextType="uniform"
+                android:gravity="center"
+                android:maxLines="1"
+                android:text="-1234546-"
+                android:textColor="@color/gold" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:layout_marginTop="40dp"
+            android:layout_marginEnd="5dp"
+            android:layout_weight="1"
+            android:background="#DCFFF9"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="#2"
+                android:textColor="@color/silver"
+                android:textSize="50dp" />
+
+            <TextView
+                android:id="@+id/tvName2"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:autoSizeMaxTextSize="40dp"
+                android:autoSizeMinTextSize="20dp"
+                android:autoSizeTextType="uniform"
+                android:gravity="center"
+                android:maxLines="1"
+                android:text="-Dr.saingrrer-"
+                android:textColor="@color/silver"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvPoints2"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:autoSizeMaxTextSize="40dp"
+                android:autoSizeMinTextSize="20dp"
+                android:autoSizeTextType="uniform"
+                android:gravity="center"
+                android:maxLines="1"
+                android:text="-1234546-"
+                android:textColor="@color/silver" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnBackToLobby"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Back to lobby"
+        android:textSize="30dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/btnToMainMenu"
+        android:layout_marginBottom="30dp"/>
+
+    <Button
+        android:id="@+id/btnToMainMenu"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:text="Main Menu"
+        android:textSize="25dp"
+        android:layout_marginBottom="20dp"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

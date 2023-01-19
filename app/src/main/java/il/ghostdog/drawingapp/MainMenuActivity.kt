@@ -54,7 +54,9 @@ class MainMenuActivity : AppCompatActivity() {
 
         Toast.makeText(applicationContext, lobbyId, Toast.LENGTH_LONG).show()
 
-        databaseLobbies.child(lobbyId)
+        //creates new lobby in db and sets leaderId
+        databaseLobbies.child(lobbyId).child("leader")
+            .setValue(FirebaseAuth.getInstance()!!.currentUser!!.uid)
         val intent = Intent(this, CreateLobbyActivity::class.java)
         intent.putExtra("lobbyId", lobbyId)
         startActivity(intent)

@@ -1,6 +1,7 @@
 package il.ghostdog.drawingapp
 
 import android.Manifest
+import android.app.Activity
 import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Intent
@@ -45,6 +46,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 import kotlin.random.Random
+
 
 @Suppress("DEPRECATION")
 class MainActivity : AppCompatActivity() {
@@ -120,6 +122,110 @@ class MainActivity : AppCompatActivity() {
             TODO("Not yet implemented")
         }
     }
+    private val drawerIdListener = object : ValueEventListener{
+        override fun onDataChange(snapshot: DataSnapshot) {
+            mDrawerUid = snapshot.getValue(String::class.java)
+            if(mDrawerUid == null) return
+
+            var i = 0
+            while(i < mPlayerRDataList.size){
+                mPlayerRDataList[i].isDrawer = mPlayerRDataList[i].userId == mDrawerUid
+                rvPlayers.adapter!!.notifyItemChanged(i)
+                i++
+            }
+
+            if(mAuth!!.currentUser!!.uid == mDrawerUid)
+            {
+                setUpDrawer()
+            }else{
+                setUpGuesser()
+            }
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            TODO("Not yet implemented")
+        }
+    }
+    private val gameStatusListener = object : ValueEventListener{
+        override fun onDataChange(snapshot: DataSnapshot) {
+            val gamePreferences = snapshot.getValue<GamePreferences>()
+            if (gamePreferences!!.status == GameStatus.ended){
+                endGame()
+            }
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            TODO("Not yet implemented")
+        }
+    }
+    private val playersListener = object : ChildEventListener{
+        override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+            val playerData = snapshot.getValue(PlayerData::class.java)!!
+            mPlayersMap[snapshot.key!!] = playerData
+
+            if(playerData.answeredCorrectly){
+                mHaveNotGuessedList.remove(snapshot.key)
+                if(mHaveNotGuessedList.isEmpty()){
+                    lifecycleScope.launch {
+                        nextTurn()
+                    }
+                }
+            }
+
+            val index = mPlayerRDataList.indexOf(mPlayerRDataList.find
+            { playerRGameViewData ->  playerRGameViewData.userId == snapshot.key!!})
+            mPlayerRDataList[index] = PlayerRGameViewData(snapshot.key!!, playerData, snapshot.key == mDrawerUid)
+            rvPlayers.adapter!!.notifyItemChanged(index)
+        }
+
+        override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+            val playerData = snapshot.getValue(PlayerData::class.java)!!
+            mPlayersMap[snapshot.key!!] = playerData
+            mHaveNotDrawnList.add(snapshot.key!!)
+
+            mPlayerRDataList.add(PlayerRGameViewData(snapshot.key!!, playerData, snapshot.key == mDrawerUid))
+            val index: Int
+            if(snapshot.key == mPartyLeader){
+                index = 0
+                val temp = mPlayerRDataList[0]
+                mPlayerRDataList[0] = mPlayerRDataList[mPlayerRDataList.size - 1]
+                mPlayerRDataList[mPlayerRDataList.size - 1] = temp
+            }else{
+                index = mPlayerRDataList.size - 1
+            }
+            rvPlayers.adapter!!.notifyItemInserted(index)
+        }
+
+        override fun onChildRemoved(snapshot: DataSnapshot) {
+            mPlayersMap.remove(snapshot.key)
+            mHaveNotDrawnList.remove(snapshot.key!!)
+
+            if(snapshot.key == mPartyLeader) {
+                for (key in mPlayersMap.keys) {
+                    mDatabaseLobby!!.child("leader").setValue(key)
+                    break
+                }
+            }
+
+            var index = 0
+            while(index < mPlayerRDataList.size) {
+                if(mPlayerRDataList[index].userId == snapshot.key!!){
+                    break
+                }
+                index++
+            }
+            mPlayerRDataList.removeAt(index)
+            rvPlayers.adapter!!.notifyItemRemoved(index)
+        }
+
+        override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
+            TODO("Not yet implemented")
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            TODO("Not yet implemented")
+        }
+    }
 
     private val openGalleryLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
@@ -167,9 +273,6 @@ class MainActivity : AppCompatActivity() {
         mRounds = intent.getIntExtra("rounds", GamePreferences().rounds)
         val turnTime = intent.getIntExtra("turnTime", GamePreferences().turnTime)
 
-        Toast.makeText(applicationContext, "rounds: $mRounds", Toast.LENGTH_SHORT).show()
-        Toast.makeText(applicationContext, "turnTime: $turnTime", Toast.LENGTH_SHORT).show()
-
         drawingView = findViewById(R.id.dvDrawingView)
         vgDrawersTools = findViewById(R.id.drawersTools)
         llGuessField = findViewById(R.id.llGuessField)
@@ -193,7 +296,6 @@ class MainActivity : AppCompatActivity() {
             height = (widthR * 1.2).toInt()
             width = (widthR - widthR * 0.02).toInt()
             Constants.viewWidth = width
-            Toast.makeText(applicationContext, widthR.toString(), Toast.LENGTH_SHORT).show()
         }
 
         drawingView?.setSizeForBrush(12.toFloat())
@@ -280,6 +382,7 @@ class MainActivity : AppCompatActivity() {
     private suspend fun setupGame() {
         mPathDatabase!!.setValue("")
         mDatabaseLobby!!.child("pathsCount").setValue(0)
+        clearChat()
 
         mDatabaseLobby!!.child("leader").addListenerForSingleValueEvent(object: ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
@@ -305,7 +408,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private suspend fun nextTurn() {
-        clearCanvas()//clears canvas for all
         if(mAuth!!.currentUser!!.uid != mPartyLeader) return //runs exclusively on the leader
         //playersMap is set
 
@@ -345,8 +447,12 @@ class MainActivity : AppCompatActivity() {
     private fun endGame() {
         Toast.makeText(applicationContext, "Game Ended", Toast.LENGTH_SHORT).show()
         val intent = Intent()
-        intent.putExtra("leaderId", mPartyLeader)
         intent.putExtra("players", mPlayersMap)
+        intent.putExtra("lobbyId", lobbyId)
+
+        removeDrawerIdListener()
+        removePathsValueListener()
+        removeGameStatusListener()
 
         intent.setClass(this@MainActivity, EndGameActivity::class.java)
         startActivity(intent)
@@ -389,7 +495,11 @@ class MainActivity : AppCompatActivity() {
         thirdButton.setOnClickListener {
             setGuessWord(((it as Button).text.toString()), dialog)
         }
-        dialog.show()
+        if ((this as Activity).isFinishing) {
+            Toast.makeText(applicationContext, "Application finisherd", Toast.LENGTH_SHORT).show()
+        }else{
+            dialog.show()
+        }
     }
 
     private fun setGuessWord(word: String, dialog: Dialog) {
@@ -458,45 +568,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun addDrawerIdListener() {
-        mDatabaseLobby!!.child("drawerID").addValueEventListener(object : ValueEventListener{
-            override fun onDataChange(snapshot: DataSnapshot) {
-                mDrawerUid = snapshot.getValue(String::class.java)
-                if(mDrawerUid == null) return
-
-                var i = 0
-                while(i < mPlayerRDataList.size){
-                    mPlayerRDataList[i].isDrawer = mPlayerRDataList[i].userId == mDrawerUid
-                    rvPlayers.adapter!!.notifyItemChanged(i)
-                    i++
-                }
-
-                if(mAuth!!.currentUser!!.uid == mDrawerUid)
-                {
-                    setUpDrawer()
-                }else{
-                    setUpGuesser()
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
-            }
-        })
+        mDatabaseLobby!!.child("drawerID").addValueEventListener(drawerIdListener)
+    }
+    private fun removeDrawerIdListener() {
+        mDatabaseLobby!!.child("drawerID").removeEventListener(drawerIdListener)
     }
 
     private fun addGameStatusListener() {
-        mDatabaseLobby!!.child("gamePreferences").addValueEventListener(object : ValueEventListener{
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val gamePreferences = snapshot.getValue<GamePreferences>()
-                if (gamePreferences!!.status == GameStatus.ended){
-                    endGame()
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
-            }
-        })
+        mDatabaseLobby!!.child("gamePreferences").addValueEventListener(gameStatusListener)
+    }
+    private fun removeGameStatusListener() {
+        mDatabaseLobby!!.child("gamePreferences").removeEventListener(gameStatusListener)
     }
 
     private fun addPathsCountListener() {
@@ -517,71 +599,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun addPlayersListener() {
-        mDatabaseLobby!!.child("players").addChildEventListener(object : ChildEventListener{
-            override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
-                val playerData = snapshot.getValue(PlayerData::class.java)!!
-                mPlayersMap[snapshot.key!!] = playerData
-
-                if(playerData.answeredCorrectly){
-                    mHaveNotGuessedList.remove(snapshot.key)
-                    if(mHaveNotGuessedList.isEmpty()){
-                        lifecycleScope.launch {
-                            nextTurn()
-                        }
-                    }
-                }
-
-                val index = mPlayerRDataList.indexOf(mPlayerRDataList.find
-                { playerRGameViewData ->  playerRGameViewData.userId == snapshot.key!!})
-                mPlayerRDataList[index] = PlayerRGameViewData(snapshot.key!!, playerData, snapshot.key == mDrawerUid)
-                rvPlayers.adapter!!.notifyItemChanged(index)
-
-                if(mAuth!!.currentUser!!.uid == snapshot.key!!){ }
-            }
-
-            override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
-                val playerData = snapshot.getValue(PlayerData::class.java)!!
-                mPlayersMap[snapshot.key!!] = playerData
-                mHaveNotDrawnList.add(snapshot.key!!)
-
-                mPlayerRDataList.add(PlayerRGameViewData(snapshot.key!!, playerData, snapshot.key == mDrawerUid))
-                val index: Int
-                if(snapshot.key == mPartyLeader){
-                    index = 0
-                    val temp = mPlayerRDataList[0]
-                    mPlayerRDataList[0] = mPlayerRDataList[mPlayerRDataList.size - 1]
-                    mPlayerRDataList[mPlayerRDataList.size - 1] = temp
-                }else{
-                    index = mPlayerRDataList.size - 1
-                }
-                rvPlayers.adapter!!.notifyItemInserted(index)
-            }
-
-            override fun onChildRemoved(snapshot: DataSnapshot) {
-                mPlayersMap.remove(snapshot.key)
-                mHaveNotDrawnList.remove(snapshot.key!!)
-
-                var index = 0
-                while(index < mPlayerRDataList.size) {
-                    if(mPlayerRDataList[index].userId == snapshot.key!!){
-                        break
-                    }
-                    index++
-                }
-                mPlayerRDataList.removeAt(index)
-                rvPlayers.adapter!!.notifyItemRemoved(index)
-            }
-
-            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
-                TODO("Not yet implemented")
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
-            }
-        })
+        mDatabaseLobby!!.child("players").addChildEventListener(playersListener)
     }
-
+    private fun removePlayersListener() {
+        mDatabaseLobby!!.child("players").removeEventListener(playersListener)
+    }
     private fun addGuessChatListener() {
         mChatDatabase!!.addChildEventListener(object : ChildEventListener{
             override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
@@ -615,13 +637,7 @@ class MainActivity : AppCompatActivity() {
             .setValue(newData)
     }
 
-    private fun clearCanvas(){
-        drawingView!!.mPaths.clear()
-        drawingView!!.invalidate()
-    }
-
     private fun clearChat(){
-        //clears chat
         mChatDatabase!!.removeValue()
         mChatRDataList.clear()
         rvChat.adapter!!.notifyDataSetChanged()
