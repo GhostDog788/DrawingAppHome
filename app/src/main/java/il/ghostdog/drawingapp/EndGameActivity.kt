@@ -1,22 +1,24 @@
 package il.ghostdog.drawingapp
 
 import android.os.Bundle
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
 
 class EndGameActivity : AppCompatActivity() {
 
-    private var mPlayersMap: LinkedHashMap<String, PlayerData> = LinkedHashMap()
+    private var mPlayersMap: HashMap<String, PlayerData> = HashMap()
     private lateinit var mPartyLeader: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_end_game)
 
-        mPlayersMap = intent.getSerializableExtra("players") as LinkedHashMap<String, PlayerData>
+        mPlayersMap = intent.getSerializableExtra("players") as HashMap<String, PlayerData>
         mPartyLeader = intent.getStringExtra("leaderId")!!
 
-        Toast.makeText(applicationContext, "khgop", Toast.LENGTH_SHORT).show()
+        findViewById<TextView>(R.id.tvLeader).text = mPartyLeader
+
     }
 }

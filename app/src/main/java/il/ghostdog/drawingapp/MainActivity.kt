@@ -30,6 +30,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
+import com.google.firebase.database.ktx.getValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.android.awaitFrame
 import kotlinx.coroutines.launch
@@ -209,6 +210,7 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             addPlayersListener()
             addDrawerIdListener()
+            addGameStatusListener()
             addGuessWordListener()
             addGuessChatListener()
             setupGame() //have to be before listeners
@@ -310,7 +312,8 @@ class MainActivity : AppCompatActivity() {
         if (mHaveNotDrawnList.isEmpty()){
             mCurrentRound++
             if(mCurrentRound > mRounds){
-                endGame()
+                mDatabaseLobby!!.child("gamePreferences")
+                    .child("status").setValue(GameStatus.ended)
                 return
             }
             Toast.makeText(applicationContext, "Round Ended", Toast.LENGTH_SHORT).show()
@@ -472,6 +475,21 @@ class MainActivity : AppCompatActivity() {
                     setUpDrawer()
                 }else{
                     setUpGuesser()
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                TODO("Not yet implemented")
+            }
+        })
+    }
+
+    private fun addGameStatusListener() {
+        mDatabaseLobby!!.child("gamePreferences").addValueEventListener(object : ValueEventListener{
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val gamePreferences = snapshot.getValue<GamePreferences>()
+                if (gamePreferences!!.status == GameStatus.ended){
+                    endGame()
                 }
             }
 

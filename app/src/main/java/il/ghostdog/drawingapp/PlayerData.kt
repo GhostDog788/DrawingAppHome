@@ -1,8 +1,8 @@
 package il.ghostdog.drawingapp
 
-import android.text.BoringLayout
+import java.io.Serializable
 
-class PlayerData {
+class PlayerData : Serializable{
 
     lateinit var name: String
     var points: Int = 0

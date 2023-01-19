@@ -1,6 +1,7 @@
 package il.ghostdog.drawingapp
 
 enum class GameStatus {
+    preparing,
     active,
-    preparing
+    ended
 }

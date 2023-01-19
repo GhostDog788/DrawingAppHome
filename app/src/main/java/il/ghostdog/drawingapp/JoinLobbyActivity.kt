@@ -41,16 +41,23 @@ class JoinLobbyActivity : AppCompatActivity() {
     private fun JoinLobby(){
         cancelProgressDialog()
 
-        FirebaseDatabase.getInstance().getReference("lobbies").child(mLobbyId!!).child("status").addListenerForSingleValueEvent(object : ValueEventListener{
+        FirebaseDatabase.getInstance().getReference("lobbies").child(mLobbyId!!).child("gamePreferences").addListenerForSingleValueEvent(object : ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
-                val gameStatus = snapshot.getValue(String::class.java)
+                val gamePreferences = snapshot.getValue(GamePreferences::class.java)
 
                 val intent = Intent()
                 intent.putExtra("lobbyId", mLobbyId!!)
-                if (gameStatus == GameStatus.active.toString()){
-                    intent.setClass(this@JoinLobbyActivity, MainActivity::class.java)
-                }else if(gameStatus == GameStatus.preparing.toString()){
-                    intent.setClass(this@JoinLobbyActivity, CreateLobbyActivity::class.java)
+                when (gamePreferences!!.status) {
+                    GameStatus.active -> {
+                        intent.setClass(this@JoinLobbyActivity, MainActivity::class.java)
+                    }
+                    GameStatus.preparing -> {
+                        intent.setClass(this@JoinLobbyActivity, CreateLobbyActivity::class.java)
+                    }
+                    else -> {
+                        Toast.makeText(applicationContext, "Error", Toast.LENGTH_SHORT).show()
+                        return
+                    }
                 }
                 cancelProgressDialog()
                 startActivity(intent)

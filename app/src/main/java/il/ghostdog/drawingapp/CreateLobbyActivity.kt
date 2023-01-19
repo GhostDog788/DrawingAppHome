@@ -235,7 +235,8 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
 
     private fun setUpLeader() {
         databaseMyLobby!!.child("leader").setValue(mAuth!!.currentUser!!.uid)
-        databaseMyLobby!!.child("status").setValue(GameStatus.preparing.toString())
+        gamePreferences.status = GameStatus.preparing
+        databaseMyLobby!!.child("gamePreferences").setValue(gamePreferences)
 
         partyLeader = mAuth!!.currentUser!!.uid
 
