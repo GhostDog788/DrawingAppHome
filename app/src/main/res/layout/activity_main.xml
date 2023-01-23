@@ -60,7 +60,7 @@
             android:text="120"
             android:layout_weight="1.95"
             android:gravity="center"
-            android:autoSizeMaxTextSize="30dp"
+            android:autoSizeMaxTextSize="15dp"
             android:autoSizeMinTextSize="2dp"
             android:autoSizeTextType="uniform"
             android:maxLines="1"

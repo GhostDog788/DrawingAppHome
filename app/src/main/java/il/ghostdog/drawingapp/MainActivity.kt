@@ -32,10 +32,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.google.firebase.database.ktx.getValue
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.android.awaitFrame
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -80,9 +78,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var vgDrawersTools: Group
     private lateinit var tvGuessWord: TextView
     private lateinit var tvRounds: TextView
+    private lateinit var tvTurnTimer: TextView
     private lateinit var etGuessField: EditText
     private var mRounds: Int = -1
     private var mCurrentRound: Int = 1
+    private var mTurnTime: Int = -1
+    private var mTimeLeft: Int = -1
+    private var mTurnTimerJob: Job? = null
+    private var mCanGuess: Boolean = false
 
     private val pathsChildListener = object  : ChildEventListener{
         override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
@@ -98,6 +101,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+            if(drawingView!!.mPaths.isEmpty()) return
+
             val encoded = snapshot.getValue(String::class.java) ?: return
             val data = unGzip(encoded)
             val path: DrawingView.StandardPath = Json.decodeFromString(data)
@@ -108,6 +113,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onChildRemoved(snapshot: DataSnapshot) {
+            if(drawingView!!.mPaths.isEmpty()) return
+
             if(dbPathsCount < drawingView!!.mPaths.size) {
                 drawingView!!.mPaths.removeAt(snapshot.key!!.toInt())
 
@@ -168,7 +175,9 @@ class MainActivity : AppCompatActivity() {
                 mHaveNotGuessedList.remove(snapshot.key)
                 if(mHaveNotGuessedList.isEmpty()){
                     lifecycleScope.launch {
-                        nextTurn()
+                        if(mAuth!!.currentUser!!.uid == mPartyLeader) {
+                            nextTurn()
+                        }
                     }
                 }
             }
@@ -272,13 +281,14 @@ class MainActivity : AppCompatActivity() {
         lobbyId = intent.getStringExtra("lobbyId")
         mLanguage = intent.getStringExtra("language")!!
         mRounds = intent.getIntExtra("rounds", GamePreferences().rounds)
-        val turnTime = intent.getIntExtra("turnTime", GamePreferences().turnTime)
+        mTurnTime = intent.getIntExtra("turnTime", GamePreferences().turnTime)
 
         drawingView = findViewById(R.id.dvDrawingView)
         vgDrawersTools = findViewById(R.id.drawersTools)
         llGuessField = findViewById(R.id.llGuessField)
         tvGuessWord = findViewById(R.id.tvGuessWord)
         tvRounds = findViewById(R.id.tvRounds)
+        tvTurnTimer = findViewById(R.id.tvTimer)
         etGuessField = findViewById(R.id.etGuessField)
         rvPlayers = findViewById(R.id.rvPlayers)
         rvPlayers.adapter = PlayerGameHUDAdapter(mPlayerRDataList)
@@ -286,7 +296,7 @@ class MainActivity : AppCompatActivity() {
 
         rvChat = findViewById(R.id.rvChat)
         rvChat.adapter = GuessChatAdapter(mChatRDataList)
-        val linearLayoutManager = LinearLayoutManager(this);
+        val linearLayoutManager = LinearLayoutManager(this)
         linearLayoutManager.stackFromEnd = true
         rvChat.layoutManager = linearLayoutManager
 
@@ -318,6 +328,7 @@ class MainActivity : AppCompatActivity() {
             addGuessWordListener()
             addGuessChatListener()
             addCurrentRoundListener()
+            addTurnTimerListener()
             setupGame() //have to be before listeners
             addPathsValueListener()
             addPathsCountListener()
@@ -371,7 +382,7 @@ class MainActivity : AppCompatActivity() {
 
         if (guess == mGuessWord){
             val playerData = mPlayersMap[mAuth!!.currentUser!!.uid]
-            if(playerData!!.answeredCorrectly) return
+            if(playerData!!.answeredCorrectly || !mCanGuess) return
 
             playerData.answeredCorrectly = true
             playerData.points += 100
@@ -386,7 +397,8 @@ class MainActivity : AppCompatActivity() {
         mPathDatabase!!.setValue("")
         mDatabaseLobby!!.child("pathsCount").setValue(0)
         clearChat()
-        updateRoundsDisplay()
+        mDatabaseLobby!!.child("currentRound").setValue(1)
+        tvTurnTimer.text = mTurnTime.toString()
 
         mDatabaseLobby!!.child("leader").addListenerForSingleValueEvent(object: ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
@@ -412,8 +424,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private suspend fun nextTurn() {
+        mCanGuess = false
+        drawingView!!.canDraw = false //takes the ability from all players to draw until new drawer is set
+        drawingView!!.clear()
+
         if(mAuth!!.currentUser!!.uid != mPartyLeader) return //runs exclusively on the leader
         //playersMap is set
+        mTurnTimerJob?.cancel() //cancels the timer if exists
 
         if (mHaveNotDrawnList.isEmpty()){
             mCurrentRound++
@@ -422,7 +439,6 @@ class MainActivity : AppCompatActivity() {
                     .child("status").setValue(GameStatus.ended)
                 return
             }
-            Toast.makeText(applicationContext, "Round Ended", Toast.LENGTH_SHORT).show()
             mDatabaseLobby!!.child("currentRound").setValue(mCurrentRound)
             for (key in mPlayersMap.keys){
                 mHaveNotDrawnList.add(key)
@@ -435,6 +451,7 @@ class MainActivity : AppCompatActivity() {
         val selectedPlayerKey = mHaveNotDrawnList[0]
         mHaveNotDrawnList.removeAt(0)
 
+        mHaveNotGuessedList.clear()
         for(playerId in mPlayersMap.keys){
             if(playerId != selectedPlayerKey){
                 mHaveNotGuessedList.add(playerId)
@@ -472,6 +489,7 @@ class MainActivity : AppCompatActivity() {
         removeDrawerIdListener()
         removePathsValueListener()
         removeGameStatusListener()
+        removePlayersListener()
 
         intent.setClass(this@MainActivity, EndGameActivity::class.java)
         startActivity(intent)
@@ -536,6 +554,7 @@ class MainActivity : AppCompatActivity() {
         llGuessField.visibility = View.VISIBLE
         updateRoundsDisplay()
 
+
         val playerData = mPlayersMap[mAuth!!.currentUser!!.uid]
         playerData!!.answeredCorrectly = false
         updatePlayerData(mAuth!!.currentUser!!.uid, playerData)
@@ -547,6 +566,7 @@ class MainActivity : AppCompatActivity() {
         vgDrawersTools.visibility = View.VISIBLE
         llGuessField.visibility = View.GONE
         updateRoundsDisplay()
+
 
         val playerData = mPlayersMap[mAuth!!.currentUser!!.uid]
         playerData!!.answeredCorrectly = false
@@ -581,6 +601,10 @@ class MainActivity : AppCompatActivity() {
                         tvGuessWord.text = str
                     }
                     clearChat()
+                    mCanGuess = true
+                    if(mAuth!!.currentUser!!.uid == mPartyLeader){
+                        mTurnTimerJob = startDrawingTimer()
+                    }
                 }
             }
 
@@ -612,6 +636,28 @@ class MainActivity : AppCompatActivity() {
                 if(dbPathsCount == 0){
                     drawingView!!.mPaths.clear()
                     drawingView!!.invalidate()
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                TODO("Not yet implemented")
+            }
+        })
+    }
+
+    private fun addTurnTimerListener() {
+        mDatabaseLobby!!.child("turnTimeLeft").addValueEventListener(object : ValueEventListener{
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (snapshot.getValue(Int::class.java) == null) return
+                mTimeLeft = snapshot.getValue(Int::class.java)!!
+
+                tvTurnTimer.text = mTimeLeft.toString()
+
+                if(mTimeLeft == 0){
+                    Toast.makeText(applicationContext, "Time ended", Toast.LENGTH_SHORT).show()
+                    lifecycleScope.launch {
+                        nextTurn()
+                    }
                 }
             }
 
@@ -668,6 +714,19 @@ class MainActivity : AppCompatActivity() {
         mChatDatabase!!.removeValue()
         mChatRDataList.clear()
         rvChat.adapter!!.notifyDataSetChanged()
+    }
+
+    private fun startDrawingTimer(): Job {
+        mTimeLeft = mTurnTime
+        tvTurnTimer.text = mTimeLeft.toString()
+        mDatabaseLobby!!.child("turnTimeLeft").setValue(mTimeLeft)
+        return lifecycleScope.launch {
+            while (isActive && mTimeLeft > 0){ //if 0 than time out
+                delay(1000L)
+                mTimeLeft--
+                mDatabaseLobby!!.child("turnTimeLeft").setValue(mTimeLeft)
+            }
+        }
     }
 
     private fun handleDrawChange(myPathsCount : Int){

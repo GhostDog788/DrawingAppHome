@@ -138,6 +138,12 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         mDrawPaint!!.color = color
     }
 
+    fun clear(){
+        mPaths.clear()
+        mDrawPath!!.reset()
+        invalidate()
+    }
+
     class CustomPath(var color: Int, var brushSize: Float) {
 
         private val points : ArrayList<Vector2> = ArrayList<Vector2>()
