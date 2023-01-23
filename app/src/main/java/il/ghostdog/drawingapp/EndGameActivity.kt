@@ -45,7 +45,7 @@ class EndGameActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.tvName2).text = secondPlayer.second.name
         findViewById<TextView>(R.id.tvPoints2).text = secondPlayer.second.points.toString()
 
-        if(orderedByPoints.size > 3)
+        if(orderedByPoints.size > 2)
         {
             val thirdPlayer = orderedByPoints[orderedByPoints.lastIndex - 2]
             findViewById<TextView>(R.id.tvName3).text = thirdPlayer.second.name

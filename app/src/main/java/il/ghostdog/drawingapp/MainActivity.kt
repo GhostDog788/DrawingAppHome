@@ -79,6 +79,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var llGuessField: LinearLayout
     private lateinit var vgDrawersTools: Group
     private lateinit var tvGuessWord: TextView
+    private lateinit var tvRounds: TextView
     private lateinit var etGuessField: EditText
     private var mRounds: Int = -1
     private var mCurrentRound: Int = 1
@@ -277,6 +278,7 @@ class MainActivity : AppCompatActivity() {
         vgDrawersTools = findViewById(R.id.drawersTools)
         llGuessField = findViewById(R.id.llGuessField)
         tvGuessWord = findViewById(R.id.tvGuessWord)
+        tvRounds = findViewById(R.id.tvRounds)
         etGuessField = findViewById(R.id.etGuessField)
         rvPlayers = findViewById(R.id.rvPlayers)
         rvPlayers.adapter = PlayerGameHUDAdapter(mPlayerRDataList)
@@ -315,6 +317,7 @@ class MainActivity : AppCompatActivity() {
             addGameStatusListener()
             addGuessWordListener()
             addGuessChatListener()
+            addCurrentRoundListener()
             setupGame() //have to be before listeners
             addPathsValueListener()
             addPathsCountListener()
@@ -383,6 +386,7 @@ class MainActivity : AppCompatActivity() {
         mPathDatabase!!.setValue("")
         mDatabaseLobby!!.child("pathsCount").setValue(0)
         clearChat()
+        updateRoundsDisplay()
 
         mDatabaseLobby!!.child("leader").addListenerForSingleValueEvent(object: ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
@@ -419,6 +423,7 @@ class MainActivity : AppCompatActivity() {
                 return
             }
             Toast.makeText(applicationContext, "Round Ended", Toast.LENGTH_SHORT).show()
+            mDatabaseLobby!!.child("currentRound").setValue(mCurrentRound)
             for (key in mPlayersMap.keys){
                 mHaveNotDrawnList.add(key)
             }
@@ -442,6 +447,20 @@ class MainActivity : AppCompatActivity() {
                 awaitFrame()
             }
         }
+    }
+
+    private fun addCurrentRoundListener() {
+        mDatabaseLobby!!.child("currentRound").addValueEventListener(object : ValueEventListener{
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val value = snapshot.getValue(Int::class.java) ?: return
+                mCurrentRound = value
+                updateRoundsDisplay()
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                TODO("Not yet implemented")
+            }
+        })
     }
 
     private fun endGame() {
@@ -469,6 +488,8 @@ class MainActivity : AppCompatActivity() {
         val thirdButton = dialog.findViewById<Button>(R.id.btnThree)
 
         val usedIndexes = ArrayList<Int>()
+        usedIndexes.add(Constants.GUESS_WORDS_MAP[mLanguage]!!.indexOf(mGuessWord))
+        //prevents from getting the same word
         var index = 0
         do {
             index = Random.nextInt(0, Constants.GUESS_WORDS_MAP[mLanguage]!!.size)
@@ -496,7 +517,7 @@ class MainActivity : AppCompatActivity() {
             setGuessWord(((it as Button).text.toString()), dialog)
         }
         if ((this as Activity).isFinishing) {
-            Toast.makeText(applicationContext, "Application finisherd", Toast.LENGTH_SHORT).show()
+            Toast.makeText(applicationContext, "Application finished", Toast.LENGTH_SHORT).show()
         }else{
             dialog.show()
         }
@@ -513,6 +534,7 @@ class MainActivity : AppCompatActivity() {
         addPathsValueListener()
         vgDrawersTools.visibility = View.GONE
         llGuessField.visibility = View.VISIBLE
+        updateRoundsDisplay()
 
         val playerData = mPlayersMap[mAuth!!.currentUser!!.uid]
         playerData!!.answeredCorrectly = false
@@ -524,6 +546,7 @@ class MainActivity : AppCompatActivity() {
         drawingView!!.canDraw = true
         vgDrawersTools.visibility = View.VISIBLE
         llGuessField.visibility = View.GONE
+        updateRoundsDisplay()
 
         val playerData = mPlayersMap[mAuth!!.currentUser!!.uid]
         playerData!!.answeredCorrectly = false
@@ -635,6 +658,10 @@ class MainActivity : AppCompatActivity() {
     private fun updatePlayerData(playerId: String, newData: PlayerData){
         mDatabaseLobby!!.child("players").child(playerId)
             .setValue(newData)
+    }
+
+    private fun updateRoundsDisplay(){
+        tvRounds.text = "$mCurrentRound/$mRounds"
     }
 
     private fun clearChat(){
