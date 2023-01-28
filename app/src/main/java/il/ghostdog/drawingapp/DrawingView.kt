@@ -69,6 +69,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
+        //Toast.makeText(context1, "$canDraw", Toast.LENGTH_SHORT).show()
         if(!canDraw) return true
 
         val touchX = event?.x
@@ -86,7 +87,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
                 }
             }
             MotionEvent.ACTION_MOVE ->{
-                if(touchX != null && touchY != null && pointOnView(touchX, touchY))
+                if(mPaths.size > 0 && touchX != null && touchY != null && pointOnView(touchX, touchY))
                 {
                     mPaths.removeAt(mPaths.size - 1)
                     mDrawPath!!.addPoint(touchX, touchY)
@@ -94,12 +95,14 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
                 }
             }
             MotionEvent.ACTION_UP ->{
-                mOnDrawChange.invoke(mPaths.size)
-                mDrawPath = CustomPath(color, mBrushSize)
+                if(mPaths.size > 0) {
+                    mOnDrawChange.invoke(mPaths.size)
+                    mDrawPath = CustomPath(color, mBrushSize)
+                }
             }
             else -> return false
         }
-        if(circleCount > 4) {
+        if(circleCount > 4 && mPaths.size > 0) {
             circleCount = 1
             mOnDrawChange.invoke(mPaths.size)
         }else{

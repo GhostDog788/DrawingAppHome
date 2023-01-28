@@ -236,6 +236,108 @@ class MainActivity : AppCompatActivity() {
             TODO("Not yet implemented")
         }
     }
+    private val pathCountListener = object : ValueEventListener{
+        override fun onDataChange(snapshot: DataSnapshot) {
+            dbPathsCount = snapshot.getValue(Long::class.java)!!.toInt()
+
+            if(dbPathsCount == 0){
+                drawingView!!.mPaths.clear()
+                drawingView!!.invalidate()
+            }
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            TODO("Not yet implemented")
+        }
+    }
+    private val turnTimerListener = object : ValueEventListener{
+        override fun onDataChange(snapshot: DataSnapshot) {
+            if (snapshot.getValue(Int::class.java) == null) return
+            mTimeLeft = snapshot.getValue(Int::class.java)!!
+
+            tvTurnTimer.text = mTimeLeft.toString()
+
+            if(mTimeLeft == 0){
+                Toast.makeText(applicationContext, "Time ended", Toast.LENGTH_SHORT).show()
+                lifecycleScope.launch {
+                    nextTurn()
+                }
+            }
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            TODO("Not yet implemented")
+        }
+    }
+    private val guessWordListener = object : ValueEventListener{
+        override fun onDataChange(snapshot: DataSnapshot) {
+            mGuessWord = snapshot.getValue(String::class.java)
+            if(mGuessWord != null){ // means set drawerId
+                if(mDrawerUid == mAuth!!.currentUser!!.uid){
+                    tvGuessWord.text = mGuessWord
+                }else{
+                    var str = ""
+                    for (char in mGuessWord!!){
+                        if(char != ' '){
+                            str += "_ "
+                        }else{
+                            str += " "
+                        }
+                    }
+                    tvGuessWord.text = str
+                }
+                clearChat()
+                drawingView!!.clear()
+                if(mAuth!!.currentUser!!.uid == mDrawerUid){
+                    drawingView!!.canDraw = true
+                }
+                mCanGuess = true
+                if(mAuth!!.currentUser!!.uid == mPartyLeader){
+                    mTurnTimerJob = startDrawingTimer()
+                }
+            }
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            TODO("Not yet implemented")
+        }
+    }
+    private val guessChatListener = object : ChildEventListener{
+        override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+            val messageData = snapshot.getValue(GuessMessageRData::class.java)!!
+
+            mChatRDataList.add(messageData)
+            rvChat.adapter!!.notifyItemInserted(mChatRDataList.size)
+            rvChat.scrollToPosition(mChatRDataList.size - 1)
+        }
+
+        override fun onChildRemoved(snapshot: DataSnapshot) {
+            //no need
+        }
+
+        override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+            TODO("Not yet implemented")
+        }
+
+        override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
+            TODO("Not yet implemented")
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            TODO("Not yet implemented")
+        }
+    }
+    private val currentRoundListener = object : ValueEventListener{
+        override fun onDataChange(snapshot: DataSnapshot) {
+            val value = snapshot.getValue(Int::class.java) ?: return
+            mCurrentRound = value
+            updateRoundsDisplay()
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            TODO("Not yet implemented")
+        }
+    }
 
     private val openGalleryLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
@@ -279,6 +381,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         lobbyId = intent.getStringExtra("lobbyId")
+        val reEntering = intent.getBooleanExtra("reEntering", false)
         mLanguage = intent.getStringExtra("language")!!
         mRounds = intent.getIntExtra("rounds", GamePreferences().rounds)
         mTurnTime = intent.getIntExtra("turnTime", GamePreferences().turnTime)
@@ -329,7 +432,11 @@ class MainActivity : AppCompatActivity() {
             addGuessChatListener()
             addCurrentRoundListener()
             addTurnTimerListener()
-            setupGame() //have to be before listeners
+            if(!reEntering) {
+                setupGame() //have to be before listeners
+            }else{
+                rejoinGame()
+            }
             addPathsValueListener()
             addPathsCountListener()
         }
@@ -423,6 +530,10 @@ class MainActivity : AppCompatActivity() {
         nextTurn()
     }
 
+    private fun rejoinGame() {
+        TODO("After service is implemented")
+    }
+
     private suspend fun nextTurn() {
         mCanGuess = false
         drawingView!!.canDraw = false //takes the ability from all players to draw until new drawer is set
@@ -467,17 +578,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun addCurrentRoundListener() {
-        mDatabaseLobby!!.child("currentRound").addValueEventListener(object : ValueEventListener{
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val value = snapshot.getValue(Int::class.java) ?: return
-                mCurrentRound = value
-                updateRoundsDisplay()
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
-            }
-        })
+        mDatabaseLobby!!.child("currentRound").addValueEventListener(currentRoundListener)
+    }
+    private fun removeCurrentRoundListener() {
+        mDatabaseLobby!!.child("currentRound").removeEventListener(currentRoundListener)
     }
 
     private fun endGame() {
@@ -486,14 +590,23 @@ class MainActivity : AppCompatActivity() {
         intent.putExtra("players", mPlayersMap)
         intent.putExtra("lobbyId", lobbyId)
 
-        removeDrawerIdListener()
-        removePathsValueListener()
-        removeGameStatusListener()
-        removePlayersListener()
+        removeAllListeners()
 
         intent.setClass(this@MainActivity, EndGameActivity::class.java)
         startActivity(intent)
         finish()
+    }
+
+    private fun removeAllListeners() {
+        removeDrawerIdListener()
+        removePathsValueListener()
+        removePlayersListener()
+        removeGameStatusListener()
+        removeCurrentRoundListener()
+        removeGuessChatListener()
+        removeGuessWordListener()
+        removeTurnTimerListener()
+        removePathsCountListener()
     }
 
     private fun chooseWord() {
@@ -562,11 +675,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun setUpDrawer() {
         removePathsValueListener()
-        drawingView!!.canDraw = true
         vgDrawersTools.visibility = View.VISIBLE
         llGuessField.visibility = View.GONE
         updateRoundsDisplay()
-
 
         val playerData = mPlayersMap[mAuth!!.currentUser!!.uid]
         playerData!!.answeredCorrectly = false
@@ -583,35 +694,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun addGuessWordListener() {
-        mDatabaseLobby!!.child("guessWord").addValueEventListener(object : ValueEventListener{
-            override fun onDataChange(snapshot: DataSnapshot) {
-                mGuessWord = snapshot.getValue(String::class.java)
-                if(mGuessWord != null){ // means set drawerId
-                    if(mDrawerUid == mAuth!!.currentUser!!.uid){
-                        tvGuessWord.text = mGuessWord
-                    }else{
-                        var str = ""
-                        for (char in mGuessWord!!){
-                            if(char != ' '){
-                                str += "_ "
-                            }else{
-                                str += " "
-                            }
-                        }
-                        tvGuessWord.text = str
-                    }
-                    clearChat()
-                    mCanGuess = true
-                    if(mAuth!!.currentUser!!.uid == mPartyLeader){
-                        mTurnTimerJob = startDrawingTimer()
-                    }
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
-            }
-        })
+        mDatabaseLobby!!.child("guessWord").addValueEventListener(guessWordListener)
+    }
+    private fun removeGuessWordListener() {
+        mDatabaseLobby!!.child("guessWord").removeEventListener(guessWordListener)
     }
 
     private fun addDrawerIdListener() {
@@ -629,42 +715,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun addPathsCountListener() {
-        mDatabaseLobby!!.child("pathsCount").addValueEventListener(object : ValueEventListener{
-            override fun onDataChange(snapshot: DataSnapshot) {
-                dbPathsCount = snapshot.getValue(Long::class.java)!!.toInt()
-
-                if(dbPathsCount == 0){
-                    drawingView!!.mPaths.clear()
-                    drawingView!!.invalidate()
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
-            }
-        })
+        mDatabaseLobby!!.child("pathsCount").addValueEventListener(pathCountListener)
+    }
+    private fun removePathsCountListener() {
+        mDatabaseLobby!!.child("pathsCount").removeEventListener(pathCountListener)
     }
 
     private fun addTurnTimerListener() {
-        mDatabaseLobby!!.child("turnTimeLeft").addValueEventListener(object : ValueEventListener{
-            override fun onDataChange(snapshot: DataSnapshot) {
-                if (snapshot.getValue(Int::class.java) == null) return
-                mTimeLeft = snapshot.getValue(Int::class.java)!!
-
-                tvTurnTimer.text = mTimeLeft.toString()
-
-                if(mTimeLeft == 0){
-                    Toast.makeText(applicationContext, "Time ended", Toast.LENGTH_SHORT).show()
-                    lifecycleScope.launch {
-                        nextTurn()
-                    }
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
-            }
-        })
+        mDatabaseLobby!!.child("turnTimeLeft").addValueEventListener(turnTimerListener)
+    }
+    private fun removeTurnTimerListener() {
+        mDatabaseLobby!!.child("turnTimeLeft").removeEventListener(turnTimerListener)
     }
 
     private fun addPlayersListener() {
@@ -674,32 +735,12 @@ class MainActivity : AppCompatActivity() {
         mDatabaseLobby!!.child("players").removeEventListener(playersListener)
     }
     private fun addGuessChatListener() {
-        mChatDatabase!!.addChildEventListener(object : ChildEventListener{
-            override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
-                val messageData = snapshot.getValue(GuessMessageRData::class.java)!!
-
-                mChatRDataList.add(messageData)
-                rvChat.adapter!!.notifyItemInserted(mChatRDataList.size)
-                rvChat.scrollToPosition(mChatRDataList.size - 1)
-            }
-
-            override fun onChildRemoved(snapshot: DataSnapshot) {
-                //no need
-            }
-
-            override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
-                TODO("Not yet implemented")
-            }
-
-            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
-                TODO("Not yet implemented")
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
-            }
-        })
+        mChatDatabase!!.addChildEventListener(guessChatListener)
     }
+    private fun removeGuessChatListener() {
+        mChatDatabase!!.removeEventListener(guessChatListener)
+    }
+
 
     private fun updatePlayerData(playerId: String, newData: PlayerData){
         mDatabaseLobby!!.child("players").child(playerId)

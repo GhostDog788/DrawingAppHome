@@ -38,7 +38,7 @@ class JoinLobbyActivity : AppCompatActivity() {
         checkIfLobbyExists(databaseLobbies, mLobbyId!!)
     }
 
-    private fun JoinLobby(){
+    private fun joinLobby(){
         cancelProgressDialog()
 
         FirebaseDatabase.getInstance().getReference("lobbies").child(mLobbyId!!).child("gamePreferences").addListenerForSingleValueEvent(object : ValueEventListener{
@@ -50,6 +50,10 @@ class JoinLobbyActivity : AppCompatActivity() {
                 when (gamePreferences!!.status) {
                     GameStatus.active -> {
                         intent.setClass(this@JoinLobbyActivity, MainActivity::class.java)
+                        intent.putExtra("reEntering", true)
+                        intent.putExtra("language", gamePreferences.language)
+                        intent.putExtra("rounds", gamePreferences.rounds)
+                        intent.putExtra("turnTime", gamePreferences.turnTime)
                     }
                     GameStatus.preparing -> {
                         intent.setClass(this@JoinLobbyActivity, CreateLobbyActivity::class.java)
@@ -74,7 +78,7 @@ class JoinLobbyActivity : AppCompatActivity() {
         ref.addListenerForSingleValueEvent(object: ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 if(dataSnapshot.hasChild(child)){
-                    JoinLobby()
+                    joinLobby()
                 }else{
                     cancelProgressDialog()
                     Toast.makeText(applicationContext, "Invalid id", Toast.LENGTH_SHORT).show()

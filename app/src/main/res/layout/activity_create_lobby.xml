@@ -15,6 +15,14 @@
         android:text="Create Lobby"
         android:textSize="40dp"/>
 
+    <TextView
+        android:id="@+id/tvLobbyId"
+        android:layout_margin="10dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Create Lobby"
+        android:textSize="25dp"/>
+
     <LinearLayout
         android:id="@+id/llGamePreferences"
         android:layout_width="match_parent"

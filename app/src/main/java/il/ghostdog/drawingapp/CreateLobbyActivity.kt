@@ -113,6 +113,9 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
         databaseUsers = dataBaseInstance.getReference("users")
         databaseMyLobby = databaseLobbies.child(lobbyId!!)
 
+        //set lobby id display
+        findViewById<TextView>(R.id.tvLobbyId).text = lobbyId
+
         tvRounds = findViewById(R.id.tvRounds)
         findViewById<Button>(R.id.btnMinusRounds)
             .setOnClickListener{ onAdditiveButtonClicked(minRounds, maxRounds, -1, tvRounds)}
