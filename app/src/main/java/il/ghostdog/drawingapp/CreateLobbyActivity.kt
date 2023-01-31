@@ -2,9 +2,13 @@ package il.ghostdog.drawingapp
 
 import android.app.AlertDialog
 import android.app.Dialog
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.IBinder
 import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
@@ -36,6 +40,7 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
     private var databaseMyLobby : DatabaseReference? = null
     private var databaseUsers : DatabaseReference? = null
     private var partyLeader : String? = null
+    private var lobbyTimeOutService: LobbyTimeOutService? = null
 
     private lateinit var rvPlayers: RecyclerView
     private var playerRViewDataList : ArrayList<PlayerRViewData> = ArrayList()
@@ -301,20 +306,40 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
         }
     }
 
+    private var isBound = false
+    private val connection = object : ServiceConnection {
+        override fun onServiceConnected(className: ComponentName, service: IBinder) {
+            val binder = service as LobbyTimeOutService.LocalBinder
+            lobbyTimeOutService = binder.getService()
+            isBound = true
+            Toast.makeText(applicationContext, "Service Conected", Toast.LENGTH_SHORT).show()
+        }
+
+        override fun onServiceDisconnected(arg0: ComponentName) {
+            isBound = false
+        }
+    }
+
     override fun onStop() {
         super.onStop()
         Toast.makeText(applicationContext, "On Stop", Toast.LENGTH_SHORT).show()
         val intent = Intent(this@CreateLobbyActivity, LobbyTimeOutService::class.java)
         intent.putExtra("lobbyId", lobbyId!!)
         intent.putExtra("playerId", mAuth!!.currentUser!!.uid)
-        startService(intent)
+        //startService(intent)
+        bindService(intent, connection, Context.BIND_AUTO_CREATE)
     }
 
     override fun onResume() {
         super.onResume()
         Toast.makeText(applicationContext, "On Resume", Toast.LENGTH_SHORT).show()
-        val intent = Intent(this@CreateLobbyActivity, LobbyTimeOutService::class.java)
+        /*val intent = Intent(this@CreateLobbyActivity, LobbyTimeOutService::class.java)
         intent.putExtra("stopTimer", true)
-        stopService(intent)
+        stopService(intent)*/
+        if (isBound) {
+            unbindService(connection)
+            lobbyTimeOutService?.stopService()
+            isBound = false
+        }
     }
 }
