@@ -79,6 +79,8 @@
                 android:value="" />
         </activity>
 
+        <service android:name=".LobbyTimeOutService"/>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

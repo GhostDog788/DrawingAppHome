@@ -52,8 +52,6 @@ class MainMenuActivity : AppCompatActivity() {
         val databaseLobbies = dataBaseInstance.getReference("lobbies")
         val lobbyId = UUID.randomUUID().toString().substring(0,4) //unique id of the lobby and join code
 
-        Toast.makeText(applicationContext, lobbyId, Toast.LENGTH_LONG).show()
-
         //creates new lobby in db and sets leaderId
         databaseLobbies.child(lobbyId).child("leader")
             .setValue(FirebaseAuth.getInstance()!!.currentUser!!.uid)

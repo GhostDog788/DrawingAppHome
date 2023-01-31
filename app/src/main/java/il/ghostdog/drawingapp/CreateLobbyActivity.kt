@@ -26,7 +26,7 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashMap
 
-class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerViewEvent {
+class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapter.RecyclerViewEvent {
 
     private var lobbyId: String? = null
 
@@ -47,6 +47,8 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
     private var minTime: Int = 30
     private var maxTime: Int = 150
     private var timeJumps: Int = 10
+
+    override var usingLobby: Boolean = true
 
     private var gamePreferences: GamePreferences = GamePreferences()
 
@@ -155,6 +157,7 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
         intent.putExtra("rounds", gamePreferences.rounds)
         intent.putExtra("turnTime", gamePreferences.turnTime)
         databaseMyLobby!!.child("players").removeEventListener(playersChildListener)
+        usingLobby = false//don't remove player from lobby on destroy
         startActivity(intent)
         finish()
     }
@@ -296,5 +299,22 @@ class CreateLobbyActivity : AppCompatActivity(), PlayerRecyclerAdapter.RecyclerV
             customProgressDialog?.dismiss()
             customProgressDialog = null
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Toast.makeText(applicationContext, "On Stop", Toast.LENGTH_SHORT).show()
+        val intent = Intent(this@CreateLobbyActivity, LobbyTimeOutService::class.java)
+        intent.putExtra("lobbyId", lobbyId!!)
+        intent.putExtra("playerId", mAuth!!.currentUser!!.uid)
+        startService(intent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Toast.makeText(applicationContext, "On Resume", Toast.LENGTH_SHORT).show()
+        val intent = Intent(this@CreateLobbyActivity, LobbyTimeOutService::class.java)
+        intent.putExtra("stopTimer", true)
+        stopService(intent)
     }
 }
