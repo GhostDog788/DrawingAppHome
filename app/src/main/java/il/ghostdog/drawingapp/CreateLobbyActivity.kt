@@ -53,8 +53,6 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
     private var maxTime: Int = 150
     private var timeJumps: Int = 10
 
-    override var usingLobby: Boolean = true
-
     private var gamePreferences: GamePreferences = GamePreferences()
 
     private var playersMap: LinkedHashMap<String, PlayerData> = LinkedHashMap()
@@ -162,7 +160,6 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
         intent.putExtra("rounds", gamePreferences.rounds)
         intent.putExtra("turnTime", gamePreferences.turnTime)
         databaseMyLobby!!.child("players").removeEventListener(playersChildListener)
-        usingLobby = false//don't remove player from lobby on destroy
         startActivity(intent)
         finish()
     }
@@ -306,40 +303,16 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
         }
     }
 
-    private var isBound = false
-    private val connection = object : ServiceConnection {
-        override fun onServiceConnected(className: ComponentName, service: IBinder) {
-            val binder = service as LobbyTimeOutService.LocalBinder
-            lobbyTimeOutService = binder.getService()
-            isBound = true
-            Toast.makeText(applicationContext, "Service Conected", Toast.LENGTH_SHORT).show()
-        }
 
-        override fun onServiceDisconnected(arg0: ComponentName) {
-            isBound = false
-        }
+    override fun updateMyStatus() {
+        databaseMyLobby!!.child("playersStatus").child(mAuth!!.currentUser!!.uid).setValue(1)
     }
 
-    override fun onStop() {
-        super.onStop()
-        Toast.makeText(applicationContext, "On Stop", Toast.LENGTH_SHORT).show()
-        val intent = Intent(this@CreateLobbyActivity, LobbyTimeOutService::class.java)
-        intent.putExtra("lobbyId", lobbyId!!)
-        intent.putExtra("playerId", mAuth!!.currentUser!!.uid)
-        //startService(intent)
-        bindService(intent, connection, Context.BIND_AUTO_CREATE)
+    override fun checkPlayersStatus() {
+        if(mAuth!!.currentUser!!.uid != partyLeader) return
     }
 
-    override fun onResume() {
-        super.onResume()
-        Toast.makeText(applicationContext, "On Resume", Toast.LENGTH_SHORT).show()
-        /*val intent = Intent(this@CreateLobbyActivity, LobbyTimeOutService::class.java)
-        intent.putExtra("stopTimer", true)
-        stopService(intent)*/
-        if (isBound) {
-            unbindService(connection)
-            lobbyTimeOutService?.stopService()
-            isBound = false
-        }
+    override fun onLeaderDisconnected() {
+        TODO("Not yet implemented")
     }
 }
