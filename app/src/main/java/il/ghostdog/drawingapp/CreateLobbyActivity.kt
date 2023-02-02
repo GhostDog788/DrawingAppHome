@@ -22,10 +22,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.android.awaitFrame
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import java.sql.Time
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashMap
@@ -40,7 +41,11 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
     private var databaseMyLobby : DatabaseReference? = null
     private var databaseUsers : DatabaseReference? = null
     private var partyLeader : String? = null
-    private var lobbyTimeOutService: LobbyTimeOutService? = null
+
+    override var pingTimerJob: Job? = null
+    override var leaderCheckPingTimerJob: Job? = null
+    override var mPingInterval: Int = 8
+    override var mLeaderCheckPingInterval: Int = 15
 
     private lateinit var rvPlayers: RecyclerView
     private var playerRViewDataList : ArrayList<PlayerRViewData> = ArrayList()
@@ -138,6 +143,9 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
         rvPlayers = findViewById(R.id.rvPlayers)
         rvPlayers.adapter = PlayerRecyclerAdapter(playerRViewDataList, this)
         rvPlayers.layoutManager = GridLayoutManager(this@CreateLobbyActivity, 2)
+
+        pingTimerJob = startPingTimer()
+        leaderCheckPingTimerJob = startLeaderPingCheckTimer()
 
         lifecycleScope.launch {
             setUpLobby()
@@ -280,6 +288,11 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
 
     private fun kickPlayer(player: PlayerRViewData) {
         databaseMyLobby!!.child("players").child(player.userId).removeValue()
+        databaseMyLobby!!.child("playersStatus").child(player.userId).removeValue()
+    }
+    private fun kickPlayer(playerId: String) {
+        databaseMyLobby!!.child("players").child(playerId ).removeValue()
+        databaseMyLobby!!.child("playersStatus").child(playerId ).removeValue()
     }
 
     private fun onAdditiveButtonClicked(minRange: Int, maxRange: Int, amount: Int, display: TextView?) {
@@ -303,13 +316,70 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
         }
     }
 
+    override fun startPingTimer(): Job {
+        pingTimerJob?.cancel()
+        return lifecycleScope.launch {
+            while (isActive){
+                delay((mPingInterval * 1000).toLong())
+                updateMyStatus()
+            }
+        }
+    }
+
+    override fun startLeaderPingCheckTimer(): Job {
+        leaderCheckPingTimerJob?.cancel()
+        return lifecycleScope.launch {
+            while(isActive){
+                delay((mLeaderCheckPingInterval * 1000).toLong())
+                checkPlayersStatus()
+            }
+        }
+    }
+
+    override fun onStop() {
+        pingTimerJob?.cancel()
+        leaderCheckPingTimerJob?.cancel()
+        super.onStop()
+    }
+
+    override fun onResume() {
+        pingTimerJob = startPingTimer()
+        leaderCheckPingTimerJob = startLeaderPingCheckTimer()
+        super.onResume()
+    }
+
 
     override fun updateMyStatus() {
-        databaseMyLobby!!.child("playersStatus").child(mAuth!!.currentUser!!.uid).setValue(1)
+        if(mAuth!!.currentUser!!.uid == partyLeader){
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+            val current = LocalDateTime.now().format(formatter)
+            databaseMyLobby!!.child("playersStatus").child(mAuth!!.currentUser!!.uid)
+                .setValue(current)
+        }else{
+            databaseMyLobby!!.child("playersStatus").child(mAuth!!.currentUser!!.uid).setValue(1)
+        }
     }
 
     override fun checkPlayersStatus() {
         if(mAuth!!.currentUser!!.uid != partyLeader) return
+        databaseMyLobby!!.child("playersStatus").addListenerForSingleValueEvent(object : ValueEventListener{
+            override fun onDataChange(snapshot: DataSnapshot) {
+                for (player in snapshot.children){
+                    if(player.key != partyLeader){
+                        if(player.value != 1L){
+                            kickPlayer(player.key!!)
+                        }else{
+                            databaseMyLobby!!.child("playersStatus").child(player.key!!)
+                                .setValue(0)
+                        }
+                    }
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                TODO("Not yet implemented")
+            }
+        })
     }
 
     override fun onLeaderDisconnected() {
