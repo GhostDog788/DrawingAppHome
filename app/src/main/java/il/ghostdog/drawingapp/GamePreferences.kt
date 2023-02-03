@@ -5,7 +5,7 @@ class GamePreferences {
     var status: GameStatus = GameStatus.preparing
     var language: String = "english"
     var rounds: Int = 2
-    var turnTime: Int = 15
+    var turnTime: Int = 60
 
     constructor(){}
 

@@ -1,6 +1,7 @@
 package il.ghostdog.drawingapp
 
 import android.content.SharedPreferences
+import android.icu.util.Calendar
 import androidx.lifecycle.LifecycleCoroutineScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
@@ -14,6 +15,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.util.*
 
 
 interface ILobbyUser {
@@ -49,6 +51,7 @@ interface ILobbyUser {
     }
 
     fun updateMyStatus(){
+        //need to take the time from the internet not the device
         if(FirebaseAuth.getInstance().currentUser!!.uid == partyLeader){
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
             val current = LocalDateTime.now().format(formatter)
@@ -87,6 +90,7 @@ interface ILobbyUser {
                 val dateTimeLastLeader = LocalDateTime.parse(timeString, formatter)
                 val dateTimeCurrent = LocalDateTime.now()
                 val difference = (dateTimeCurrent.toEpochSecond(ZoneOffset.UTC) - dateTimeLastLeader.toEpochSecond(ZoneOffset.UTC))
+                println("Time difference $difference")
                 if(difference > mCheckPingInterval){
                     ConnectionHelper.disconnectPlayerFromLobby(databaseMyLobby!!, partyLeader!!)
                     onLeaderDisconnected()

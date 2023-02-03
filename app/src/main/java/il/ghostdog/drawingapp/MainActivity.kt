@@ -4,7 +4,9 @@ import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.Dialog
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -47,7 +49,7 @@ import kotlin.random.Random
 
 
 @Suppress("DEPRECATION")
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), ILobbyUser {
 
     private var drawingView: DrawingView? = null
     private var mImageButtonCurrentPaint: ImageButton? = null
@@ -55,8 +57,15 @@ class MainActivity : AppCompatActivity() {
 
     private var lobbyId: String? = null
 
+    override var pingTimerJob: Job? = null
+    override var checkPingTimerJob: Job? = null
+    override var mPingInterval: Int = 8
+    override var mCheckPingInterval: Int = 15
+    override var sharedPref: SharedPreferences? = null
+    override var databaseMyLobby : DatabaseReference? = null
+    override var partyLeader : String? = null
+
     private var mDatabaseInstance: FirebaseDatabase? = null
-    private var mDatabaseLobby: DatabaseReference? = null
     private var mPathDatabase: DatabaseReference? = null
     private var mChatDatabase: DatabaseReference? = null
     private var mflDrawingView: FrameLayout? = null
@@ -64,7 +73,6 @@ class MainActivity : AppCompatActivity() {
     private var dbPathsCount : Int = 0
     private var mAuth : FirebaseAuth? = null
     private var mDrawerUid: String? = null
-    private var mPartyLeader: String? = null
     private var mGuessWord: String? = null
     private lateinit var mLanguage: String
     private var mPlayersMap: LinkedHashMap<String, PlayerData> = LinkedHashMap()
@@ -175,7 +183,7 @@ class MainActivity : AppCompatActivity() {
                 mHaveNotGuessedList.remove(snapshot.key)
                 if(mHaveNotGuessedList.isEmpty()){
                     lifecycleScope.launch {
-                        if(mAuth!!.currentUser!!.uid == mPartyLeader) {
+                        if(mAuth!!.currentUser!!.uid == partyLeader) {
                             nextTurn()
                         }
                     }
@@ -195,7 +203,7 @@ class MainActivity : AppCompatActivity() {
 
             mPlayerRDataList.add(PlayerRGameViewData(snapshot.key!!, playerData, snapshot.key == mDrawerUid))
             val index: Int
-            if(snapshot.key == mPartyLeader){
+            if(snapshot.key == partyLeader){
                 index = 0
                 val temp = mPlayerRDataList[0]
                 mPlayerRDataList[0] = mPlayerRDataList[mPlayerRDataList.size - 1]
@@ -209,11 +217,30 @@ class MainActivity : AppCompatActivity() {
         override fun onChildRemoved(snapshot: DataSnapshot) {
             mPlayersMap.remove(snapshot.key)
             mHaveNotDrawnList.remove(snapshot.key!!)
+            mHaveNotGuessedList.remove(snapshot.key!!)
 
-            if(snapshot.key == mPartyLeader) {
-                for (key in mPlayersMap.keys) {
-                    mDatabaseLobby!!.child("leader").setValue(key)
-                    break
+            if (snapshot.key == partyLeader){
+                val newLeader = mPlayersMap.keys.first()
+                databaseMyLobby!!.child("leader")
+                    .setValue(newLeader)
+                if(mAuth!!.currentUser!!.uid == newLeader) {
+                    databaseMyLobby!!.child("turnTimeLeft")
+                        .addListenerForSingleValueEvent(object : ValueEventListener {
+                            override fun onDataChange(snapshot: DataSnapshot) {
+                                mTurnTimerJob =
+                                    startDrawingTimer(snapshot.getValue(Int::class.java)!!)
+                            }
+
+                            override fun onCancelled(error: DatabaseError) {}
+                        })
+                }
+            }
+
+            if(snapshot.key == mDrawerUid || mHaveNotGuessedList.isEmpty()) {
+                lifecycleScope.launch {
+                    if(mAuth!!.currentUser!!.uid == partyLeader) {
+                        nextTurn()
+                    }
                 }
             }
 
@@ -226,6 +253,23 @@ class MainActivity : AppCompatActivity() {
             }
             mPlayerRDataList.removeAt(index)
             rvPlayers.adapter!!.notifyItemRemoved(index)
+
+            if(mPlayersMap.keys.count() < 2){
+                mTurnTimerJob?.cancel()
+                val alertDialogBuilder = AlertDialog.Builder(this@MainActivity)
+                alertDialogBuilder.setCancelable(false)
+                alertDialogBuilder.setTitle("All players had exit")
+                alertDialogBuilder.setMessage("You are the only one left")
+                alertDialogBuilder.setPositiveButton("Exit") { dialog, _ ->
+                    removeAllListeners()
+                    val intent = Intent()
+                    intent.setClass(this@MainActivity, MainMenuActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                    dialog.dismiss()
+                }
+                alertDialogBuilder.show()
+            }
         }
 
         override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
@@ -292,7 +336,7 @@ class MainActivity : AppCompatActivity() {
                     drawingView!!.canDraw = true
                 }
                 mCanGuess = true
-                if(mAuth!!.currentUser!!.uid == mPartyLeader){
+                if(mAuth!!.currentUser!!.uid == partyLeader){
                     mTurnTimerJob = startDrawingTimer()
                 }
             }
@@ -338,6 +382,21 @@ class MainActivity : AppCompatActivity() {
             TODO("Not yet implemented")
         }
     }
+    private val partyLeaderListener = object: ValueEventListener {
+        override fun onDataChange(dataSnapshot: DataSnapshot) {
+            partyLeader = dataSnapshot.getValue(String::class.java)!! //had to be initialized
+            if(mAuth!!.currentUser!!.uid == partyLeader){
+                val editor = sharedPref?.edit()
+                editor?.putString("lobbyId", lobbyId)
+                editor?.apply()
+            }
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            // An error occurred
+            Toast.makeText(applicationContext, "Error in setting up party leader", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     private val openGalleryLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
@@ -380,6 +439,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        sharedPref = applicationContext.getSharedPreferences(Constants.SHARED_LOBBIES_NAME, Context.MODE_PRIVATE)
+
         lobbyId = intent.getStringExtra("lobbyId")
         val reEntering = intent.getBooleanExtra("reEntering", false)
         mLanguage = intent.getStringExtra("language")!!
@@ -419,9 +480,9 @@ class MainActivity : AppCompatActivity() {
         drawingView?.mOnDrawChange!!.plusAssign(::handleDrawChange)
 
         mDatabaseInstance = FirebaseDatabase.getInstance()
-        mDatabaseLobby = mDatabaseInstance!!.getReference("lobbies").child(lobbyId!!)
-        mPathDatabase = mDatabaseLobby!!.child("paths")
-        mChatDatabase = mDatabaseLobby!!.child("guessChat")
+        databaseMyLobby = mDatabaseInstance!!.getReference("lobbies").child(lobbyId!!)
+        mPathDatabase = databaseMyLobby!!.child("paths")
+        mChatDatabase = databaseMyLobby!!.child("guessChat")
         mflDrawingView = findViewById(R.id.flDrawingViewContainer)
 
         lifecycleScope.launch {
@@ -432,6 +493,7 @@ class MainActivity : AppCompatActivity() {
             addGuessChatListener()
             addCurrentRoundListener()
             addTurnTimerListener()
+            addPartyLeaderListener()
             if(!reEntering) {
                 setupGame() //have to be before listeners
             }else{
@@ -483,6 +545,24 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onStop() {
+        pingTimerJob?.cancel()
+        checkPingTimerJob?.cancel()
+        super.onStop()
+    }
+
+    override fun onResume() {
+        lifecycleScope.launch {
+            while (databaseMyLobby == null || partyLeader == null) {
+                delay(100)
+            }
+            pingTimerJob = startPingTimer(lifecycleScope)
+            checkPingTimerJob = startPingCheckTimer(lifecycleScope, mAuth!!.currentUser!!.uid)
+            updateMyStatus()
+        }
+        super.onResume()
+    }
+
     private fun onSubmitGuess() {
         val guess = etGuessField.text.toString()
         etGuessField.text.clear()
@@ -502,23 +582,13 @@ class MainActivity : AppCompatActivity() {
 
     private suspend fun setupGame() {
         mPathDatabase!!.setValue("")
-        mDatabaseLobby!!.child("pathsCount").setValue(0)
+        databaseMyLobby!!.child("pathsCount").setValue(0)
         clearChat()
-        mDatabaseLobby!!.child("currentRound").setValue(1)
+        databaseMyLobby!!.child("currentRound").setValue(1)
         tvTurnTimer.text = mTurnTime.toString()
 
-        mDatabaseLobby!!.child("leader").addListenerForSingleValueEvent(object: ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                mPartyLeader = dataSnapshot.getValue(String::class.java)!! //had to be initialized
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                // An error occurred
-                Toast.makeText(applicationContext, "Error in setting up party leader", Toast.LENGTH_SHORT).show()
-            }
-        })
         withContext(Dispatchers.IO){
-            while(mPartyLeader == null)
+            while(partyLeader == null)
             {
                 awaitFrame()
             }
@@ -539,25 +609,26 @@ class MainActivity : AppCompatActivity() {
         drawingView!!.canDraw = false //takes the ability from all players to draw until new drawer is set
         drawingView!!.clear()
 
-        if(mAuth!!.currentUser!!.uid != mPartyLeader) return //runs exclusively on the leader
+        if(mAuth!!.currentUser!!.uid != partyLeader) return //runs exclusively on the leader
         //playersMap is set
         mTurnTimerJob?.cancel() //cancels the timer if exists
-
+        Toast.makeText(applicationContext, "Timer stoped", Toast.LENGTH_SHORT).show()
         if (mHaveNotDrawnList.isEmpty()){
             mCurrentRound++
             if(mCurrentRound > mRounds){
-                mDatabaseLobby!!.child("gamePreferences")
+                databaseMyLobby!!.child("gamePreferences")
                     .child("status").setValue(GameStatus.ended)
                 return
             }
-            mDatabaseLobby!!.child("currentRound").setValue(mCurrentRound)
+            databaseMyLobby!!.child("currentRound").setValue(mCurrentRound)
             for (key in mPlayersMap.keys){
                 mHaveNotDrawnList.add(key)
             }
         }
+        Toast.makeText(applicationContext, "Current Round ${mCurrentRound} Have not drawn ${mHaveNotDrawnList.count()}", Toast.LENGTH_SHORT).show()
 
         mPathDatabase!!.setValue("")
-        mDatabaseLobby!!.child("pathsCount").setValue(0)
+        databaseMyLobby!!.child("pathsCount").setValue(0)
 
         val selectedPlayerKey = mHaveNotDrawnList[0]
         mHaveNotDrawnList.removeAt(0)
@@ -569,19 +640,20 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        mDatabaseLobby!!.child("drawerID").setValue(selectedPlayerKey)
+        databaseMyLobby!!.child("drawerID").setValue(selectedPlayerKey)
         withContext(Dispatchers.IO){
             while(mDrawerUid == null) {
                 awaitFrame()
             }
         }
+        Toast.makeText(applicationContext, "Next Turn Ended", Toast.LENGTH_SHORT).show()
     }
 
     private fun addCurrentRoundListener() {
-        mDatabaseLobby!!.child("currentRound").addValueEventListener(currentRoundListener)
+        databaseMyLobby!!.child("currentRound").addValueEventListener(currentRoundListener)
     }
     private fun removeCurrentRoundListener() {
-        mDatabaseLobby!!.child("currentRound").removeEventListener(currentRoundListener)
+        databaseMyLobby!!.child("currentRound").removeEventListener(currentRoundListener)
     }
 
     private fun endGame() {
@@ -589,6 +661,7 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent()
         intent.putExtra("players", mPlayersMap)
         intent.putExtra("lobbyId", lobbyId)
+        intent.putExtra("partyLeader", partyLeader)
 
         removeAllListeners()
 
@@ -607,6 +680,7 @@ class MainActivity : AppCompatActivity() {
         removeGuessWordListener()
         removeTurnTimerListener()
         removePathsCountListener()
+        removePartyLeaderListener()
     }
 
     private fun chooseWord() {
@@ -655,7 +729,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setGuessWord(word: String, dialog: Dialog) {
-        mDatabaseLobby!!.child("guessWord").setValue(word).addOnCompleteListener{
+        databaseMyLobby!!.child("guessWord").setValue(word).addOnCompleteListener{
             dialog.dismiss()
         }
     }
@@ -686,6 +760,8 @@ class MainActivity : AppCompatActivity() {
         chooseWord()
     }
 
+    override fun onLeaderDisconnected() {}
+
     private fun addPathsValueListener() {
         mPathDatabase!!.addChildEventListener(pathsChildListener)
     }
@@ -694,45 +770,45 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun addGuessWordListener() {
-        mDatabaseLobby!!.child("guessWord").addValueEventListener(guessWordListener)
+        databaseMyLobby!!.child("guessWord").addValueEventListener(guessWordListener)
     }
     private fun removeGuessWordListener() {
-        mDatabaseLobby!!.child("guessWord").removeEventListener(guessWordListener)
+        databaseMyLobby!!.child("guessWord").removeEventListener(guessWordListener)
     }
 
     private fun addDrawerIdListener() {
-        mDatabaseLobby!!.child("drawerID").addValueEventListener(drawerIdListener)
+        databaseMyLobby!!.child("drawerID").addValueEventListener(drawerIdListener)
     }
     private fun removeDrawerIdListener() {
-        mDatabaseLobby!!.child("drawerID").removeEventListener(drawerIdListener)
+        databaseMyLobby!!.child("drawerID").removeEventListener(drawerIdListener)
     }
 
     private fun addGameStatusListener() {
-        mDatabaseLobby!!.child("gamePreferences").addValueEventListener(gameStatusListener)
+        databaseMyLobby!!.child("gamePreferences").addValueEventListener(gameStatusListener)
     }
     private fun removeGameStatusListener() {
-        mDatabaseLobby!!.child("gamePreferences").removeEventListener(gameStatusListener)
+        databaseMyLobby!!.child("gamePreferences").removeEventListener(gameStatusListener)
     }
 
     private fun addPathsCountListener() {
-        mDatabaseLobby!!.child("pathsCount").addValueEventListener(pathCountListener)
+        databaseMyLobby!!.child("pathsCount").addValueEventListener(pathCountListener)
     }
     private fun removePathsCountListener() {
-        mDatabaseLobby!!.child("pathsCount").removeEventListener(pathCountListener)
+        databaseMyLobby!!.child("pathsCount").removeEventListener(pathCountListener)
     }
 
     private fun addTurnTimerListener() {
-        mDatabaseLobby!!.child("turnTimeLeft").addValueEventListener(turnTimerListener)
+        databaseMyLobby!!.child("turnTimeLeft").addValueEventListener(turnTimerListener)
     }
     private fun removeTurnTimerListener() {
-        mDatabaseLobby!!.child("turnTimeLeft").removeEventListener(turnTimerListener)
+        databaseMyLobby!!.child("turnTimeLeft").removeEventListener(turnTimerListener)
     }
 
     private fun addPlayersListener() {
-        mDatabaseLobby!!.child("players").addChildEventListener(playersListener)
+        databaseMyLobby!!.child("players").addChildEventListener(playersListener)
     }
     private fun removePlayersListener() {
-        mDatabaseLobby!!.child("players").removeEventListener(playersListener)
+        databaseMyLobby!!.child("players").removeEventListener(playersListener)
     }
     private fun addGuessChatListener() {
         mChatDatabase!!.addChildEventListener(guessChatListener)
@@ -740,10 +816,16 @@ class MainActivity : AppCompatActivity() {
     private fun removeGuessChatListener() {
         mChatDatabase!!.removeEventListener(guessChatListener)
     }
+    private fun addPartyLeaderListener() {
+        databaseMyLobby!!.child("leader").addValueEventListener(partyLeaderListener)
+    }
+    private fun removePartyLeaderListener() {
+        databaseMyLobby!!.child("leader").removeEventListener(partyLeaderListener)
+    }
 
 
     private fun updatePlayerData(playerId: String, newData: PlayerData){
-        mDatabaseLobby!!.child("players").child(playerId)
+        databaseMyLobby!!.child("players").child(playerId)
             .setValue(newData)
     }
 
@@ -757,26 +839,26 @@ class MainActivity : AppCompatActivity() {
         rvChat.adapter!!.notifyDataSetChanged()
     }
 
-    private fun startDrawingTimer(): Job {
-        mTimeLeft = mTurnTime
+    private fun startDrawingTimer(time: Int = mTurnTime): Job {
+        mTimeLeft = time
         tvTurnTimer.text = mTimeLeft.toString()
-        mDatabaseLobby!!.child("turnTimeLeft").setValue(mTimeLeft)
+        databaseMyLobby!!.child("turnTimeLeft").setValue(mTimeLeft)
         return lifecycleScope.launch {
             while (isActive && mTimeLeft > 0){ //if 0 than time out
                 delay(1000L)
                 mTimeLeft--
-                mDatabaseLobby!!.child("turnTimeLeft").setValue(mTimeLeft)
+                databaseMyLobby!!.child("turnTimeLeft").setValue(mTimeLeft)
             }
         }
     }
 
     private fun handleDrawChange(myPathsCount : Int){
         count++
-        mDatabaseLobby!!.child("count").setValue(count)
+        databaseMyLobby!!.child("count").setValue(count)
 
 
         if(dbPathsCount != myPathsCount){
-            mDatabaseLobby!!.child("pathsCount").setValue(myPathsCount)
+            databaseMyLobby!!.child("pathsCount").setValue(myPathsCount)
         }
 
         if(dbPathsCount < myPathsCount){
@@ -968,4 +1050,5 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent.createChooser(shareIntent, "Share"))
         }
     }
+
 }
