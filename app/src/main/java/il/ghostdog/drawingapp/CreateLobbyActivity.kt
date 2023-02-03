@@ -2,7 +2,9 @@ package il.ghostdog.drawingapp
 
 import android.app.AlertDialog
 import android.app.Dialog
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
@@ -11,6 +13,7 @@ import android.widget.LinearLayout
 import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -28,14 +31,16 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
     private var customProgressDialog: Dialog? = null
 
     private var mAuth : FirebaseAuth? = null
-    private var databaseMyLobby : DatabaseReference? = null
+
     private var databaseUsers : DatabaseReference? = null
-    private var partyLeader : String? = null
 
     override var pingTimerJob: Job? = null
     override var checkPingTimerJob: Job? = null
     override var mPingInterval: Int = 8
     override var mCheckPingInterval: Int = 15
+    override var sharedPref: SharedPreferences? = null
+    override var databaseMyLobby : DatabaseReference? = null
+    override var partyLeader : String? = null
 
     private lateinit var rvPlayers: RecyclerView
     private var playerRViewDataList : ArrayList<PlayerRViewData> = ArrayList()
@@ -105,10 +110,23 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
             TODO("Not yet implemented")
         }
     }
+    private val leaderListener = object : ValueEventListener{
+        override fun onDataChange(snapshot: DataSnapshot) {
+            partyLeader = snapshot.getValue(String::class.java)
+            if(partyLeader == mAuth!!.currentUser!!.uid){
+                setUpLeader()
+            }
+        }
+        override fun onCancelled(error: DatabaseError) {
+            TODO("Not yet implemented")
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_create_lobby)
+
+        sharedPref = applicationContext.getSharedPreferences(Constants.SHARED_LOBBIES_NAME, Context.MODE_PRIVATE)
 
         lobbyId = intent.getStringExtra("lobbyId")
 
@@ -138,9 +156,6 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
         rvPlayers.adapter = PlayerRecyclerAdapter(playerRViewDataList, this)
         rvPlayers.layoutManager = GridLayoutManager(this@CreateLobbyActivity, 2)
 
-        pingTimerJob = startPingTimer()
-        checkPingTimerJob = startPingCheckTimer()
-
         lifecycleScope.launch {
             setUpLobby()
         }
@@ -162,6 +177,7 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
         intent.putExtra("rounds", gamePreferences.rounds)
         intent.putExtra("turnTime", gamePreferences.turnTime)
         databaseMyLobby!!.child("players").removeEventListener(playersChildListener)
+        removeLeaderListener()
         startActivity(intent)
         finish()
     }
@@ -182,23 +198,14 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
 
     private suspend fun setUpLobby(){
         showProgressDialog()
-        databaseMyLobby!!.child("leader").addListenerForSingleValueEvent(object : ValueEventListener{
-            override fun onDataChange(snapshot: DataSnapshot) {
-                partyLeader = snapshot.getValue(String::class.java)
-            }
-            override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
-            }
-        })
+        addLeaderListener()
         withContext(Dispatchers.IO){
             while(partyLeader == null)
             {
                 awaitFrame()
             }
         }
-        if(partyLeader == mAuth!!.currentUser!!.uid){
-            setUpLeader()
-        }else{
+        if(partyLeader != mAuth!!.currentUser!!.uid){
             setUpPlayer()
         }
         databaseUsers!!.child(mAuth!!.currentUser!!.uid).addListenerForSingleValueEvent(object : ValueEventListener{
@@ -218,10 +225,17 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
         cancelProgressDialog()
     }
 
+    private fun addLeaderListener() {
+        databaseMyLobby!!.child("leader").addValueEventListener(leaderListener)
+    }
+    private fun removeLeaderListener() {
+        databaseMyLobby!!.child("leader").removeEventListener(leaderListener)
+    }
+
     private fun setUpPlayer() {
         databaseMyLobby!!.child("leader").addListenerForSingleValueEvent(object: ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
-                partyLeader = dataSnapshot.getValue(String::class.java)!! //had to be initialized
+                partyLeader = dataSnapshot.getValue(String::class.java)!!
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -247,11 +261,12 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
     }
 
     private fun setUpLeader() {
-        //databaseMyLobby!!.child("leader").setValue(mAuth!!.currentUser!!.uid)
         gamePreferences.status = GameStatus.preparing
         databaseMyLobby!!.child("gamePreferences").setValue(gamePreferences)
 
-        partyLeader = mAuth!!.currentUser!!.uid
+        val editor = sharedPref?.edit()
+        editor?.putString("lobbyId", lobbyId)
+        editor?.apply()
 
         findViewById<LinearLayout>(R.id.llGamePreferences).visibility = View.VISIBLE
         tvRounds.text = gamePreferences.rounds.toString()
@@ -306,32 +321,16 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
         }
     }
 
-    override fun startPingTimer(): Job {
-        pingTimerJob?.cancel()
-        return lifecycleScope.launch {
-            while (isActive){
-                delay((mPingInterval * 1000).toLong())
-                updateMyStatus(databaseMyLobby!!, partyLeader!!)
-            }
-        }
-    }
-
-    override fun startPingCheckTimer(): Job {
-        checkPingTimerJob?.cancel()
-        return lifecycleScope.launch {
-            while(isActive){
-                delay((mCheckPingInterval * 1000).toLong())
-                if(mAuth!!.currentUser!!.uid == partyLeader!!) {
-                    checkPlayersStatus(databaseMyLobby!!, partyLeader!!)
-                }else{
-                    checkLeaderStatus(databaseMyLobby!!, partyLeader!!)
-                }
-            }
-        }
-    }
-
     override fun onLeaderDisconnected() {
-        TODO("Not yet implemented")
+        Toast.makeText(applicationContext, "Leader disconnected", Toast.LENGTH_SHORT).show()
+        for(key in playersMap.keys){
+            if(partyLeader != key){
+                if(mAuth!!.currentUser!!.uid != key) return
+                databaseMyLobby!!.child("leader")
+                    .setValue(mAuth!!.currentUser!!.uid)
+                return
+            }
+        }
     }
 
     override fun onStop() {
@@ -341,14 +340,14 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
     }
 
     override fun onResume() {
-        pingTimerJob = startPingTimer()
-        checkPingTimerJob = startPingCheckTimer()
+        lifecycleScope.launch {
+            while (databaseMyLobby == null || partyLeader == null) {
+                delay(100)
+            }
+            pingTimerJob = startPingTimer(lifecycleScope)
+            checkPingTimerJob = startPingCheckTimer(lifecycleScope, mAuth!!.currentUser!!.uid)
+            updateMyStatus()
+        }
         super.onResume()
-    }
-
-    override fun onDestroy() {
-        pingTimerJob?.cancel()
-        checkPingTimerJob?.cancel()
-        super.onDestroy()
     }
 }

@@ -1,5 +1,6 @@
 package il.ghostdog.drawingapp
 
+import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -17,6 +18,8 @@ class MainMenuActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main_menu)
+
+        cleanPastLobbies()
 
         val dbR = FirebaseDatabase.getInstance().getReference("guessWords")
         dbR.addListenerForSingleValueEvent(object : ValueEventListener{
@@ -40,6 +43,25 @@ class MainMenuActivity : AppCompatActivity() {
 
         val btnSignOut = findViewById<Button>(R.id.btnSignOut)
         btnSignOut.setOnClickListener{ onSignOut()}
+    }
+
+    private fun cleanPastLobbies() {
+        val sharedPref = applicationContext.getSharedPreferences(Constants.SHARED_LOBBIES_NAME, Context.MODE_PRIVATE)
+        val lobbyIdToDelete = sharedPref.getString("lobbyId","E")
+        if(lobbyIdToDelete != null && lobbyIdToDelete != "E"){
+            val dbLobby = FirebaseDatabase.getInstance().getReference("lobbies").child(lobbyIdToDelete)
+            dbLobby.child("leader").addListenerForSingleValueEvent(object :  ValueEventListener{
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    if (snapshot.value == FirebaseAuth.getInstance().currentUser!!.uid){
+                        dbLobby.removeValue()
+                    }
+                    val editor = sharedPref?.edit()
+                    editor?.remove("lobbyId")
+                    editor?.apply()
+                }
+                override fun onCancelled(error: DatabaseError) {}
+            })
+        }
     }
 
     private fun onJoinLobbyClicked() {

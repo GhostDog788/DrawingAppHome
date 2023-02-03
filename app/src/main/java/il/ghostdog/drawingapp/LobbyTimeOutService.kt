@@ -34,7 +34,7 @@ class LobbyTimeOutService : Service() {
         handler = Handler()
         runnable = Runnable {
             Toast.makeText(applicationContext, "Timer is finished! $lobbyId $playerId", Toast.LENGTH_SHORT).show()
-            ConnectionHelper().disconnectPlayerFromLobby(lobbyId!!, playerId!!)
+            ConnectionHelper.disconnectPlayerFromLobby(lobbyId!!, playerId!!)
         }
         handler.postDelayed(runnable, 10000)
 

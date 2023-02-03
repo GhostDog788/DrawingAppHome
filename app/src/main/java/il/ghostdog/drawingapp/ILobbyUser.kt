@@ -1,11 +1,16 @@
 package il.ghostdog.drawingapp
 
+import android.content.SharedPreferences
+import androidx.lifecycle.LifecycleCoroutineScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ValueEventListener
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -16,74 +21,82 @@ interface ILobbyUser {
     var checkPingTimerJob: Job?
     var mPingInterval: Int
     var mCheckPingInterval: Int
+    var partyLeader: String?
+    var databaseMyLobby: DatabaseReference?
+    var sharedPref: SharedPreferences?
 
-    fun startPingTimer() : Job
-    fun startPingCheckTimer() : Job
+    fun startPingTimer(scope: LifecycleCoroutineScope): Job {
+        pingTimerJob?.cancel()
+        return scope.launch {
+            while (isActive){
+                delay((mPingInterval * 1000).toLong())
+                updateMyStatus()
+            }
+        }
+    }
+    fun startPingCheckTimer(scope: LifecycleCoroutineScope, playerId: String): Job {
+        checkPingTimerJob?.cancel()
+        return scope.launch {
+            while(isActive){
+                delay((mCheckPingInterval * 1000).toLong())
+                if (playerId == partyLeader) {
+                    checkPlayersStatus()
+                } else {
+                    checkLeaderStatus()
+                }
+            }
+        }
+    }
 
-    fun updateMyStatus(databaseMyLobby: DatabaseReference, partyLeader: String){
-        databaseMyLobby.child("playersStatus").child(FirebaseAuth.getInstance().currentUser!!.uid).setValue(1)
-
+    fun updateMyStatus(){
         if(FirebaseAuth.getInstance().currentUser!!.uid == partyLeader){
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
             val current = LocalDateTime.now().format(formatter)
-            databaseMyLobby.child("playersStatus").child(FirebaseAuth.getInstance().currentUser!!.uid)
+            databaseMyLobby!!.child("playersStatus").child(FirebaseAuth.getInstance().currentUser!!.uid)
                 .setValue(current)
         }else{
-            databaseMyLobby.child("playersStatus").child(FirebaseAuth.getInstance().currentUser!!.uid).setValue(1)
+            databaseMyLobby!!.child("playersStatus").child(FirebaseAuth.getInstance().currentUser!!.uid).setValue(1)
         }
     }
-    fun checkPlayersStatus(databaseMyLobby: DatabaseReference, partyLeader: String){
+    fun checkPlayersStatus(){
         if(FirebaseAuth.getInstance().currentUser!!.uid != partyLeader) return
-        databaseMyLobby.child("playersStatus").addListenerForSingleValueEvent(object :
+        databaseMyLobby!!.child("playersStatus").addListenerForSingleValueEvent(object :
             ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 for (player in snapshot.children){
                     if(player.key != partyLeader){
                         if(player.value == 0L){
-                            kickPlayer(databaseMyLobby, player.key!!)
+                            ConnectionHelper.disconnectPlayerFromLobby(databaseMyLobby!!, player.key!!)
                         }else if(player.value == 1L){
-                            databaseMyLobby.child("playersStatus").child(player.key!!)
+                            databaseMyLobby!!.child("playersStatus").child(player.key!!)
                                 .setValue(0)
                         }
                     }
                 }
             }
-
-            override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
-            }
+            override fun onCancelled(error: DatabaseError) {}
         })
     }
-    fun checkLeaderStatus(databaseMyLobby: DatabaseReference, partyLeader: String){
+    fun checkLeaderStatus(){
         if(FirebaseAuth.getInstance().currentUser!!.uid == partyLeader) return
-        databaseMyLobby.child("playersStatus").child(partyLeader).addListenerForSingleValueEvent(object :
+        databaseMyLobby!!.child("playersStatus").child(partyLeader!!).addListenerForSingleValueEvent(object :
             ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val timeString = snapshot.getValue(String::class.java)!!
+                val timeString = snapshot.getValue(String::class.java) ?: return
                 val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
                 val dateTimeLastLeader = LocalDateTime.parse(timeString, formatter)
                 val dateTimeCurrent = LocalDateTime.now()
                 val difference = (dateTimeCurrent.toEpochSecond(ZoneOffset.UTC) - dateTimeLastLeader.toEpochSecond(ZoneOffset.UTC))
                 if(difference > mCheckPingInterval){
-                    kickLeader(databaseMyLobby, partyLeader)
+                    ConnectionHelper.disconnectPlayerFromLobby(databaseMyLobby!!, partyLeader!!)
+                    onLeaderDisconnected()
                 }
             }
 
-            override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
-            }
+            override fun onCancelled(error: DatabaseError) {}
         })
-    }
-
-    fun kickLeader(databaseMyLobby: DatabaseReference, partyLeader: String) {
-        databaseMyLobby.child("players").child(partyLeader).removeValue()
-        databaseMyLobby.child("playersStatus").child(partyLeader).removeValue()
     }
 
     fun onLeaderDisconnected()
 
-    fun kickPlayer(databaseMyLobby: DatabaseReference, playerId: String) {
-        databaseMyLobby.child("players").child(playerId ).removeValue()
-        databaseMyLobby.child("playersStatus").child(playerId ).removeValue()
-    }
 }
