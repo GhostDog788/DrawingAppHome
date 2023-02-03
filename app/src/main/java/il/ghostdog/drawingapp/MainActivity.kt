@@ -107,7 +107,6 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
                 drawingView!!.invalidate()
             }
         }
-
         override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
             if(drawingView!!.mPaths.isEmpty()) return
 
@@ -119,7 +118,6 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
 
             drawingView!!.invalidate()
         }
-
         override fun onChildRemoved(snapshot: DataSnapshot) {
             if(drawingView!!.mPaths.isEmpty()) return
 
@@ -129,19 +127,16 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
                 drawingView!!.invalidate()
             }
         }
-
-        override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
-            TODO("Not yet implemented")
-        }
-
-        override fun onCancelled(error: DatabaseError) {
-            TODO("Not yet implemented")
-        }
+        override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+        override fun onCancelled(error: DatabaseError) {}
     }
     private val drawerIdListener = object : ValueEventListener{
         override fun onDataChange(snapshot: DataSnapshot) {
             mDrawerUid = snapshot.getValue(String::class.java)
             if(mDrawerUid == null) return
+
+            mHaveNotDrawnList.remove(mDrawerUid)
+            mHaveNotGuessedList.remove(mDrawerUid)
 
             var i = 0
             while(i < mPlayerRDataList.size){
@@ -150,29 +145,14 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
                 i++
             }
 
-            if(mAuth!!.currentUser!!.uid == mDrawerUid)
-            {
+            if(mAuth!!.currentUser!!.uid == mDrawerUid){
                 setUpDrawer()
             }else{
                 setUpGuesser()
             }
         }
 
-        override fun onCancelled(error: DatabaseError) {
-            TODO("Not yet implemented")
-        }
-    }
-    private val gameStatusListener = object : ValueEventListener{
-        override fun onDataChange(snapshot: DataSnapshot) {
-            val gamePreferences = snapshot.getValue<GamePreferences>()
-            if (gamePreferences!!.status == GameStatus.ended){
-                endGame()
-            }
-        }
-
-        override fun onCancelled(error: DatabaseError) {
-            TODO("Not yet implemented")
-        }
+        override fun onCancelled(error: DatabaseError) {}
     }
     private val playersListener = object : ChildEventListener{
         override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
@@ -182,11 +162,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
             if(playerData.answeredCorrectly){
                 mHaveNotGuessedList.remove(snapshot.key)
                 if(mHaveNotGuessedList.isEmpty()){
-                    lifecycleScope.launch {
-                        if(mAuth!!.currentUser!!.uid == partyLeader) {
-                            nextTurn()
-                        }
-                    }
+                    nextTurn()
                 }
             }
 
@@ -237,11 +213,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
             }
 
             if(snapshot.key == mDrawerUid || mHaveNotGuessedList.isEmpty()) {
-                lifecycleScope.launch {
-                    if(mAuth!!.currentUser!!.uid == partyLeader) {
-                        nextTurn()
-                    }
-                }
+                nextTurn()
             }
 
             var index = 0
@@ -302,10 +274,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
             tvTurnTimer.text = mTimeLeft.toString()
 
             if(mTimeLeft == 0){
-                Toast.makeText(applicationContext, "Time ended", Toast.LENGTH_SHORT).show()
-                lifecycleScope.launch {
-                    nextTurn()
-                }
+                nextTurn()
             }
         }
 
@@ -365,17 +334,6 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
 
         override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
             TODO("Not yet implemented")
-        }
-
-        override fun onCancelled(error: DatabaseError) {
-            TODO("Not yet implemented")
-        }
-    }
-    private val currentRoundListener = object : ValueEventListener{
-        override fun onDataChange(snapshot: DataSnapshot) {
-            val value = snapshot.getValue(Int::class.java) ?: return
-            mCurrentRound = value
-            updateRoundsDisplay()
         }
 
         override fun onCancelled(error: DatabaseError) {
@@ -488,10 +446,8 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
         lifecycleScope.launch {
             addPlayersListener()
             addDrawerIdListener()
-            addGameStatusListener()
             addGuessWordListener()
             addGuessChatListener()
-            addCurrentRoundListener()
             addTurnTimerListener()
             addPartyLeaderListener()
             if(!reEntering) {
@@ -604,60 +560,43 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
         TODO("After service is implemented")
     }
 
-    private suspend fun nextTurn() {
+    private fun nextTurn() {
         mCanGuess = false
         drawingView!!.canDraw = false //takes the ability from all players to draw until new drawer is set
         drawingView!!.clear()
 
-        if(mAuth!!.currentUser!!.uid != partyLeader) return //runs exclusively on the leader
-        //playersMap is set
         mTurnTimerJob?.cancel() //cancels the timer if exists
-        Toast.makeText(applicationContext, "Timer stoped", Toast.LENGTH_SHORT).show()
         if (mHaveNotDrawnList.isEmpty()){
             mCurrentRound++
+            updateRoundsDisplay()
             if(mCurrentRound > mRounds){
-                databaseMyLobby!!.child("gamePreferences")
-                    .child("status").setValue(GameStatus.ended)
+                if(mAuth!!.currentUser!!.uid != partyLeader) {
+                    databaseMyLobby!!.child("gamePreferences")
+                        .child("status").setValue(GameStatus.ended)
+                }
+                endGame()
                 return
             }
-            databaseMyLobby!!.child("currentRound").setValue(mCurrentRound)
             for (key in mPlayersMap.keys){
                 mHaveNotDrawnList.add(key)
             }
         }
-        Toast.makeText(applicationContext, "Current Round ${mCurrentRound} Have not drawn ${mHaveNotDrawnList.count()}", Toast.LENGTH_SHORT).show()
 
-        mPathDatabase!!.setValue("")
-        databaseMyLobby!!.child("pathsCount").setValue(0)
+        if(mAuth!!.currentUser!!.uid != partyLeader) {
+            mPathDatabase!!.setValue("")
+            databaseMyLobby!!.child("pathsCount").setValue(0)
 
-        val selectedPlayerKey = mHaveNotDrawnList[0]
-        mHaveNotDrawnList.removeAt(0)
+            val selectedPlayerKey = mHaveNotDrawnList[0]
+            databaseMyLobby!!.child("drawerID").setValue(selectedPlayerKey)
+        }
 
         mHaveNotGuessedList.clear()
-        for(playerId in mPlayersMap.keys){
-            if(playerId != selectedPlayerKey){
-                mHaveNotGuessedList.add(playerId)
-            }
+        for (playerId in mPlayersMap.keys) {
+            mHaveNotGuessedList.add(playerId)
         }
-
-        databaseMyLobby!!.child("drawerID").setValue(selectedPlayerKey)
-        withContext(Dispatchers.IO){
-            while(mDrawerUid == null) {
-                awaitFrame()
-            }
-        }
-        Toast.makeText(applicationContext, "Next Turn Ended", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun addCurrentRoundListener() {
-        databaseMyLobby!!.child("currentRound").addValueEventListener(currentRoundListener)
-    }
-    private fun removeCurrentRoundListener() {
-        databaseMyLobby!!.child("currentRound").removeEventListener(currentRoundListener)
     }
 
     private fun endGame() {
-        Toast.makeText(applicationContext, "Game Ended", Toast.LENGTH_SHORT).show()
         val intent = Intent()
         intent.putExtra("players", mPlayersMap)
         intent.putExtra("lobbyId", lobbyId)
@@ -674,8 +613,6 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
         removeDrawerIdListener()
         removePathsValueListener()
         removePlayersListener()
-        removeGameStatusListener()
-        removeCurrentRoundListener()
         removeGuessChatListener()
         removeGuessWordListener()
         removeTurnTimerListener()
@@ -781,13 +718,6 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
     }
     private fun removeDrawerIdListener() {
         databaseMyLobby!!.child("drawerID").removeEventListener(drawerIdListener)
-    }
-
-    private fun addGameStatusListener() {
-        databaseMyLobby!!.child("gamePreferences").addValueEventListener(gameStatusListener)
-    }
-    private fun removeGameStatusListener() {
-        databaseMyLobby!!.child("gamePreferences").removeEventListener(gameStatusListener)
     }
 
     private fun addPathsCountListener() {
