@@ -12,23 +12,7 @@ class ConnectionHelper {
         fun disconnectPlayerFromLobby(lobbyId: String, playerId: String) {
             val databaseInstance = FirebaseDatabase.getInstance()
             val lobbyDB = databaseInstance.getReference("lobbies").child(lobbyId)
-
-            lobbyDB.child("playersStatus").child(playerId).removeValue()
-            lobbyDB.child("players").child(playerId).removeValue().addOnSuccessListener {
-                lobbyDB.child("players")
-                    .addListenerForSingleValueEvent(object : ValueEventListener {
-                        override fun onDataChange(snapshot: DataSnapshot) {
-                            if (snapshot.childrenCount == 0L) {
-                                //all players left
-                                lobbyDB.removeValue()
-                            }
-                        }
-
-                        override fun onCancelled(error: DatabaseError) {
-                            TODO("Not yet implemented")
-                        }
-                    })
-            }
+            disconnectPlayerFromLobby(lobbyDB, playerId)
         }
         fun disconnectPlayerFromLobby(databaseMyLobby: DatabaseReference, playerId: String) {
             databaseMyLobby.child("playersStatus").child(playerId).removeValue()

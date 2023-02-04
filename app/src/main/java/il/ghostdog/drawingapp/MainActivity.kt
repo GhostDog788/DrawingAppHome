@@ -108,7 +108,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
             }
         }
         override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
-            if(drawingView!!.mPaths.isEmpty()) return
+            if(drawingView!!.mPaths.isEmpty() || snapshot.key!!.toInt() >= drawingView!!.mPaths.size) return
 
             val encoded = snapshot.getValue(String::class.java) ?: return
             val data = unGzip(encoded)
@@ -119,7 +119,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
             drawingView!!.invalidate()
         }
         override fun onChildRemoved(snapshot: DataSnapshot) {
-            if(drawingView!!.mPaths.isEmpty()) return
+            if(drawingView!!.mPaths.isEmpty() || snapshot.key!!.toInt() >= drawingView!!.mPaths.size) return
 
             if(dbPathsCount < drawingView!!.mPaths.size) {
                 drawingView!!.mPaths.removeAt(snapshot.key!!.toInt())
@@ -212,10 +212,6 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
                 }
             }
 
-            if(snapshot.key == mDrawerUid || mHaveNotGuessedList.isEmpty()) {
-                nextTurn()
-            }
-
             var index = 0
             while(index < mPlayerRDataList.size) {
                 if(mPlayerRDataList[index].userId == snapshot.key!!){
@@ -233,6 +229,8 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
                 alertDialogBuilder.setTitle("All players had exit")
                 alertDialogBuilder.setMessage("You are the only one left")
                 alertDialogBuilder.setPositiveButton("Exit") { dialog, _ ->
+                    ConnectionHelper.disconnectPlayerFromLobby(databaseMyLobby!!
+                        ,mAuth!!.currentUser!!.uid)
                     removeAllListeners()
                     val intent = Intent()
                     intent.setClass(this@MainActivity, MainMenuActivity::class.java)
@@ -241,6 +239,11 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
                     dialog.dismiss()
                 }
                 alertDialogBuilder.show()
+                return
+            }
+
+            if(snapshot.key == mDrawerUid || mHaveNotGuessedList.isEmpty()) {
+                nextTurn()
             }
         }
 
@@ -568,6 +571,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
         mTurnTimerJob?.cancel() //cancels the timer if exists
         if (mHaveNotDrawnList.isEmpty()){
             mCurrentRound++
+            databaseMyLobby!!.child("currentRound").setValue(1)
             updateRoundsDisplay()
             if(mCurrentRound > mRounds){
                 if(mAuth!!.currentUser!!.uid != partyLeader) {

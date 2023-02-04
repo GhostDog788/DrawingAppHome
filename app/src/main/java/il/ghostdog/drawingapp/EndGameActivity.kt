@@ -38,6 +38,7 @@ class EndGameActivity : AppCompatActivity(), ILobbyUser {
 
         mPlayersMap = intent.getSerializableExtra("players") as HashMap<String, PlayerData>
         lobbyId = intent.getStringExtra("lobbyId")!!
+        partyLeader = intent.getStringExtra("partyLeader")
         databaseMyLobby = FirebaseDatabase.getInstance().getReference("lobbies").child(lobbyId!!)
 
         setUpWinners()
@@ -49,16 +50,16 @@ class EndGameActivity : AppCompatActivity(), ILobbyUser {
     private fun setUpWinners() {
         val orderedByPoints = mPlayersMap.toList().sortedBy { pair -> pair.second.points }
         val firstPlayer = orderedByPoints[orderedByPoints.lastIndex]
-        val secondPlayer = orderedByPoints[orderedByPoints.lastIndex - 1]
-
         findViewById<TextView>(R.id.tvName1).text = firstPlayer.second.name
         findViewById<TextView>(R.id.tvPoints1).text = firstPlayer.second.points.toString()
 
-        findViewById<TextView>(R.id.tvName2).text = secondPlayer.second.name
-        findViewById<TextView>(R.id.tvPoints2).text = secondPlayer.second.points.toString()
+        if(orderedByPoints.size > 1) {
+            val secondPlayer = orderedByPoints[orderedByPoints.lastIndex - 1]
+            findViewById<TextView>(R.id.tvName2).text = secondPlayer.second.name
+            findViewById<TextView>(R.id.tvPoints2).text = secondPlayer.second.points.toString()
+        }
 
-        if(orderedByPoints.size > 2)
-        {
+        if(orderedByPoints.size > 2) {
             val thirdPlayer = orderedByPoints[orderedByPoints.lastIndex - 2]
             findViewById<TextView>(R.id.tvName3).text = thirdPlayer.second.name
             findViewById<TextView>(R.id.tvPoints3).text = thirdPlayer.second.points.toString()
@@ -67,11 +68,28 @@ class EndGameActivity : AppCompatActivity(), ILobbyUser {
 
     private fun exitGame() {
         val uid = FirebaseAuth.getInstance().currentUser!!.uid
+        if(uid == partyLeader){
+            setNewLeader()
+            return
+        }
         ConnectionHelper.disconnectPlayerFromLobby(databaseMyLobby!!, uid)
         val intent = Intent()
         intent.setClass(this@EndGameActivity, MainMenuActivity::class.java)
         startActivity(intent)
         finish()
+    }
+
+    private fun setNewLeader() {
+        val uid = FirebaseAuth.getInstance().currentUser!!.uid
+        mPlayersMap.remove(uid)
+        databaseMyLobby!!.child("leader")
+            .setValue(mPlayersMap.keys.first()).addOnCompleteListener{
+                ConnectionHelper.disconnectPlayerFromLobby(databaseMyLobby!!, uid)
+                val intent = Intent()
+                intent.setClass(this@EndGameActivity, MainMenuActivity::class.java)
+                startActivity(intent)
+                finish()
+            }
     }
 
     private fun backToLobby() {
