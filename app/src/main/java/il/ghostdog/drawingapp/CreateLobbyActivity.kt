@@ -82,6 +82,7 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
             if(snapshot.key == mAuth!!.currentUser!!.uid){
                 //player have been kicked
                 Toast.makeText(applicationContext, "you have been kicked", Toast.LENGTH_SHORT).show()
+                removeAllListeners()
                 startActivity(Intent(this@CreateLobbyActivity, MainMenuActivity::class.java))
                 finish()
             }
@@ -120,6 +121,17 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
         override fun onCancelled(error: DatabaseError) {
             TODO("Not yet implemented")
         }
+    }
+    private val gamesPreferencesListener = object : ValueEventListener{
+        override fun onDataChange(snapshot: DataSnapshot) {
+            val data = snapshot.getValue(GamePreferences::class.java) ?: return
+            gamePreferences = data
+
+            if (gamePreferences.status == GameStatus.active){
+                onStartGame()
+            }
+        }
+        override fun onCancelled(error: DatabaseError) {}
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -176,8 +188,7 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
         intent.putExtra("language", gamePreferences.language)
         intent.putExtra("rounds", gamePreferences.rounds)
         intent.putExtra("turnTime", gamePreferences.turnTime)
-        databaseMyLobby!!.child("players").removeEventListener(playersChildListener)
-        removeLeaderListener()
+        removeAllListeners()
         startActivity(intent)
         finish()
     }
@@ -220,16 +231,9 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
             }
         })
         //calls to all players at start + new ones
-        databaseMyLobby!!.child("players").addChildEventListener(playersChildListener)
+        addPlayerChildListener()
 
         cancelProgressDialog()
-    }
-
-    private fun addLeaderListener() {
-        databaseMyLobby!!.child("leader").addValueEventListener(leaderListener)
-    }
-    private fun removeLeaderListener() {
-        databaseMyLobby!!.child("leader").removeEventListener(leaderListener)
     }
 
     private fun setUpPlayer() {
@@ -244,20 +248,7 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
             }
         })
 
-        databaseMyLobby!!.child("gamePreferences").addValueEventListener(object : ValueEventListener{
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val data = snapshot.getValue(GamePreferences::class.java) ?: return
-                gamePreferences = data
-
-                if (gamePreferences.status == GameStatus.active){
-                    onStartGame()
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
-            }
-        })
+        addGamePreferencesListener()
     }
 
     private fun setUpLeader() {
@@ -275,6 +266,32 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
         val btnCreate = findViewById<Button>(R.id.btnStartGame)
         btnCreate.visibility = View.VISIBLE
         btnCreate.setOnClickListener{ onStartGame()}
+    }
+
+    private fun addPlayerChildListener(){
+        databaseMyLobby!!.child("players").addChildEventListener(playersChildListener)
+    }
+    private fun removePlayerChildListener(){
+        databaseMyLobby!!.child("players").removeEventListener(playersChildListener)
+    }
+    private fun addGamePreferencesListener() {
+        databaseMyLobby!!.child("gamePreferences")
+            .addValueEventListener(gamesPreferencesListener)
+    }
+    private fun removeGamePreferencesListener() {
+        databaseMyLobby!!.child("gamePreferences")
+            .removeEventListener(gamesPreferencesListener)
+    }
+    private fun addLeaderListener() {
+        databaseMyLobby!!.child("leader").addValueEventListener(leaderListener)
+    }
+    private fun removeLeaderListener() {
+        databaseMyLobby!!.child("leader").removeEventListener(leaderListener)
+    }
+    private fun removeAllListeners(){
+        removePlayerChildListener()
+        removeLeaderListener()
+        removeGamePreferencesListener()
     }
 
     override fun onItemClicked(position: Int) {

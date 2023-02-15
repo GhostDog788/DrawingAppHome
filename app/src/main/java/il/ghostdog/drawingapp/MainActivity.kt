@@ -33,7 +33,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
-import com.google.firebase.database.ktx.getValue
 import kotlinx.coroutines.*
 import kotlinx.coroutines.android.awaitFrame
 import kotlinx.serialization.decodeFromString
@@ -176,6 +175,16 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
             val playerData = snapshot.getValue(PlayerData::class.java)!!
             mPlayersMap[snapshot.key!!] = playerData
             mHaveNotDrawnList.add(snapshot.key!!)
+            mHaveNotGuessedList.add(snapshot.key!!)
+
+            databaseMyLobby!!.child("currentRound").addListenerForSingleValueEvent(object : ValueEventListener{
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    if (snapshot.getValue(Int::class.java) == null) return
+                    mCurrentRound = snapshot.getValue(Int::class.java)!!
+                    updateRoundsDisplay()
+                }
+                override fun onCancelled(error: DatabaseError) {}
+            })
 
             mPlayerRDataList.add(PlayerRGameViewData(snapshot.key!!, playerData, snapshot.key == mDrawerUid))
             val index: Int
@@ -448,6 +457,9 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
 
         lifecycleScope.launch {
             addPlayersListener()
+            if(reEntering){
+                delay(500L)
+            }
             addDrawerIdListener()
             addGuessWordListener()
             addGuessChatListener()
@@ -559,8 +571,18 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
         nextTurn()
     }
 
-    private fun rejoinGame() {
-        TODO("After service is implemented")
+    private suspend fun rejoinGame() {
+        withContext(Dispatchers.IO){
+            while(!mPlayersMap.contains(mAuth!!.currentUser!!.uid))
+            {
+                awaitFrame()
+            }
+        }
+        //set name in tvUserName
+        findViewById<TextView>(R.id.tvUserName).text = mPlayersMap[mAuth!!.currentUser!!.uid]!!.name
+
+        //get past paths
+        //databaseMyLobby!!.child(p)
     }
 
     private fun nextTurn() {
@@ -574,7 +596,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
             databaseMyLobby!!.child("currentRound").setValue(1)
             updateRoundsDisplay()
             if(mCurrentRound > mRounds){
-                if(mAuth!!.currentUser!!.uid != partyLeader) {
+                if(mAuth!!.currentUser!!.uid == partyLeader) {
                     databaseMyLobby!!.child("gamePreferences")
                         .child("status").setValue(GameStatus.ended)
                 }
@@ -586,7 +608,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
             }
         }
 
-        if(mAuth!!.currentUser!!.uid != partyLeader) {
+        if(mAuth!!.currentUser!!.uid == partyLeader) {
             mPathDatabase!!.setValue("")
             databaseMyLobby!!.child("pathsCount").setValue(0)
 

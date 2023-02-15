@@ -21,19 +21,9 @@ class MainMenuActivity : AppCompatActivity() {
 
         cleanPastLobbies()
 
-        val dbR = FirebaseDatabase.getInstance().getReference("guessWords")
-        dbR.addListenerForSingleValueEvent(object : ValueEventListener{
-            override fun onDataChange(snapshot: DataSnapshot) {
-                for (child in snapshot.children){
-                    val list = (child.value as ArrayList<String>?)!!
-                    Constants.GUESS_WORDS_MAP[child.key!!] = list
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
-            }
-        })
+        if(Constants.GUESS_WORDS_MAP.isEmpty()) {
+            fillGuessWordMap()
+        }
 
         val btnJoinLobby = findViewById<Button>(R.id.btnJoinLobby)
         btnJoinLobby.setOnClickListener{ onJoinLobbyClicked()}
@@ -43,6 +33,22 @@ class MainMenuActivity : AppCompatActivity() {
 
         val btnSignOut = findViewById<Button>(R.id.btnSignOut)
         btnSignOut.setOnClickListener{ onSignOut()}
+    }
+
+    private fun fillGuessWordMap() {
+        val dbR = FirebaseDatabase.getInstance().getReference("guessWords")
+        dbR.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                for (child in snapshot.children) {
+                    val list = (child.value as ArrayList<String>?)!!
+                    Constants.GUESS_WORDS_MAP[child.key!!] = list
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                TODO("Not yet implemented")
+            }
+        })
     }
 
     private fun cleanPastLobbies() {

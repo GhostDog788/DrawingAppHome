@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 
 class JoinLobbyActivity : AppCompatActivity() {
@@ -54,6 +55,7 @@ class JoinLobbyActivity : AppCompatActivity() {
                         intent.putExtra("language", gamePreferences.language)
                         intent.putExtra("rounds", gamePreferences.rounds)
                         intent.putExtra("turnTime", gamePreferences.turnTime)
+                        addPlayer()
                     }
                     GameStatus.preparing -> {
                         intent.setClass(this@JoinLobbyActivity, CreateLobbyActivity::class.java)
@@ -91,7 +93,19 @@ class JoinLobbyActivity : AppCompatActivity() {
             }
         })
     }
-
+    private fun addPlayer(){
+        val mAuth = FirebaseAuth.getInstance()
+        val databaseUsers = FirebaseDatabase.getInstance().getReference("users")
+        databaseUsers.child(mAuth.currentUser!!.uid).addListenerForSingleValueEvent(object : ValueEventListener{
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val user = snapshot.getValue(UserData::class.java)
+                FirebaseDatabase.getInstance().getReference("lobbies").child(mLobbyId!!)
+                    .child("players").child(mAuth.currentUser!!.uid)
+                    .setValue(PlayerData(user!!.nickname))
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        })
+    }
 
     private fun showProgressDialog(){
         customProgressDialog = Dialog(this)
