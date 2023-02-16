@@ -102,7 +102,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             }
             else -> return false
         }
-        if(circleCount > 4 && mPaths.size > 0) {
+        if(circleCount > Constants.DRAWING_UPDATE_INTERVAL && mPaths.size > 0) {
             circleCount = 1
             mOnDrawChange.invoke(mPaths.size)
         }else{

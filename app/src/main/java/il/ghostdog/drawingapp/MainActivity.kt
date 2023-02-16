@@ -58,8 +58,8 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
 
     override var pingTimerJob: Job? = null
     override var checkPingTimerJob: Job? = null
-    override var mPingInterval: Int = 8
-    override var mCheckPingInterval: Int = 15
+    override var mPingInterval: Int = Constants.PING_INTERVAL
+    override var mCheckPingInterval: Int = Constants.PING_INTERVAL_CHECK
     override var sharedPref: SharedPreferences? = null
     override var databaseMyLobby : DatabaseReference? = null
     override var partyLeader : String? = null

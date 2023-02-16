@@ -8,11 +8,13 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ValueEventListener
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import org.apache.commons.net.ntp.NTPUDPClient
+import org.apache.commons.net.ntp.NtpUtils
+import org.apache.commons.net.ntp.TimeInfo
+import java.net.InetAddress
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -29,8 +31,8 @@ interface ILobbyUser {
 
     fun startPingTimer(scope: LifecycleCoroutineScope): Job {
         pingTimerJob?.cancel()
-        return scope.launch {
-            while (isActive){
+        return scope.launch(Dispatchers.Default) {
+            while (isActive) {
                 delay((mPingInterval * 1000).toLong())
                 updateMyStatus()
             }
@@ -38,8 +40,8 @@ interface ILobbyUser {
     }
     fun startPingCheckTimer(scope: LifecycleCoroutineScope, playerId: String): Job {
         checkPingTimerJob?.cancel()
-        return scope.launch {
-            while(isActive){
+        return scope.launch(Dispatchers.Default) {
+            while (isActive) {
                 delay((mCheckPingInterval * 1000).toLong())
                 if (playerId == partyLeader) {
                     checkPlayersStatus()
@@ -50,11 +52,14 @@ interface ILobbyUser {
         }
     }
 
-    fun updateMyStatus(){
+    suspend fun updateMyStatus(){
         //need to take the time from the internet not the device
         if(FirebaseAuth.getInstance().currentUser!!.uid == partyLeader){
+            val date: Date = getCurrentDateFromNtp()
+            val israelZone: ZoneId = ZoneId.of("Asia/Jerusalem")
+            val localDateTime = LocalDateTime.ofInstant(date.toInstant(), israelZone)
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-            val current = LocalDateTime.now().format(formatter)
+            val current = localDateTime.format(formatter)
             databaseMyLobby!!.child("playersStatus").child(FirebaseAuth.getInstance().currentUser!!.uid)
                 .setValue(current)
         }else{
@@ -88,12 +93,16 @@ interface ILobbyUser {
                 val timeString = snapshot.getValue(String::class.java) ?: return
                 val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
                 val dateTimeLastLeader = LocalDateTime.parse(timeString, formatter)
-                val dateTimeCurrent = LocalDateTime.now()
-                val difference = (dateTimeCurrent.toEpochSecond(ZoneOffset.UTC) - dateTimeLastLeader.toEpochSecond(ZoneOffset.UTC))
-                println("Time difference $difference")
-                if(difference > mCheckPingInterval){
-                    ConnectionHelper.disconnectPlayerFromLobby(databaseMyLobby!!, partyLeader!!)
-                    onLeaderDisconnected()
+                GlobalScope.launch(Dispatchers.Default){
+                    val date = getCurrentDateFromNtp()
+                    val israelZone: ZoneId = ZoneId.of("Asia/Jerusalem")
+                    val localDateTime = LocalDateTime.ofInstant(date.toInstant(), israelZone)
+                    val difference = (localDateTime.toEpochSecond(ZoneOffset.UTC) - dateTimeLastLeader.toEpochSecond(ZoneOffset.UTC))
+                    println("Time difference $difference")
+                    if(difference > mCheckPingInterval){
+                        ConnectionHelper.disconnectPlayerFromLobby(databaseMyLobby!!, partyLeader!!)
+                        onLeaderDisconnected()
+                    }
                 }
             }
 
@@ -103,4 +112,23 @@ interface ILobbyUser {
 
     fun onLeaderDisconnected()
 
+    suspend fun getCurrentDateFromNtp(): Date {
+        var date: Date? = null
+
+        while (date == null) {
+            try {
+                val client = NTPUDPClient()
+                client.defaultTimeout = 10000 // set the timeout to 10 seconds
+                val address = InetAddress.getByName("pool.ntp.org")
+                val info: TimeInfo = client.getTime(address)
+                val time = info.message.receiveTimeStamp.time
+                date = Date(time)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                delay(500) // wait 0.5 second before retrying
+            }
+        }
+
+        return date
+    }
 }
