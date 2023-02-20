@@ -339,7 +339,6 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
     }
 
     override fun onLeaderDisconnected() {
-        Toast.makeText(applicationContext, "Leader disconnected", Toast.LENGTH_SHORT).show()
         for(key in playersMap.keys){
             if(partyLeader != key){
                 if(mAuth!!.currentUser!!.uid != key) return

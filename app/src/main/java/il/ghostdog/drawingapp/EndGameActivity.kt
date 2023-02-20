@@ -104,7 +104,6 @@ class EndGameActivity : AppCompatActivity(), ILobbyUser {
     }
 
     override fun onLeaderDisconnected() {
-        Toast.makeText(applicationContext, "Leader disconnected", Toast.LENGTH_SHORT).show()
         val uid = FirebaseAuth.getInstance().currentUser!!.uid
         for(key in mPlayersMap.keys){
             if(partyLeader != key){

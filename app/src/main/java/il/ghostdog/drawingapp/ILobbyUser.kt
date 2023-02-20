@@ -1,7 +1,6 @@
 package il.ghostdog.drawingapp
 
 import android.content.SharedPreferences
-import android.icu.util.Calendar
 import androidx.lifecycle.LifecycleCoroutineScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
@@ -10,7 +9,6 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ValueEventListener
 import kotlinx.coroutines.*
 import org.apache.commons.net.ntp.NTPUDPClient
-import org.apache.commons.net.ntp.NtpUtils
 import org.apache.commons.net.ntp.TimeInfo
 import java.net.InetAddress
 import java.time.LocalDateTime
@@ -113,22 +111,24 @@ interface ILobbyUser {
     fun onLeaderDisconnected()
 
     suspend fun getCurrentDateFromNtp(): Date {
-        var date: Date? = null
+        return withContext(Dispatchers.IO) {
+            var date: Date? = null
 
-        while (date == null) {
-            try {
-                val client = NTPUDPClient()
-                client.defaultTimeout = 10000 // set the timeout to 10 seconds
-                val address = InetAddress.getByName("pool.ntp.org")
-                val info: TimeInfo = client.getTime(address)
-                val time = info.message.receiveTimeStamp.time
-                date = Date(time)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                delay(500) // wait 0.5 second before retrying
+            while (date == null) {
+                try {
+                    val client = NTPUDPClient()
+                    client.defaultTimeout = 10000 // set the timeout to 10 seconds
+                    val address = InetAddress.getByName("pool.ntp.org")
+                    val info: TimeInfo = client.getTime(address)
+                    val time = info.message.receiveTimeStamp.time
+                    date = Date(time)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    delay(500) // wait 0.5 second before retrying
+                }
             }
-        }
 
-        return date
+            date
+        }
     }
 }

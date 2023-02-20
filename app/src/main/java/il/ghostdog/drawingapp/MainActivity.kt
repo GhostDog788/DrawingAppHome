@@ -73,6 +73,8 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
     private var mAuth : FirebaseAuth? = null
     private var mDrawerUid: String? = null
     private var mGuessWord: String? = null
+    private var mWaitForDrawerDialog: Dialog? = null
+    private var mTurnEndedDialog: Dialog? = null
     private lateinit var mLanguage: String
     private var mPlayersMap: LinkedHashMap<String, PlayerData> = LinkedHashMap()
     private var mPlayerRDataList: ArrayList<PlayerRGameViewData> = ArrayList()
@@ -161,7 +163,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
             if(playerData.answeredCorrectly){
                 mHaveNotGuessedList.remove(snapshot.key)
                 if(mHaveNotGuessedList.isEmpty()){
-                    nextTurn()
+                    turnEnded()
                 }
             }
 
@@ -317,6 +319,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
                     drawingView!!.canDraw = true
                 }
                 mCanGuess = true
+                mWaitForDrawerDialog?.dismiss()
                 if(mAuth!!.currentUser!!.uid == partyLeader){
                     mTurnTimerJob = startDrawingTimer()
                 }
@@ -622,6 +625,31 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
         }
     }
 
+    private fun turnEnded() {
+        mTurnTimerJob?.cancel() //cancels the timer if exists
+
+        mTurnEndedDialog = Dialog(this)
+        mTurnEndedDialog!!.setContentView(R.layout.turn_ended_dialog)
+        mTurnEndedDialog!!.setTitle("Turn Ended")
+        val tvWord = mTurnEndedDialog!!.findViewById<TextView>(R.id.tvGuessWord)
+        tvWord.text = "${tvWord.text} $mGuessWord"
+        val rvScoreBoard: RecyclerView = mTurnEndedDialog!!.findViewById(R.id.rvScoreBoard)
+        val boardList : ArrayList<ScoreBoardRViewData> = ArrayList()
+        val orderedByPoints = mPlayersMap.toList().sortedBy { pair -> pair.second.points }.reversed()
+        rvScoreBoard.adapter = ScoreBoardRecyclerAdapter(boardList)
+        rvScoreBoard.layoutManager = LinearLayoutManager(this@MainActivity)
+        mTurnEndedDialog!!.show()
+
+        for (player in orderedByPoints){
+            boardList.add(ScoreBoardRViewData(player.second))
+            rvScoreBoard.adapter!!.notifyItemInserted(boardList.size - 1)
+        }
+        lifecycleScope.launch(Dispatchers.Default){
+            delay(3000)
+            nextTurn()
+        }
+    }
+
     private fun endGame() {
         val intent = Intent()
         intent.putExtra("players", mPlayersMap)
@@ -708,6 +736,19 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
         val playerData = mPlayersMap[mAuth!!.currentUser!!.uid]
         playerData!!.answeredCorrectly = false
         updatePlayerData(mAuth!!.currentUser!!.uid, playerData)
+
+        mTurnEndedDialog?.dismiss()
+        showWaitForDrawerDialog()
+    }
+
+    private fun showWaitForDrawerDialog() {
+        mWaitForDrawerDialog = Dialog(this)
+        mWaitForDrawerDialog!!.setContentView(R.layout.wait_for_drawer_dialog)
+        mWaitForDrawerDialog!!.setTitle("Wait for drawer")
+        val drawerName = mPlayersMap[mDrawerUid]!!.name
+        mWaitForDrawerDialog!!.findViewById<TextView>(R.id.tvDrawerName).text = drawerName
+        mWaitForDrawerDialog!!.setCancelable(false)
+        mWaitForDrawerDialog!!.show()
     }
 
     private fun setUpDrawer() {
@@ -720,6 +761,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
         playerData!!.answeredCorrectly = false
         updatePlayerData(mAuth!!.currentUser!!.uid, playerData)
 
+        mTurnEndedDialog?.dismiss()
         chooseWord()
     }
 
