@@ -599,6 +599,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
             databaseMyLobby!!.child("currentRound").setValue(1)
             updateRoundsDisplay()
             if(mCurrentRound > mRounds){
+                mTurnEndedDialog?.dismiss()
                 if(mAuth!!.currentUser!!.uid == partyLeader) {
                     databaseMyLobby!!.child("gamePreferences")
                         .child("status").setValue(GameStatus.ended)
@@ -631,6 +632,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
         mTurnEndedDialog = Dialog(this)
         mTurnEndedDialog!!.setContentView(R.layout.turn_ended_dialog)
         mTurnEndedDialog!!.setTitle("Turn Ended")
+        mTurnEndedDialog!!.setCancelable(false)
         val tvWord = mTurnEndedDialog!!.findViewById<TextView>(R.id.tvGuessWord)
         tvWord.text = "${tvWord.text} $mGuessWord"
         val rvScoreBoard: RecyclerView = mTurnEndedDialog!!.findViewById(R.id.rvScoreBoard)
