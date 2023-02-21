@@ -95,6 +95,8 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
     private var mTimeLeft: Int = -1
     private var mTurnTimerJob: Job? = null
     private var mCanGuess: Boolean = false
+    private var mShouldChooseWord: Boolean = true
+    //when re entering shouldn't choose word
 
     private val pathsChildListener = object  : ChildEventListener{
         override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
@@ -147,7 +149,8 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
             }
 
             if(mAuth!!.currentUser!!.uid == mDrawerUid){
-                setUpDrawer()
+                setUpDrawer(mShouldChooseWord)
+                mShouldChooseWord = true
             }else{
                 setUpGuesser()
             }
@@ -359,8 +362,10 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
         override fun onDataChange(dataSnapshot: DataSnapshot) {
             partyLeader = dataSnapshot.getValue(String::class.java)!! //had to be initialized
             if(mAuth!!.currentUser!!.uid == partyLeader){
+                val myList = sharedPref?.getStringSet("lobbyIds", emptySet())!!.toMutableSet()
+                myList.add(lobbyId)
                 val editor = sharedPref?.edit()
-                editor?.putString("lobbyId", lobbyId)
+                editor?.putStringSet("lobbyIds", myList)
                 editor?.apply()
             }
         }
@@ -416,6 +421,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
 
         lobbyId = intent.getStringExtra("lobbyId")
         val reEntering = intent.getBooleanExtra("reEntering", false)
+        mShouldChooseWord = !reEntering
         mLanguage = intent.getStringExtra("language")!!
         mRounds = intent.getIntExtra("rounds", GamePreferences().rounds)
         mTurnTime = intent.getIntExtra("turnTime", GamePreferences().turnTime)
@@ -459,10 +465,8 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
         mflDrawingView = findViewById(R.id.flDrawingViewContainer)
 
         lifecycleScope.launch {
+            showProgressDialog()
             addPlayersListener()
-            if(reEntering){
-                delay(500L)
-            }
             addDrawerIdListener()
             addGuessWordListener()
             addGuessChatListener()
@@ -470,11 +474,13 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
             addPartyLeaderListener()
             if(!reEntering) {
                 setupGame() //have to be before listeners
-            }else{
-                rejoinGame()
             }
             addPathsValueListener()
             addPathsCountListener()
+            if(reEntering){
+                delay(200L)
+                rejoinGame()
+            }
         }
 
 
@@ -571,6 +577,8 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
         //set name in tvUserName
         findViewById<TextView>(R.id.tvUserName).text = mPlayersMap[mAuth!!.currentUser!!.uid]!!.name
 
+        cancelProgressDialog()
+
         nextTurn()
     }
 
@@ -584,8 +592,10 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
         //set name in tvUserName
         findViewById<TextView>(R.id.tvUserName).text = mPlayersMap[mAuth!!.currentUser!!.uid]!!.name
 
-        //get past paths
-        //databaseMyLobby!!.child(p)
+        addPathsValueListener()
+        delay(200)
+        removePathsValueListener()
+        cancelProgressDialog()
     }
 
     private fun nextTurn() {
@@ -729,6 +739,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
 
     private fun setUpGuesser() {
         drawingView!!.canDraw = false
+        removePathsValueListener()
         addPathsValueListener()
         vgDrawersTools.visibility = View.GONE
         llGuessField.visibility = View.VISIBLE
@@ -753,7 +764,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
         mWaitForDrawerDialog!!.show()
     }
 
-    private fun setUpDrawer() {
+    private fun setUpDrawer(chooseWord: Boolean) {
         removePathsValueListener()
         vgDrawersTools.visibility = View.VISIBLE
         llGuessField.visibility = View.GONE
@@ -764,7 +775,9 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
         updatePlayerData(mAuth!!.currentUser!!.uid, playerData)
 
         mTurnEndedDialog?.dismiss()
-        chooseWord()
+        if(chooseWord) {
+            chooseWord()
+        }
     }
 
     override fun onLeaderDisconnected() {}

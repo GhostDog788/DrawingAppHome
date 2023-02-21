@@ -255,8 +255,10 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
         gamePreferences.status = GameStatus.preparing
         databaseMyLobby!!.child("gamePreferences").setValue(gamePreferences)
 
+        val myList = sharedPref?.getStringSet("lobbyIds", emptySet())!!.toMutableSet()
+        myList.add(lobbyId)
         val editor = sharedPref?.edit()
-        editor?.putString("lobbyId", lobbyId)
+        editor?.putStringSet("lobbyIds", myList)
         editor?.apply()
 
         findViewById<LinearLayout>(R.id.llGamePreferences).visibility = View.VISIBLE

@@ -110,8 +110,10 @@ class EndGameActivity : AppCompatActivity(), ILobbyUser {
                 if(uid != key) return
                 databaseMyLobby!!.child("leader")
                     .setValue(uid)
+                val myList = sharedPref?.getStringSet("lobbyIds", emptySet())!!.toMutableSet()
+                myList.add(lobbyId)
                 val editor = sharedPref?.edit()
-                editor?.putString("lobbyId", lobbyId)
+                editor?.putStringSet("lobbyIds", myList)
                 editor?.apply()
                 return
             }
