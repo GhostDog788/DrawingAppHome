@@ -94,6 +94,15 @@ class MainMenuActivity : AppCompatActivity() {
             .child(FirebaseAuth.getInstance().currentUser!!.uid)
             .addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
+                    if (snapshot.value is Long){ //very uncommon
+                        dbLobby.removeValue()
+                        val myList = sharedPref.getStringSet("lobbyIds", emptySet())!!.toMutableSet()
+                        myList.remove(lobbyId)
+                        val editor = sharedPref.edit()
+                        editor.putStringSet("lobbyIds", myList)
+                        editor.apply()
+                        return
+                    }
                     val timeString = snapshot.getValue(String::class.java) ?: return
                     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
                     val dateTimeLastLeader = LocalDateTime.parse(timeString, formatter)

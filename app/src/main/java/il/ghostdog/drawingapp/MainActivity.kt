@@ -95,7 +95,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
     private var mTimeLeft: Int = -1
     private var mTurnTimerJob: Job? = null
     private var mCanGuess: Boolean = false
-    private var mShouldChooseWord: Boolean = true
+    private var mReEntering: Boolean = true
     //when re entering shouldn't choose word
 
     private val pathsChildListener = object  : ChildEventListener{
@@ -149,13 +149,11 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
             }
 
             if(mAuth!!.currentUser!!.uid == mDrawerUid){
-                setUpDrawer(mShouldChooseWord)
-                mShouldChooseWord = true
+                setUpDrawer(!mReEntering)//reEnter => not choose word
             }else{
                 setUpGuesser()
             }
         }
-
         override fun onCancelled(error: DatabaseError) {}
     }
     private val playersListener = object : ChildEventListener{
@@ -213,17 +211,6 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
                 val newLeader = mPlayersMap.keys.first()
                 databaseMyLobby!!.child("leader")
                     .setValue(newLeader)
-                if(mAuth!!.currentUser!!.uid == newLeader) {
-                    databaseMyLobby!!.child("turnTimeLeft")
-                        .addListenerForSingleValueEvent(object : ValueEventListener {
-                            override fun onDataChange(snapshot: DataSnapshot) {
-                                mTurnTimerJob =
-                                    startDrawingTimer(snapshot.getValue(Int::class.java)!!)
-                            }
-
-                            override fun onCancelled(error: DatabaseError) {}
-                        })
-                }
             }
 
             var index = 0
@@ -257,17 +244,11 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
             }
 
             if(snapshot.key == mDrawerUid || mHaveNotGuessedList.isEmpty()) {
-                nextTurn()
+                turnEnded()
             }
         }
-
-        override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
-            TODO("Not yet implemented")
-        }
-
-        override fun onCancelled(error: DatabaseError) {
-            TODO("Not yet implemented")
-        }
+        override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+        override fun onCancelled(error: DatabaseError) {}
     }
     private val pathCountListener = object : ValueEventListener{
         override fun onDataChange(snapshot: DataSnapshot) {
@@ -278,10 +259,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
                 drawingView!!.invalidate()
             }
         }
-
-        override fun onCancelled(error: DatabaseError) {
-            TODO("Not yet implemented")
-        }
+        override fun onCancelled(error: DatabaseError) {}
     }
     private val turnTimerListener = object : ValueEventListener{
         override fun onDataChange(snapshot: DataSnapshot) {
@@ -291,13 +269,10 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
             tvTurnTimer.text = mTimeLeft.toString()
 
             if(mTimeLeft == 0){
-                nextTurn()
+                turnEnded()
             }
         }
-
-        override fun onCancelled(error: DatabaseError) {
-            TODO("Not yet implemented")
-        }
+        override fun onCancelled(error: DatabaseError) {}
     }
     private val guessWordListener = object : ValueEventListener{
         override fun onDataChange(snapshot: DataSnapshot) {
@@ -320,43 +295,25 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
                 drawingView!!.clear()
                 if(mAuth!!.currentUser!!.uid == mDrawerUid){
                     drawingView!!.canDraw = true
+                    mTurnTimerJob = startDrawingTimer(mReEntering)
                 }
                 mCanGuess = true
                 mWaitForDrawerDialog?.dismiss()
-                if(mAuth!!.currentUser!!.uid == partyLeader){
-                    mTurnTimerJob = startDrawingTimer()
-                }
             }
         }
-
-        override fun onCancelled(error: DatabaseError) {
-            TODO("Not yet implemented")
-        }
+        override fun onCancelled(error: DatabaseError) {}
     }
     private val guessChatListener = object : ChildEventListener{
         override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
             val messageData = snapshot.getValue(GuessMessageRData::class.java)!!
-
             mChatRDataList.add(messageData)
             rvChat.adapter!!.notifyItemInserted(mChatRDataList.size)
             rvChat.scrollToPosition(mChatRDataList.size - 1)
         }
-
-        override fun onChildRemoved(snapshot: DataSnapshot) {
-            //no need
-        }
-
-        override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
-            TODO("Not yet implemented")
-        }
-
-        override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
-            TODO("Not yet implemented")
-        }
-
-        override fun onCancelled(error: DatabaseError) {
-            TODO("Not yet implemented")
-        }
+        override fun onChildRemoved(snapshot: DataSnapshot) { /*no need*/ }
+        override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
+        override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+        override fun onCancelled(error: DatabaseError) {}
     }
     private val partyLeaderListener = object: ValueEventListener {
         override fun onDataChange(dataSnapshot: DataSnapshot) {
@@ -369,11 +326,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
                 editor?.apply()
             }
         }
-
-        override fun onCancelled(error: DatabaseError) {
-            // An error occurred
-            Toast.makeText(applicationContext, "Error in setting up party leader", Toast.LENGTH_SHORT).show()
-        }
+        override fun onCancelled(error: DatabaseError) {}
     }
 
     private val openGalleryLauncher: ActivityResultLauncher<Intent> =
@@ -420,8 +373,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
         sharedPref = applicationContext.getSharedPreferences(Constants.SHARED_LOBBIES_NAME, Context.MODE_PRIVATE)
 
         lobbyId = intent.getStringExtra("lobbyId")
-        val reEntering = intent.getBooleanExtra("reEntering", false)
-        mShouldChooseWord = !reEntering
+        mReEntering = intent.getBooleanExtra("reEntering", false)
         mLanguage = intent.getStringExtra("language")!!
         mRounds = intent.getIntExtra("rounds", GamePreferences().rounds)
         mTurnTime = intent.getIntExtra("turnTime", GamePreferences().turnTime)
@@ -472,12 +424,12 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
             addGuessChatListener()
             addTurnTimerListener()
             addPartyLeaderListener()
-            if(!reEntering) {
+            if(!mReEntering) {
                 setupGame() //have to be before listeners
             }
             addPathsValueListener()
             addPathsCountListener()
-            if(reEntering){
+            if(mReEntering){
                 delay(200L)
                 rejoinGame()
             }
@@ -596,6 +548,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
         delay(200)
         removePathsValueListener()
         cancelProgressDialog()
+        mReEntering = false
     }
 
     private fun nextTurn() {
@@ -606,7 +559,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
         mTurnTimerJob?.cancel() //cancels the timer if exists
         if (mHaveNotDrawnList.isEmpty()){
             mCurrentRound++
-            databaseMyLobby!!.child("currentRound").setValue(1)
+            databaseMyLobby!!.child("currentRound").setValue(mCurrentRound)
             updateRoundsDisplay()
             if(mCurrentRound > mRounds){
                 mTurnEndedDialog?.dismiss()
@@ -835,8 +788,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
     private fun removePartyLeaderListener() {
         databaseMyLobby!!.child("leader").removeEventListener(partyLeaderListener)
     }
-
-
+    
     private fun updatePlayerData(playerId: String, newData: PlayerData){
         databaseMyLobby!!.child("players").child(playerId)
             .setValue(newData)
@@ -852,11 +804,25 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
         rvChat.adapter!!.notifyDataSetChanged()
     }
 
-    private fun startDrawingTimer(time: Int = mTurnTime): Job {
-        mTimeLeft = time
-        tvTurnTimer.text = mTimeLeft.toString()
-        databaseMyLobby!!.child("turnTimeLeft").setValue(mTimeLeft)
+    private fun startDrawingTimer(resume: Boolean = false): Job {
         return lifecycleScope.launch {
+            var time: Int? = null
+            if (resume){
+                databaseMyLobby!!.child("turnTimeLeft").addListenerForSingleValueEvent(object : ValueEventListener{
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        time = snapshot.getValue(Int::class.java)
+                    }
+                    override fun onCancelled(error: DatabaseError) {}
+                })
+                while(time == null){
+                    awaitFrame()
+                }
+            }else{
+                time = mTurnTime
+            }
+            mTimeLeft = time!!
+            tvTurnTimer.text = mTimeLeft.toString()
+            databaseMyLobby!!.child("turnTimeLeft").setValue(mTimeLeft)
             while (isActive && mTimeLeft > 0){ //if 0 than time out
                 delay(1000L)
                 mTimeLeft--
