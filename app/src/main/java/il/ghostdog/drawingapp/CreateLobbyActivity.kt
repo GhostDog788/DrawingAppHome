@@ -329,6 +329,7 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
 
     private fun showProgressDialog(){
         customProgressDialog = Dialog(this)
+        customProgressDialog?.setCancelable(false)
         customProgressDialog?.setContentView(R.layout.dialog_custom_progress)
         customProgressDialog?.show()
     }

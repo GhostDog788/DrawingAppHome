@@ -158,6 +158,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser, PlayerGameHUDAdapter.Recyc
     }
     private val playersListener = object : ChildEventListener{
         override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+            if(snapshot.key!!.startsWith(Constants.REQUESTING_PLAYER_NODE_NAME)) return
             val playerData = snapshot.getValue(PlayerData::class.java)!!
             mPlayersMap[snapshot.key!!] = playerData
 
@@ -175,6 +176,23 @@ class MainActivity : AppCompatActivity(), ILobbyUser, PlayerGameHUDAdapter.Recyc
         }
 
         override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+            if(snapshot.key!!.startsWith(Constants.REQUESTING_PLAYER_NODE_NAME)){
+                if(mAuth!!.currentUser!!.uid != partyLeader) return
+                val alertDialogBuilder = AlertDialog.Builder(this@MainActivity)
+                alertDialogBuilder.setTitle("Player join request")
+                alertDialogBuilder.setCancelable(false)
+                alertDialogBuilder.setMessage("${snapshot.value} want's to join the game")
+                alertDialogBuilder.setPositiveButton("Allow") { dialog, _ ->
+                    databaseMyLobby!!.child("players").child(snapshot.key!!).setValue("Allow")
+                    dialog.dismiss()
+                }
+                alertDialogBuilder.setNegativeButton("Decline"){ dialog, _ ->
+                    databaseMyLobby!!.child("players").child(snapshot.key!!).setValue("Decline")
+                    dialog.dismiss()
+                }
+                alertDialogBuilder.show()
+                return
+            }
             val playerData = snapshot.getValue(PlayerData::class.java)!!
             mPlayersMap[snapshot.key!!] = playerData
             mHaveNotDrawnList.add(snapshot.key!!)
@@ -203,6 +221,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser, PlayerGameHUDAdapter.Recyc
         }
 
         override fun onChildRemoved(snapshot: DataSnapshot) {
+            if(snapshot.key!!.startsWith(Constants.REQUESTING_PLAYER_NODE_NAME)) return
             if(mAuth!!.currentUser!!.uid == snapshot.key){
                 exitGame()
                 return
@@ -595,6 +614,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser, PlayerGameHUDAdapter.Recyc
     }
 
     private fun turnEnded() {
+        Toast.makeText(applicationContext, "Turn Ended", Toast.LENGTH_LONG).show()
         mTurnTimerJob?.cancel() //cancels the timer if exists
 
         mTurnEndedDialog = Dialog(this)
@@ -1041,6 +1061,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser, PlayerGameHUDAdapter.Recyc
 
     private fun showProgressDialog(){
         customProgressDialog = Dialog(this@MainActivity)
+        customProgressDialog?.setCancelable(false)
         customProgressDialog?.setContentView(R.layout.dialog_custom_progress)
         customProgressDialog?.show()
     }
