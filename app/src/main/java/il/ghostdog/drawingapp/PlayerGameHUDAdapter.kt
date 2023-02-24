@@ -11,11 +11,23 @@ import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 
-class PlayerGameHUDAdapter(private var data: ArrayList<PlayerRGameViewData>) : RecyclerView.Adapter<PlayerGameHUDAdapter.ItemViewHolder>() {
-    inner class ItemViewHolder(view: View): RecyclerView.ViewHolder(view){
+class PlayerGameHUDAdapter(private var data: ArrayList<PlayerRGameViewData>, private var listener: RecyclerViewEvent) : RecyclerView.Adapter<PlayerGameHUDAdapter.ItemViewHolder>() {
+    inner class ItemViewHolder(view: View): RecyclerView.ViewHolder(view), View.OnLongClickListener{
         val name: TextView = view.findViewById(R.id.tvName)
         val points: TextView = view.findViewById(R.id.tvPoints)
         val drawerIcon: ImageView = view.findViewById(R.id.ivDrawerIcon)
+
+        init {
+            view.setOnLongClickListener(this)
+        }
+
+        override fun onLongClick(p0: View?): Boolean {
+            val position = adapterPosition
+            if(position != RecyclerView.NO_POSITION){
+                listener.onItemClicked(position)
+            }
+            return true
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlayerGameHUDAdapter.ItemViewHolder {
@@ -47,5 +59,9 @@ class PlayerGameHUDAdapter(private var data: ArrayList<PlayerRGameViewData>) : R
 
     override fun getItemCount(): Int {
         return data.size
+    }
+
+    interface RecyclerViewEvent{
+        fun onItemClicked(position: Int)
     }
 }

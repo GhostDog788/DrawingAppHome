@@ -303,7 +303,7 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
 
         val alertDialogBuilder = AlertDialog.Builder(this)
         alertDialogBuilder.setTitle("Kick player")
-        alertDialogBuilder.setMessage("Do you want to kick the player from the lobby?")
+        alertDialogBuilder.setMessage("Do you want to kick ${player.name} from the lobby?")
         alertDialogBuilder.setPositiveButton("Kick") { dialog, _ ->
             kickPlayer(player)
             dialog.dismiss()

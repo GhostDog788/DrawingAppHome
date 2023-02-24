@@ -48,7 +48,7 @@ import kotlin.random.Random
 
 
 @Suppress("DEPRECATION")
-class MainActivity : AppCompatActivity(), ILobbyUser {
+class MainActivity : AppCompatActivity(), ILobbyUser, PlayerGameHUDAdapter.RecyclerViewEvent {
 
     private var drawingView: DrawingView? = null
     private var mImageButtonCurrentPaint: ImageButton? = null
@@ -203,6 +203,11 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
         }
 
         override fun onChildRemoved(snapshot: DataSnapshot) {
+            if(mAuth!!.currentUser!!.uid == snapshot.key){
+                exitGame()
+                return
+            }
+
             mPlayersMap.remove(snapshot.key)
             mHaveNotDrawnList.remove(snapshot.key!!)
             mHaveNotGuessedList.remove(snapshot.key!!)
@@ -386,7 +391,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
         tvTurnTimer = findViewById(R.id.tvTimer)
         etGuessField = findViewById(R.id.etGuessField)
         rvPlayers = findViewById(R.id.rvPlayers)
-        rvPlayers.adapter = PlayerGameHUDAdapter(mPlayerRDataList)
+        rvPlayers.adapter = PlayerGameHUDAdapter(mPlayerRDataList, this)
         rvPlayers.layoutManager = GridLayoutManager(this, 1)
 
         rvChat = findViewById(R.id.rvChat)
@@ -803,7 +808,35 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
         mChatRDataList.clear()
         rvChat.adapter!!.notifyDataSetChanged()
     }
+    override fun onItemClicked(position: Int) {
+        val player = mPlayerRDataList[position]
+        if (mAuth!!.currentUser!!.uid != partyLeader || player.userId == partyLeader) return
 
+        val alertDialogBuilder = AlertDialog.Builder(this)
+        alertDialogBuilder.setTitle("Kick player")
+        alertDialogBuilder.setMessage("Do you want to kick ${player.name} from the lobby?")
+        alertDialogBuilder.setPositiveButton("Kick") { dialog, _ ->
+            kickPlayer(player)
+            dialog.dismiss()
+        }
+        alertDialogBuilder.setNegativeButton("No"){ dialog, _ ->
+            dialog.dismiss()
+        }
+        alertDialogBuilder.show()
+    }
+    private fun kickPlayer(player: PlayerRGameViewData) {
+        databaseMyLobby!!.child("players").child(player.userId).removeValue()
+        databaseMyLobby!!.child("playersStatus").child(player.userId).removeValue()
+    }
+    private fun exitGame(){
+        removeAllListeners()
+
+        val intent = Intent()
+        intent.setClass(this@MainActivity, MainMenuActivity::class.java)
+        startActivity(intent)
+        finish()
+    }
+    
     private fun startDrawingTimer(resume: Boolean = false): Job {
         return lifecycleScope.launch {
             var time: Int? = null
@@ -1029,5 +1062,4 @@ class MainActivity : AppCompatActivity(), ILobbyUser {
             startActivity(Intent.createChooser(shareIntent, "Share"))
         }
     }
-
 }
