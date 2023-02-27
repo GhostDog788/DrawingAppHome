@@ -470,6 +470,8 @@ class MainActivity : AppCompatActivity(), ILobbyUser, PlayerGameHUDAdapter.Recyc
             }
             false
         }
+        val ivOptions: ImageView = findViewById(R.id.ivPopupOptions)
+        ivOptions.setOnClickListener{ showPopupGameMenu(it)}
 
         val linearLayoutPaintColors = findViewById<LinearLayout>(R.id.llPaintColors)
         mImageButtonCurrentPaint = linearLayoutPaintColors.findViewWithTag("#ff000000") as ImageButton
@@ -500,7 +502,6 @@ class MainActivity : AppCompatActivity(), ILobbyUser, PlayerGameHUDAdapter.Recyc
 
         }
     }
-
     override fun onStop() {
         pingTimerJob?.cancel()
         checkPingTimerJob?.cancel()
@@ -756,6 +757,22 @@ class MainActivity : AppCompatActivity(), ILobbyUser, PlayerGameHUDAdapter.Recyc
         if(chooseWord) {
             chooseWord()
         }
+    }
+    private fun showPopupGameMenu(view: View?) {
+        val popupMenu = PopupMenu(this, view)
+        popupMenu.setOnMenuItemClickListener { item ->
+            when(item.itemId){
+                R.id.item1 ->{
+                    Toast.makeText(applicationContext, "Exit Game", Toast.LENGTH_SHORT).show()
+                    ConnectionHelper.disconnectPlayerFromLobby(databaseMyLobby!!, mAuth!!.currentUser!!.uid)
+                    true
+                }else ->{
+                false
+            }
+            }
+        }
+        popupMenu.inflate(R.menu.popup_game_menu)
+        popupMenu.show()
     }
 
     override fun onLeaderDisconnected() {}

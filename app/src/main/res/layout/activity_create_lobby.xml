@@ -20,7 +20,7 @@
         android:layout_margin="10dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Create Lobby"
+        android:text="2s4g2"
         android:textSize="25dp"/>
 
     <LinearLayout
@@ -231,7 +231,7 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvPlayers"
         android:layout_width="match_parent"
-        android:layout_height="300dp" />
+        android:layout_height="200dp" />
 
     <Button
         android:id="@+id/btnStartGame"
@@ -240,5 +240,11 @@
         android:text="Start Game"
         android:textSize="30dp"
         android:visibility="invisible"/>
+
+    <Button
+        android:id="@+id/btnExit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Exit"/>
 
 </LinearLayout>

@@ -50,6 +50,9 @@
             android:layout_height="match_parent"
             android:text="Time:"
             android:layout_weight="1.9"
+            android:autoSizeMaxTextSize="30dp"
+            android:autoSizeMinTextSize="2dp"
+            android:autoSizeTextType="uniform"
             android:gravity="center"
             />
 
@@ -81,6 +84,7 @@
             android:paddingEnd="5dp"/>
 
         <ImageView
+            android:id="@+id/ivPopupOptions"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1.9"

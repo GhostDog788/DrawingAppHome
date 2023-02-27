@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.PopupMenu
 import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
@@ -80,8 +81,7 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
 
         override fun onChildRemoved(snapshot: DataSnapshot) {
             if(snapshot.key == mAuth!!.currentUser!!.uid){
-                //player have been kicked
-                Toast.makeText(applicationContext, "you have been kicked", Toast.LENGTH_SHORT).show()
+                //player have been kicked or exit
                 removeAllListeners()
                 startActivity(Intent(this@CreateLobbyActivity, MainMenuActivity::class.java))
                 finish()
@@ -163,6 +163,9 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
             .setOnClickListener{ onAdditiveButtonClicked(minTime, maxTime, timeJumps, tvTime)}
 
         mAuth = FirebaseAuth.getInstance()
+
+        val btnExit = findViewById<Button>(R.id.btnExit)
+        btnExit.setOnClickListener {exitLobby()}
 
         rvPlayers = findViewById(R.id.rvPlayers)
         rvPlayers.adapter = PlayerRecyclerAdapter(playerRViewDataList, this)
@@ -317,6 +320,9 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
     private fun kickPlayer(player: PlayerRViewData) {
         databaseMyLobby!!.child("players").child(player.userId).removeValue()
         databaseMyLobby!!.child("playersStatus").child(player.userId).removeValue()
+    }
+    private fun exitLobby(){
+        ConnectionHelper.disconnectPlayerFromLobby(databaseMyLobby!!, mAuth!!.currentUser!!.uid)
     }
 
     private fun onAdditiveButtonClicked(minRange: Int, maxRange: Int, amount: Int, display: TextView?) {
