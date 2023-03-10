@@ -3,20 +3,15 @@ package il.ghostdog.drawingapp
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
-import android.view.MenuItem
+import androidx.fragment.app.Fragment
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Toast
-import androidx.fragment.app.Fragment
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -26,41 +21,29 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
 
-class MainMenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationItemSelectedListener {
-    private val homeFragment = HomeFragment()
-    private val accountFragment = AccountFragment()
 
-    //home fragment
-    var checkedPastLobbies = false
+class HomeFragment : Fragment(R.layout.fragment_home) {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main_menu)
-
-        /*if(!Constants.checkedPastLobbies) {
+        if(!(activity as MainMenuActivity).checkedPastLobbies) {
             cleanPastLobbies()
-            Constants.checkedPastLobbies = true
+            (activity as MainMenuActivity).checkedPastLobbies = true
         }
 
         if(Constants.GUESS_WORDS_MAP.isEmpty()) {
             fillGuessWordMap()
         }
 
-        val btnJoinLobby = findViewById<Button>(R.id.btnJoinLobby)
+        val btnJoinLobby = view.findViewById<Button>(R.id.btnJoinLobby)
         btnJoinLobby.setOnClickListener{ onJoinLobbyClicked()}
 
-        val btnCreateLobby = findViewById<Button>(R.id.btnCreateLobby)
+        val btnCreateLobby = view.findViewById<Button>(R.id.btnCreateLobby)
         btnCreateLobby.setOnClickListener{ onCreateLobbyClicked()}
 
-        val btnSignOut = findViewById<Button>(R.id.btnSignOut)
-        btnSignOut.setOnClickListener{ onSignOut()}*/
-
-        val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
-        bottomNavigationView.selectedItemId = R.id.action_home
-        setCurrentFragment(homeFragment)
-        bottomNavigationView.setOnNavigationItemSelectedListener(this)
+        val btnSignOut = view.findViewById<Button>(R.id.btnSignOut)
+        btnSignOut.setOnClickListener{ onSignOut()}
     }
 
     private fun fillGuessWordMap() {
@@ -80,10 +63,10 @@ class MainMenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationI
     }
 
     private fun cleanPastLobbies() {
-        val sharedPref = applicationContext.getSharedPreferences(Constants.SHARED_LOBBIES_NAME, Context.MODE_PRIVATE)
+        val sharedPref = activity!!.getSharedPreferences(Constants.SHARED_LOBBIES_NAME, Context.MODE_PRIVATE)
         val lobbyIdToDeleteSet = sharedPref.getStringSet("lobbyIds", emptySet())
         for (id in lobbyIdToDeleteSet!!){
-            Toast.makeText(applicationContext, "$id", Toast.LENGTH_SHORT).show()
+            Toast.makeText(activity!!, id, Toast.LENGTH_SHORT).show()
         }
         if(lobbyIdToDeleteSet != null && lobbyIdToDeleteSet.isNotEmpty()) {
             for (lobbyIdToDelete in lobbyIdToDeleteSet) {
@@ -127,10 +110,8 @@ class MainMenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationI
                         val date = ConnectionHelper.getCurrentTimeFromFirebase()
                         val israelZone: ZoneId = ZoneId.of("Asia/Jerusalem")
                         val localDateTime = LocalDateTime.ofInstant(date.toInstant(), israelZone)
-                        val difference = (localDateTime.toEpochSecond(ZoneOffset.UTC) - dateTimeLastLeader.toEpochSecond(ZoneOffset.UTC))
-                        runOnUiThread{
-                            Toast.makeText(applicationContext, "$difference", Toast.LENGTH_SHORT).show()
-                        }
+                        val difference = (localDateTime.toEpochSecond(ZoneOffset.UTC) - dateTimeLastLeader.toEpochSecond(
+                            ZoneOffset.UTC))
                         if(difference > Constants.PING_INTERVAL_CHECK + 5) {
                             dbLobby.removeValue()
                             val myList = sharedPref.getStringSet("lobbyIds", emptySet())!!.toMutableSet()
@@ -146,8 +127,8 @@ class MainMenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationI
     }
 
     private fun onJoinLobbyClicked() {
-        startActivity(Intent(this, JoinLobbyActivity::class.java))
-        finish()
+        startActivity(Intent(activity, JoinLobbyActivity::class.java))
+        //activity!!.finish()
     }
 
     private fun onCreateLobbyClicked() {
@@ -158,36 +139,15 @@ class MainMenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationI
         //creates new lobby in db and sets leaderId
         databaseLobbies.child(lobbyId).child("leader")
             .setValue(FirebaseAuth.getInstance()!!.currentUser!!.uid)
-        val intent = Intent(this, CreateLobbyActivity::class.java)
+        val intent = Intent(activity, CreateLobbyActivity::class.java)
         intent.putExtra("lobbyId", lobbyId)
         startActivity(intent)
-        finish()
+        activity!!.finish()
     }
 
     private fun onSignOut(){
         FirebaseAuth.getInstance().signOut()
-        startActivity(Intent(this, LoginActivity::class.java))
-        finish()
-    }
-
-    override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.action_home -> {
-                setCurrentFragment(homeFragment)
-            }
-            R.id.action_account -> {
-                setCurrentFragment(accountFragment )
-            }
-            R.id.action_shop -> {
-
-            }
-        }
-        return true
-    }
-    private fun setCurrentFragment(fragment: Fragment){
-        supportFragmentManager.beginTransaction().apply {
-            replace(R.id.flFragment, fragment)
-            commit()
-        }
+        startActivity(Intent(activity, LoginActivity::class.java))
+        activity!!.finish()
     }
 }

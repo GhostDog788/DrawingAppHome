@@ -16,6 +16,13 @@
         android:theme="@style/Theme.DrawingApp"
         tools:targetApi="31">
         <activity
+            android:name=".AccountActivity"
+            android:exported="false">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
+        <activity
             android:name=".EndGameActivity"
             android:exported="false"
             android:label="@string/title_activity_end_game"
@@ -79,7 +86,7 @@
                 android:value="" />
         </activity>
 
-        <service android:name=".LobbyTimeOutService"/>
+        <service android:name=".LobbyTimeOutService" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
