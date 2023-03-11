@@ -48,8 +48,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
-        app:layout_constraintBottom_toTopOf="@id/btnApplyChanges"
+        app:layout_constraintBottom_toTopOf="@+id/btnApplyChanges"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/etNickname">
@@ -59,7 +58,6 @@
             android:name="il.ghostdog.drawingapp.PhotoMakerFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
-
     </FrameLayout>
 
     <Button
