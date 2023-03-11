@@ -1,6 +1,11 @@
 buildscript {
     ext.kotlin_version = '1.5.31'
 
+    repositories {
+        maven { url 'https://jitpack.io' }
+        jcenter() //Keep jcenter() in the last
+    }
+
     dependencies {
         classpath 'com.google.gms:google-services:4.3.14'
         classpath "org.jetbrains.kotlin:kotlin-serialization:$kotlin_version"
