@@ -31,6 +31,7 @@ import kotlin.collections.HashSet
 class MainMenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationItemSelectedListener {
     private val homeFragment = HomeFragment()
     private val accountFragment = AccountFragment()
+    private lateinit var currentFragment: Fragment
 
     //home fragment
     var checkedPastLobbies = false
@@ -41,7 +42,13 @@ class MainMenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationI
 
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNavigationView.selectedItemId = R.id.action_home
-        setCurrentFragment(homeFragment)
+        supportFragmentManager.beginTransaction().apply {
+            add(R.id.flFragment, homeFragment)
+            add(R.id.flFragment, accountFragment)
+            hide(accountFragment)
+            commit()
+        }
+        currentFragment = homeFragment
         bottomNavigationView.setOnNavigationItemSelectedListener(this)
     }
 
@@ -51,7 +58,7 @@ class MainMenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationI
                 setCurrentFragment(homeFragment)
             }
             R.id.action_account -> {
-                setCurrentFragment(accountFragment )
+                setCurrentFragment(accountFragment)
             }
             R.id.action_shop -> {
 
@@ -60,8 +67,20 @@ class MainMenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationI
         return true
     }
     private fun setCurrentFragment(fragment: Fragment){
+        if(fragment == currentFragment) return
         supportFragmentManager.beginTransaction().apply {
-            replace(R.id.flFragment, fragment)
+            if(fragment is HomeFragment) {
+                show(homeFragment)
+            }else {
+                hide(homeFragment)
+            }
+            if(fragment is AccountFragment) {
+                show(accountFragment)
+            }
+            else {
+                hide(accountFragment)
+            }
+            currentFragment = fragment
             commit()
         }
     }

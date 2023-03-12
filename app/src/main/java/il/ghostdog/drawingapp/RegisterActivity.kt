@@ -1,5 +1,6 @@
 package il.ghostdog.drawingapp
 
+import android.app.Dialog
 import android.content.Intent
 import android.graphics.Bitmap
 import androidx.appcompat.app.AppCompatActivity
@@ -10,6 +11,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.storage.FirebaseStorage
 
 class RegisterActivity : AppCompatActivity() {
 
@@ -18,6 +20,7 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var userTextFieldsFragment: UserTextFieldsFragment
     private lateinit var photoMakerFragment: PhotoMakerFragment
     private lateinit var currentFragment: Fragment
+    private var customProgressDialog: Dialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,21 +81,39 @@ class RegisterActivity : AppCompatActivity() {
             return
         }
 
-        val data = SerializationHelper.compressBitmap(photoMakerFragment.getBitmapFromView())
-        val strData = SerializationHelper.gzip(data.contentToString())
-        Toast.makeText(applicationContext, "${etNickname.text} ${etEmail.text} ${strData.count()}", Toast.LENGTH_SHORT).show()
-        /*mAuth!!.createUserWithEmailAndPassword(etEmail.text.toString(), etPassword.text.toString())
+        showProgressDialog()
+        mAuth!!.createUserWithEmailAndPassword(etEmail.text.toString(), etPassword.text.toString())
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
                         val databaseUsers = FirebaseDatabase.getInstance().getReference("users")
                         databaseUsers.child(mAuth!!.currentUser!!.uid).setValue(
-                            UserData(etNickname.text.toString(), etEmail.text.toString(), Bitmap.createBitmap(5,5,Bitmap.Config.ARGB_8888))
+                            UserData(etNickname.text.toString(), etEmail.text.toString())
                         )
-                        startActivity(Intent(this, MainMenuActivity::class.java))
-                        finish()
+                        val data = SerializationHelper.compressBitmap(photoMakerFragment.getBitmapFromView())
+                        val reference = FirebaseStorage.getInstance().getReference("UsersData")
+                            .child(mAuth!!.currentUser!!.uid).child("profilePic")
+                        reference.putBytes(data).addOnCompleteListener{
+                            cancelProgressDialog()
+                            Toast.makeText(this, it.isSuccessful.toString(), Toast.LENGTH_SHORT).show()
+                            startActivity(Intent(this, MainMenuActivity::class.java))
+                            finish()
+                        }
                     }else{
                         Toast.makeText(this, "Authentication Failed", Toast.LENGTH_SHORT).show()
                     }
-                }*/
+                }
+    }
+    private fun showProgressDialog(){
+        customProgressDialog = Dialog(this@RegisterActivity)
+        customProgressDialog?.setCancelable(false)
+        customProgressDialog?.setContentView(R.layout.dialog_custom_progress)
+        customProgressDialog?.show()
+    }
+
+    private fun cancelProgressDialog(){
+        if(customProgressDialog != null){
+            customProgressDialog?.dismiss()
+            customProgressDialog = null
+        }
     }
 }

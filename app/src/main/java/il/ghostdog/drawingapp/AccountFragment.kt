@@ -1,5 +1,6 @@
 package il.ghostdog.drawingapp
 
+import android.app.Dialog
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -17,10 +18,12 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.storage.FirebaseStorage
 
 class AccountFragment : Fragment(R.layout.fragment_account) {
     private lateinit var photoMakerFragment: PhotoMakerFragment
     private lateinit var etNickName: EditText
+    private var customProgressDialog: Dialog? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -50,28 +53,52 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
             Toast.makeText(activity!!, "Name size is too long or too short", Toast.LENGTH_SHORT).show()
             return
         }
-
         applyChanges(etNickName.text.toString())
     }
 
     private fun applyChanges(nickName: String) {
+        showProgressDialog()
         val userId = FirebaseAuth.getInstance().currentUser!!.uid
         val dbUserReference = FirebaseDatabase.getInstance().getReference("users").child(userId)
         dbUserReference.addListenerForSingleValueEvent(object : ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
                 val userData = snapshot.getValue(UserData::class.java) ?: return
                 userData.nickname = nickName
-                
-                
+
+
                 dbUserReference.setValue(userData).addOnCompleteListener{
                     if(it.isSuccessful){
-                        Toast.makeText(activity!!, "Data updated successfully", Toast.LENGTH_SHORT).show()
+                        val data = SerializationHelper.compressBitmap(photoMakerFragment.getBitmapFromView())
+                        val reference = FirebaseStorage.getInstance().getReference("UsersData")
+                            .child(userId).child("profilePic")
+                        reference.putBytes(data).addOnCompleteListener{ it2 ->
+                            if (it2.isSuccessful){
+                                Toast.makeText(activity!!, "Data updated successfully", Toast.LENGTH_SHORT).show()
+                            }else{
+                                Toast.makeText(activity!!, "Photo could not be updated please try again", Toast.LENGTH_SHORT).show()
+                            }
+                            cancelProgressDialog()
+                        }
                     }else{
                         Toast.makeText(activity!!, "Data could not be updated please try again", Toast.LENGTH_SHORT).show()
+                        cancelProgressDialog()
                     }
                 }
             }
             override fun onCancelled(error: DatabaseError) {}
         })
+    }
+    private fun showProgressDialog(){
+        customProgressDialog = Dialog(activity!!)
+        customProgressDialog?.setCancelable(false)
+        customProgressDialog?.setContentView(R.layout.dialog_custom_progress)
+        customProgressDialog?.show()
+    }
+
+    private fun cancelProgressDialog(){
+        if(customProgressDialog != null){
+            customProgressDialog?.dismiss()
+            customProgressDialog = null
+        }
     }
 }
