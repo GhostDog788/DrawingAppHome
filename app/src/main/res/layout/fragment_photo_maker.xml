@@ -10,11 +10,25 @@
         android:id="@+id/btnUploadPhoto"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
         android:text="Upload Photo"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/flDrawingViewContainer"
+        app:layout_constraintEnd_toStartOf="@id/btnClear"
+        app:layout_constraintHorizontal_chainStyle="packed"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btnClear"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="Clear"
+        app:layout_constraintBottom_toTopOf="@+id/flDrawingViewContainer"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/btnUploadPhoto"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0" />
 
     <FrameLayout
         android:id="@+id/flDrawingViewContainer"
@@ -30,7 +44,7 @@
             android:id="@+id/ivBackground"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scaleType="centerCrop"/>
+            android:scaleType="centerCrop" />
 
         <il.ghostdog.drawingapp.DrawingView
             android:id="@+id/dvDrawingView"
@@ -57,7 +71,7 @@
             android:layout_margin="5dp"
             android:background="@color/teal_200"
             android:scaleType="fitXY"
-            android:src="@drawable/ic_brush"/>
+            android:src="@drawable/ic_brush" />
 
         <ImageButton
             android:id="@+id/ibColor"

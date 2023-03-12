@@ -102,7 +102,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser, PlayerGameHUDAdapter.Recyc
         override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
             if(dbPathsCount > drawingView!!.mPaths.size) {
                 val encoded = snapshot.getValue(String::class.java) ?: return
-                val data = unGzip(encoded)
+                val data = SerializationHelper.unGzip(encoded)
                 val path: DrawingView.StandardPath = Json.decodeFromString(data)
                 val customPath = DrawingView.CustomPath(path)
                 drawingView!!.mPaths.add(customPath)
@@ -114,7 +114,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser, PlayerGameHUDAdapter.Recyc
             if(drawingView!!.mPaths.isEmpty() || snapshot.key!!.toInt() >= drawingView!!.mPaths.size) return
 
             val encoded = snapshot.getValue(String::class.java) ?: return
-            val data = unGzip(encoded)
+            val data = SerializationHelper.unGzip(encoded)
             val path: DrawingView.StandardPath = Json.decodeFromString(data)
             val customPath = DrawingView.CustomPath(path)
             drawingView!!.mPaths[snapshot.key!!.toInt()] = customPath
@@ -916,7 +916,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser, PlayerGameHUDAdapter.Recyc
                 val path = drawingView!!.mPaths[counter]
                 val standardPath = path.toStandardPath()
                 val data = Json.encodeToString(standardPath)
-                val compressedData = gzip(data)
+                val compressedData = SerializationHelper.gzip(data)
 
                 mPathDatabase!!.child(counter.toString()).setValue(compressedData)
                 counter++
@@ -935,22 +935,12 @@ class MainActivity : AppCompatActivity(), ILobbyUser, PlayerGameHUDAdapter.Recyc
             val path = drawingView!!.mPaths[myPathsCount - 1]
             val standardPath = path.toStandardPath()
             val data = Json.encodeToString(standardPath)
-            val compressedData = gzip(data)
+            val compressedData = SerializationHelper.gzip(data)
 
 
             mPathDatabase!!.child((myPathsCount - 1).toString()).setValue(compressedData)
         }
     }
-
-    private fun gzip(content: String): String {
-        val bos = ByteArrayOutputStream()
-        GZIPOutputStream(bos).bufferedWriter(UTF_8).use { it.write(content) }
-        val b = bos.toByteArray()
-        return Base64.encodeToString(b, Base64.DEFAULT)
-    }
-
-    private fun unGzip(content: String): String =
-        GZIPInputStream(Base64.decode(content, Base64.DEFAULT).inputStream()).bufferedReader(UTF_8).use { it.readText() }
 
     private fun isReadStorageAllowed(): Boolean{
         val result = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)

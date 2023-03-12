@@ -46,6 +46,15 @@ class PhotoMakerFragment : Fragment(R.layout.fragment_photo_maker) {
 
         val btnUploadPhoto : Button = view.findViewById(R.id.btnUploadPhoto)
         btnUploadPhoto.setOnClickListener{ uploadPhoto()}
+
+        val btnClear : Button = view.findViewById(R.id.btnClear)
+        btnClear.setOnClickListener{ clear()}
+    }
+
+    private fun clear() {
+        val imageBackground: ImageView = mflDrawingView.findViewById(R.id.ivBackground)
+        imageBackground.setImageResource(0)
+        drawingView.clear()
     }
 
     private fun uploadPhoto() {
