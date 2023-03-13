@@ -80,7 +80,6 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
                 index = playerRViewDataList.size - 1
             }
             rvPlayers.adapter!!.notifyItemInserted(index)
-            getProfilePicAndUpdateRecycler(snapshot.key!!)
         }
         override fun onChildRemoved(snapshot: DataSnapshot) {
             if(snapshot.key == mAuth!!.currentUser!!.uid){
@@ -107,30 +106,6 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
         }
         override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
         override fun onCancelled(error: DatabaseError) {}
-    }
-
-    private fun getProfilePicAndUpdateRecycler(userId: String) = CoroutineScope(Dispatchers.IO).launch{
-        try {
-            val reference = FirebaseStorage.getInstance().getReference("UsersData")
-                .child(userId).child("profilePic")
-            val localFile = File.createTempFile("image", "jpg")
-            val task = reference.getFile(localFile)
-            task.addOnSuccessListener {
-                val bitmap = BitmapFactory.decodeFile(localFile.absolutePath)
-                val playerRViewData =
-                    playerRViewDataList.find { playerRViewData -> playerRViewData.userId == userId }
-                playerRViewData?.profilePic = bitmap
-                rvPlayers.adapter!!.notifyItemChanged(playerRViewDataList.indexOf(playerRViewData))
-            }.addOnFailureListener {
-                Toast.makeText(applicationContext, "Failed to download profile picture", Toast.LENGTH_SHORT).show()
-            }.addOnProgressListener { taskSnapshot ->
-                val progress =
-                    (100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount).toInt()
-                // Update the progress bar
-            }
-        }catch (e : Exception){
-            Toast.makeText(applicationContext, e.message, Toast.LENGTH_SHORT).show()
-        }
     }
 
     private val leaderListener = object : ValueEventListener{
