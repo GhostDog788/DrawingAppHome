@@ -56,6 +56,9 @@ class PhotoMakerFragment : Fragment(R.layout.fragment_photo_maker) {
         imageBackground.setImageResource(0)
         drawingView.clear()
     }
+    fun getBackgroundImageView() : ImageView{
+        return mflDrawingView.findViewById(R.id.ivBackground)
+    }
 
     private fun uploadPhoto() {
         requestStoragePermission()

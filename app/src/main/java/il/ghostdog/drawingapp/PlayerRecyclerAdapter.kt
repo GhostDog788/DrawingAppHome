@@ -38,7 +38,11 @@ class PlayerRecyclerAdapter(private var data: ArrayList<PlayerRViewData>, privat
         val playerRecycleView: PlayerRViewData = data[position]
 
         holder.name.text = playerRecycleView.name
-        holder.profilePic.setImageResource(playerRecycleView.profilePic)
+        if(playerRecycleView.profilePic == null){
+            holder.profilePic.setImageResource(0)
+        }else{
+            holder.profilePic.setImageBitmap(playerRecycleView.profilePic)
+        }
         if(playerRecycleView.isLeader){
             holder.leaderIcon.visibility = View.VISIBLE
         }else{

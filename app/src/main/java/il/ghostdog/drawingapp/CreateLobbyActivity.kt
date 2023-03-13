@@ -5,23 +5,27 @@ import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.BitmapFactory
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
-import android.widget.PopupMenu
 import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
-import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.*
 import kotlinx.coroutines.android.awaitFrame
+import java.io.BufferedInputStream
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.File
 import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashMap
 
@@ -62,11 +66,10 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
         override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
             //some time called for some reason
         }
-
         override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
             val playerData = snapshot.getValue(PlayerData::class.java)!!
             playersMap[snapshot.key!!] = playerData
-            playerRViewDataList.add(PlayerRViewData(snapshot.key!!, playerData, snapshot.key == partyLeader))
+            playerRViewDataList.add(PlayerRViewData(snapshot.key!!, playerData,null, snapshot.key == partyLeader))
             val index: Int
             if(snapshot.key == partyLeader){
                 index = 0
@@ -77,8 +80,8 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
                 index = playerRViewDataList.size - 1
             }
             rvPlayers.adapter!!.notifyItemInserted(index)
+            getProfilePicAndUpdateRecycler(snapshot.key!!)
         }
-
         override fun onChildRemoved(snapshot: DataSnapshot) {
             if(snapshot.key == mAuth!!.currentUser!!.uid){
                 //player have been kicked or exit
@@ -102,15 +105,34 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
                 onLeaderDisconnected()
             }
         }
+        override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+        override fun onCancelled(error: DatabaseError) {}
+    }
 
-        override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
-            TODO("Not yet implemented")
-        }
-
-        override fun onCancelled(error: DatabaseError) {
-            TODO("Not yet implemented")
+    private fun getProfilePicAndUpdateRecycler(userId: String) = CoroutineScope(Dispatchers.IO).launch{
+        try {
+            val reference = FirebaseStorage.getInstance().getReference("UsersData")
+                .child(userId).child("profilePic")
+            val localFile = File.createTempFile("image", "jpg")
+            val task = reference.getFile(localFile)
+            task.addOnSuccessListener {
+                val bitmap = BitmapFactory.decodeFile(localFile.absolutePath)
+                val playerRViewData =
+                    playerRViewDataList.find { playerRViewData -> playerRViewData.userId == userId }
+                playerRViewData?.profilePic = bitmap
+                rvPlayers.adapter!!.notifyItemChanged(playerRViewDataList.indexOf(playerRViewData))
+            }.addOnFailureListener {
+                Toast.makeText(applicationContext, "Failed to download profile picture", Toast.LENGTH_SHORT).show()
+            }.addOnProgressListener { taskSnapshot ->
+                val progress =
+                    (100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount).toInt()
+                // Update the progress bar
+            }
+        }catch (e : Exception){
+            Toast.makeText(applicationContext, e.message, Toast.LENGTH_SHORT).show()
         }
     }
+
     private val leaderListener = object : ValueEventListener{
         override fun onDataChange(snapshot: DataSnapshot) {
             partyLeader = snapshot.getValue(String::class.java)

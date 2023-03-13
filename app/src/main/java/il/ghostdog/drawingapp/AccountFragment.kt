@@ -1,7 +1,10 @@
 package il.ghostdog.drawingapp
 
 import android.app.Dialog
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -13,12 +16,16 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.findFragment
+import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.*
+import kotlinx.coroutines.tasks.await
+import java.io.InputStream
 
 class AccountFragment : Fragment(R.layout.fragment_account) {
     private lateinit var photoMakerFragment: PhotoMakerFragment
@@ -36,16 +43,33 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
         updateUIFromDB()
     }
 
-    private fun updateUIFromDB() {
-        val userId = FirebaseAuth.getInstance().currentUser!!.uid
-        val dbUserReference = FirebaseDatabase.getInstance().getReference("users").child(userId)
-        dbUserReference.addListenerForSingleValueEvent(object : ValueEventListener{
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val userData = snapshot.getValue(UserData::class.java) ?: return
-                etNickName.setText(userData.nickname)
+    private fun updateUIFromDB()  = CoroutineScope(Dispatchers.IO).launch{
+        try {
+            val userId = FirebaseAuth.getInstance().currentUser!!.uid
+            val dbUserReference = FirebaseDatabase.getInstance().getReference("users").child(userId)
+            dbUserReference.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val userData = snapshot.getValue(UserData::class.java) ?: return
+                    etNickName.setText(userData.nickname)
+                }
+
+                override fun onCancelled(error: DatabaseError) {}
+            })
+            val reference = FirebaseStorage.getInstance().getReference("UsersData")
+                .child(userId).child("profilePic")
+
+            val maxDownloadSize = 5L * 1024 * 1024
+            val bytes = reference.getBytes(maxDownloadSize).await()
+            val bitmap = BitmapFactory.decodeByteArray(bytes, 0 , bytes.size)
+            withContext(Dispatchers.Main){
+                photoMakerFragment.getBackgroundImageView().setImageBitmap(bitmap)
             }
-            override fun onCancelled(error: DatabaseError) {}
-        })
+        }
+        catch (e : Exception){
+            withContext(Dispatchers.Main){
+                Toast.makeText(activity!!, e.message, Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun checkChanges() {

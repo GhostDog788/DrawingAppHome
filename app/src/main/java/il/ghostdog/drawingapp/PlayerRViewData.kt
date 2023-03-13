@@ -1,15 +1,15 @@
 package il.ghostdog.drawingapp
 
-import androidx.annotation.DrawableRes
+import android.graphics.Bitmap
 
 data class PlayerRViewData(
     val userId: String,
     val name: String,
-    @DrawableRes val profilePic: Int,
+    var profilePic: Bitmap?,
     var isLeader: Boolean
 ) {
-    constructor(userId: String, playerData: PlayerData, isLeader: Boolean) : this(
+    constructor(userId: String, playerData: PlayerData, profilePic: Bitmap?, isLeader: Boolean) : this(
         userId,
-        playerData.name, R.drawable.ic_brush, isLeader
+        playerData.name, profilePic, isLeader
     )
 }
