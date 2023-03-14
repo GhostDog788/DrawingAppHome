@@ -11,12 +11,12 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import java.util.*
 
-class JoinLobbyActivity : AppCompatActivity() {
+class JoinLobbyActivity : AppCompatActivity(), IProgressDialogUser {
 
     private var mLobbyId : String? = null
     private var mTempRequestingId: String? = null
 
-    private var customProgressDialog: Dialog? = null
+    override var customProgressDialog: Dialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,7 +37,7 @@ class JoinLobbyActivity : AppCompatActivity() {
         val dataBaseInstance = FirebaseDatabase.getInstance()
         val databaseLobbies = dataBaseInstance.getReference("lobbies")
 
-        showProgressDialog()
+        showProgressDialog(this@JoinLobbyActivity)
         checkIfLobbyExists(databaseLobbies, mLobbyId!!)
     }
 
@@ -159,19 +159,5 @@ class JoinLobbyActivity : AppCompatActivity() {
             cancelProgressDialog()
         }
         override fun onCancelled(error: DatabaseError) {}
-    }
-
-    private fun showProgressDialog(){
-        customProgressDialog = Dialog(this)
-        customProgressDialog?.setCancelable(false)
-        customProgressDialog?.setContentView(R.layout.dialog_custom_progress)
-        customProgressDialog?.show()
-    }
-
-    private fun cancelProgressDialog(){
-        if(customProgressDialog != null){
-            customProgressDialog?.dismiss()
-            customProgressDialog = null
-        }
     }
 }

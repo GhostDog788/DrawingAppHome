@@ -2,7 +2,6 @@ package il.ghostdog.drawingapp
 
 import android.app.Dialog
 import android.content.Intent
-import android.graphics.Bitmap
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
@@ -13,14 +12,14 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
 
-class RegisterActivity : AppCompatActivity() {
+class RegisterActivity : AppCompatActivity(), IProgressDialogUser {
 
     private var mAuth: FirebaseAuth? = null
 
     private lateinit var userTextFieldsFragment: UserTextFieldsFragment
     private lateinit var photoMakerFragment: PhotoMakerFragment
     private lateinit var currentFragment: Fragment
-    private var customProgressDialog: Dialog? = null
+    override var customProgressDialog: Dialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,7 +80,7 @@ class RegisterActivity : AppCompatActivity() {
             return
         }
 
-        showProgressDialog()
+        showProgressDialog(this@RegisterActivity)
         mAuth!!.createUserWithEmailAndPassword(etEmail.text.toString(), etPassword.text.toString())
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
@@ -102,18 +101,5 @@ class RegisterActivity : AppCompatActivity() {
                         Toast.makeText(this, "Authentication Failed", Toast.LENGTH_SHORT).show()
                     }
                 }
-    }
-    private fun showProgressDialog(){
-        customProgressDialog = Dialog(this@RegisterActivity)
-        customProgressDialog?.setCancelable(false)
-        customProgressDialog?.setContentView(R.layout.dialog_custom_progress)
-        customProgressDialog?.show()
-    }
-
-    private fun cancelProgressDialog(){
-        if(customProgressDialog != null){
-            customProgressDialog?.dismiss()
-            customProgressDialog = null
-        }
     }
 }

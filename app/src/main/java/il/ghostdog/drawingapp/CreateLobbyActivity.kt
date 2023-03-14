@@ -5,7 +5,6 @@ import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.graphics.BitmapFactory
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
@@ -19,21 +18,16 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
-import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.*
 import kotlinx.coroutines.android.awaitFrame
-import java.io.BufferedInputStream
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.io.File
 import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashMap
 
-class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapter.RecyclerViewEvent {
+class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, PlayerRecyclerAdapter.RecyclerViewEvent {
 
     private var lobbyId: String? = null
 
-    private var customProgressDialog: Dialog? = null
+    override var customProgressDialog: Dialog? = null
 
     private var mAuth : FirebaseAuth? = null
 
@@ -208,7 +202,7 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
     }
 
     private suspend fun setUpLobby(){
-        showProgressDialog()
+        showProgressDialog(this@CreateLobbyActivity)
         addLeaderListener()
         withContext(Dispatchers.IO){
             while(partyLeader == null)
@@ -328,20 +322,6 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, PlayerRecyclerAdapt
 
         value += amount
         display!!.text = value.toString()
-    }
-
-    private fun showProgressDialog(){
-        customProgressDialog = Dialog(this)
-        customProgressDialog?.setCancelable(false)
-        customProgressDialog?.setContentView(R.layout.dialog_custom_progress)
-        customProgressDialog?.show()
-    }
-
-    private fun cancelProgressDialog(){
-        if(customProgressDialog != null){
-            customProgressDialog?.dismiss()
-            customProgressDialog = null
-        }
     }
 
     override fun onLeaderDisconnected() {

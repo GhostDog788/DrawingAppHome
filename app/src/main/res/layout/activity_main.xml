@@ -322,15 +322,6 @@
             android:src="@drawable/ic_brush" />
 
         <ImageButton
-            android:id="@+id/ibGallery"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_margin="5dp"
-            android:background="@color/purple_200"
-            android:scaleType="fitXY"
-            android:src="@drawable/ic_gallery" />
-
-        <ImageButton
             android:id="@+id/ibUndo"
             android:layout_width="40dp"
             android:layout_height="40dp"
@@ -338,15 +329,6 @@
             android:background="@color/yellow"
             android:scaleType="fitXY"
             android:src="@drawable/ic_undo" />
-
-        <ImageButton
-            android:id="@+id/ibSave"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_margin="5dp"
-            android:background="@color/blue"
-            android:scaleType="fitXY"
-            android:src="@drawable/ic_save" />
 
     </LinearLayout>
 

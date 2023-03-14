@@ -1,22 +1,13 @@
 package il.ghostdog.drawingapp
 
 import android.app.Dialog
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
-import android.widget.FrameLayout
-import android.widget.ImageView
 import android.widget.Toast
-import androidx.fragment.app.FragmentManager
-import androidx.fragment.app.findFragment
-import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -25,12 +16,11 @@ import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.*
 import kotlinx.coroutines.tasks.await
-import java.io.InputStream
 
-class AccountFragment : Fragment(R.layout.fragment_account) {
+class AccountFragment : Fragment(R.layout.fragment_account), IProgressDialogUser {
     private lateinit var photoMakerFragment: PhotoMakerFragment
     private lateinit var etNickName: EditText
-    private var customProgressDialog: Dialog? = null
+    override var customProgressDialog: Dialog? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -81,7 +71,7 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
     }
 
     private fun applyChanges(nickName: String) {
-        showProgressDialog()
+        showProgressDialog(activity!!)
         val userId = FirebaseAuth.getInstance().currentUser!!.uid
         val dbUserReference = FirebaseDatabase.getInstance().getReference("users").child(userId)
         dbUserReference.addListenerForSingleValueEvent(object : ValueEventListener{
@@ -111,18 +101,5 @@ class AccountFragment : Fragment(R.layout.fragment_account) {
             }
             override fun onCancelled(error: DatabaseError) {}
         })
-    }
-    private fun showProgressDialog(){
-        customProgressDialog = Dialog(activity!!)
-        customProgressDialog?.setCancelable(false)
-        customProgressDialog?.setContentView(R.layout.dialog_custom_progress)
-        customProgressDialog?.show()
-    }
-
-    private fun cancelProgressDialog(){
-        if(customProgressDialog != null){
-            customProgressDialog?.dismiss()
-            customProgressDialog = null
-        }
     }
 }
