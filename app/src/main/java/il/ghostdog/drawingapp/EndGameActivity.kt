@@ -6,15 +6,14 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 
 class EndGameActivity : AppCompatActivity(), ILobbyUser {
@@ -41,14 +40,37 @@ class EndGameActivity : AppCompatActivity(), ILobbyUser {
         partyLeader = intent.getStringExtra("partyLeader")
         databaseMyLobby = FirebaseDatabase.getInstance().getReference("lobbies").child(lobbyId!!)
 
-        setUpWinners()
+        val orderedByPoints = mPlayersMap.toList().sortedBy { pair -> pair.second.points }
+        setUpWinners(orderedByPoints)
+        giveMoney(orderedByPoints)
 
         findViewById<Button>(R.id.btnToMainMenu).setOnClickListener { exitGame() }
         findViewById<Button>(R.id.btnBackToLobby).setOnClickListener { backToLobby()}
     }
 
-    private fun setUpWinners() {
-        val orderedByPoints = mPlayersMap.toList().sortedBy { pair -> pair.second.points }
+    private fun giveMoney(orderedByPoints: List<Pair<String, PlayerData>>) {
+        val uid = FirebaseAuth.getInstance().currentUser!!.uid
+        val myPair = orderedByPoints.find { p -> p.first == uid }
+        val ref = FirebaseDatabase.getInstance().getReference("users").child(uid)
+        var placeMultiplayer = 1.0
+        when(orderedByPoints.indexOf(myPair)){
+            0 -> placeMultiplayer = 1.3
+            1 -> placeMultiplayer = 1.2
+            2 -> placeMultiplayer = 1.1
+        }
+        val money = (((myPair!!.second.points / 300) * 5.432) * placeMultiplayer).roundToInt() + 1
+        findViewById<TextView>(R.id.tvMoneyEarned).text = money.toString()
+        ref.addListenerForSingleValueEvent(object : ValueEventListener{
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val userData = snapshot.getValue(UserData::class.java)!!
+                userData.money += money
+                ref.setValue(userData)
+            }
+            override fun onCancelled(error: DatabaseError) {}
+        })
+    }
+
+    private fun setUpWinners(orderedByPoints: List<Pair<String, PlayerData>>) {
         val firstPlayer = orderedByPoints[orderedByPoints.lastIndex]
         findViewById<TextView>(R.id.tvName1).text = firstPlayer.second.name
         findViewById<TextView>(R.id.tvPoints1).text = firstPlayer.second.points.toString()

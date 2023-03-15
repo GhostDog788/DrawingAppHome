@@ -27,6 +27,7 @@ import kotlinx.coroutines.android.awaitFrame
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlin.math.roundToInt
 import kotlin.random.Random
 
 
@@ -460,8 +461,16 @@ class MainActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
             val playerData = mPlayersMap[mAuth!!.currentUser!!.uid]
             if(playerData!!.answeredCorrectly || !mCanGuess) return
 
+            //check how many players have answered
+            var playersAnswered = 0
+            for(playerData1 in mPlayersMap.values){
+                if(playerData1.answeredCorrectly) playersAnswered++
+            }
+            val points = (400.0 * (mTimeLeft.toDouble() / mTurnTime.toDouble())
+                    * (1 - (playersAnswered.toDouble() / mPlayersMap.size.toDouble())))
+                .roundToInt()
             playerData.answeredCorrectly = true
-            playerData.points += 100
+            playerData.points += points
             updatePlayerData(mAuth!!.currentUser!!.uid, playerData)
         }else{
             val name = mPlayersMap[mAuth!!.currentUser!!.uid]!!.name

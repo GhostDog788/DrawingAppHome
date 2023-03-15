@@ -3,6 +3,7 @@ package il.ghostdog.drawingapp
 class UserData {
     lateinit var nickname: String
     lateinit var email: String
+    var money: Int = 0
 
     constructor() {}
 
