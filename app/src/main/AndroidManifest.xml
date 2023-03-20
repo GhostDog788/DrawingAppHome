@@ -17,17 +17,10 @@
         android:theme="@style/Theme.DrawingApp"
         tools:targetApi="31">
         <activity
-            android:name=".AccountActivity"
-            android:exported="false">
-            <meta-data
-                android:name="android.app.lib_name"
-                android:value="" />
-        </activity>
-        <activity
             android:name=".EndGameActivity"
             android:exported="false"
             android:label="@string/title_activity_end_game"
-            android:theme="@style/Theme.DrawingApp.NoActionBar">
+            android:theme="@style/Theme.MaterialComponents.Light.NoActionBar">
             <meta-data
                 android:name="android.app.lib_name"
                 android:value="" />
@@ -58,7 +51,7 @@
             android:name=".MainActivity"
             android:exported="false"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+            android:theme="@style/Theme.MaterialComponents.Light.NoActionBar"
             android:windowSoftInputMode="adjustPan">
             <meta-data
                 android:name="android.app.lib_name"
@@ -86,8 +79,6 @@
                 android:name="android.app.lib_name"
                 android:value="" />
         </activity>
-
-        <service android:name=".LobbyTimeOutService" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

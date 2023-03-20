@@ -4,19 +4,19 @@
 
     <item
         android:id="@+id/action_friends"
-        android:title="Friends"
-        android:icon="@drawable/ic_friends_main"
+        android:title="My Friends"
+        android:icon="@drawable/ic_friends_sub"
         app:showAsAction="ifRoom" />
 
     <item
-        android:id="@+id/action_home"
-        android:title="Home"
-        android:icon="@drawable/ic_game_controller"
+        android:id="@+id/action_requests"
+        android:title="Requests"
+        android:icon="@drawable/ic_friend_request"
         app:showAsAction="ifRoom" />
 
     <item
-        android:id="@+id/action_account"
-        android:title="Account"
-        android:icon="@drawable/ic_account_manage"
+        android:id="@+id/action_add_friend"
+        android:title="Add Friend"
+        android:icon="@drawable/ic_add_friend"
         app:showAsAction="ifRoom" />
 </menu>

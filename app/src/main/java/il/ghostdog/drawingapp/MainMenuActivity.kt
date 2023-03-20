@@ -9,7 +9,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 class MainMenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationItemSelectedListener {
     private val homeFragment = HomeFragment()
     private val accountFragment = AccountFragment()
-    private val shopFragment = ShopFragment()
+    private val friendsFragment = FriendsFragment()
     private lateinit var currentFragment: Fragment
 
     //home fragment
@@ -24,9 +24,9 @@ class MainMenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationI
         supportFragmentManager.beginTransaction().apply {
             add(R.id.flFragment, homeFragment)
             add(R.id.flFragment, accountFragment)
-            add(R.id.flFragment, shopFragment)
+            add(R.id.flFragment, friendsFragment)
             hide(accountFragment)
-            hide(shopFragment)
+            hide(friendsFragment)
             commit()
         }
         currentFragment = homeFragment
@@ -39,7 +39,7 @@ class MainMenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationI
             R.id.action_home -> {
                 if (currentFragment == accountFragment) {
                     transaction.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_right)
-                } else if (currentFragment == shopFragment) {
+                } else if (currentFragment == friendsFragment) {
                     transaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left)
                 }
                 transaction.hide(currentFragment)
@@ -48,26 +48,18 @@ class MainMenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationI
                 currentFragment = homeFragment
             }
             R.id.action_account -> {
-                if (currentFragment == homeFragment) {
-                    transaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left)
-                } else if (currentFragment == shopFragment) {
-                    transaction.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_right)
-                }
+                transaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left)
                 transaction.hide(currentFragment)
                 transaction.show(accountFragment)
                 transaction.commit()
                 currentFragment = accountFragment
             }
-            R.id.action_shop -> {
-                if (currentFragment == homeFragment) {
-                    transaction.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_right)
-                } else if (currentFragment == accountFragment) {
-                    transaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left)
-                }
+            R.id.action_friends -> {
+                transaction.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_right)
                 transaction.hide(currentFragment)
-                transaction.show(shopFragment)
+                transaction.show(friendsFragment)
                 transaction.commit()
-                currentFragment = shopFragment
+                currentFragment = friendsFragment
             }
         }
         return true

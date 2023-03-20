@@ -4,6 +4,7 @@ class UserData {
     lateinit var nickname: String
     lateinit var email: String
     var money: Int = 0
+    var friendsList: ArrayList<String> = ArrayList()
 
     constructor() {}
 
