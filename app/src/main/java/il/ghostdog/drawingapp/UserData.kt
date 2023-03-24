@@ -5,6 +5,7 @@ class UserData {
     lateinit var email: String
     var money: Int = 0
     var friendsList: ArrayList<String> = ArrayList()
+    var lastSeen: String? = null
 
     constructor() {}
 

@@ -1,5 +1,7 @@
 package il.ghostdog.drawingapp
 
+import android.content.Intent
+
 object Constants {
     const val defaultWidth = 1058
     var viewWidth = 0
@@ -10,4 +12,5 @@ object Constants {
     val DRAWING_UPDATE_INTERVAL = 4
 
     var GUESS_WORDS_MAP = LinkedHashMap<String, ArrayList<String>>()
+    var lastSeenServiceIntent: Intent? = null
 }
