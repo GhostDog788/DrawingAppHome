@@ -39,6 +39,7 @@ class MainMenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationI
         }
         currentFragment = homeFragment
         bottomNavigationView.setOnNavigationItemSelectedListener(this)
+        friendsFragment.friendRequestsFragment.rvMain = bottomNavigationView
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {

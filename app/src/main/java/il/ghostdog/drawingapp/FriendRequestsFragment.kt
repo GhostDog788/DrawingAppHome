@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -17,6 +18,7 @@ import com.google.firebase.database.ValueEventListener
 class FriendRequestsFragment : Fragment(R.layout.fragment_friend_requests), FriendRequestsRecyclerAdapter.RecyclerViewEvent {
     private lateinit var rvRequests: RecyclerView
     private var requestsRDataList : ArrayList<FriendRequestRViewData> = ArrayList()
+    var rvMain: BottomNavigationView? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -30,14 +32,27 @@ class FriendRequestsFragment : Fragment(R.layout.fragment_friend_requests), Frie
         val position = requestsRDataList.indexOf(tempRView)
         requestsRDataList[position] = friendRequestRViewData
         rvRequests.adapter!!.notifyItemChanged(position)
+
+        updateBadge()
     }
     fun updateRView(requestsRDataList : ArrayList<FriendRequestRViewData>){
         this.requestsRDataList = requestsRDataList
         rvRequests.adapter!!.notifyDataSetChanged()
+
+        updateBadge()
     }
     fun addRView(friendRequestRViewData: FriendRequestRViewData){
         requestsRDataList.add(friendRequestRViewData)
         rvRequests.adapter!!.notifyItemInserted(requestsRDataList.size)
+
+        updateBadge()
+    }
+    private fun updateBadge(){
+        if(rvMain == null) return
+        rvMain!!.getOrCreateBadge(R.id.action_friends).apply {
+            number = requestsRDataList.size
+            isVisible = number > 0
+        }
     }
 
     override fun onApprovedClicked(position: Int) {
@@ -61,6 +76,7 @@ class FriendRequestsFragment : Fragment(R.layout.fragment_friend_requests), Frie
                                     .child(requestRViewData.userId).setValue(theirUserData)
                                 requestsRDataList.removeAt(position)
                                 rvRequests.adapter!!.notifyItemRemoved(position)
+                                updateBadge()
                             }
                             override fun onCancelled(error: DatabaseError) {}
                         })
@@ -82,6 +98,7 @@ class FriendRequestsFragment : Fragment(R.layout.fragment_friend_requests), Frie
                         .child(myUid).setValue(userData)
                     requestsRDataList.removeAt(position)
                     rvRequests.adapter!!.notifyItemRemoved(position)
+                    updateBadge()
                 }
                 override fun onCancelled(error: DatabaseError) {}
             })

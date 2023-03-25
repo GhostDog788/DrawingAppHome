@@ -2,11 +2,13 @@ package il.ghostdog.drawingapp
 
 import android.os.Bundle
 import android.view.View
+import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -67,8 +69,42 @@ class MyFriendsFragment : Fragment(R.layout.fragment_my_friends), FriendsRecycle
         friendsRDataList[position] = friendRViewData
         rvFriends.adapter!!.notifyItemChanged(position)
     }
+    fun removeRView(friendRViewData: FriendRViewData){
+        val tempRView = friendsRDataList.find { v -> v.userId == friendRViewData.userId }
+        val position = friendsRDataList.indexOf(tempRView)
+        friendsRDataList.remove(tempRView)
+        rvFriends.adapter!!.notifyItemRemoved(position)
+    }
 
     override fun onItemClicked(position: Int) {
-        Toast.makeText(activity!!, "Friend Clicked", Toast.LENGTH_SHORT).show()
+        val popupMenu = PopupMenu(activity!!, rvFriends.findViewHolderForAdapterPosition(position)!!.itemView)
+        popupMenu.setOnMenuItemClickListener { item ->
+            when(item.itemId){
+                R.id.action_remove_friend ->{
+                    val ref = FirebaseDatabase.getInstance().getReference("users")
+                    ref.child(FirebaseAuth.getInstance().currentUser!!.uid).addListenerForSingleValueEvent(object : ValueEventListener{
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            val userData = snapshot.getValue(UserData::class.java)
+                            userData!!.friendsList.remove(friendsRDataList[position].userId)
+                            ref.child(FirebaseAuth.getInstance().currentUser!!.uid).setValue(userData)
+                        }
+                        override fun onCancelled(error: DatabaseError) {}
+                    })
+                    ref.child(friendsRDataList[position].userId).addListenerForSingleValueEvent(object : ValueEventListener{
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            val userData = snapshot.getValue(UserData::class.java)
+                            userData!!.friendsList.remove(FirebaseAuth.getInstance().currentUser!!.uid)
+                            ref.child(friendsRDataList[position].userId).setValue(userData)
+                        }
+                        override fun onCancelled(error: DatabaseError) {}
+                    })
+                    true
+                }else ->{
+                false
+            }
+            }
+        }
+        popupMenu.inflate(R.menu.popup_friend_menu)
+        popupMenu.show()
     }
 }

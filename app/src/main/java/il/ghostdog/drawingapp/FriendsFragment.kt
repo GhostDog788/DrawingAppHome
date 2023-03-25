@@ -3,6 +3,7 @@ package il.ghostdog.drawingapp
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
@@ -15,9 +16,10 @@ import com.google.firebase.database.ValueEventListener
 
 class FriendsFragment : Fragment(R.layout.fragment_friends), BottomNavigationView.OnNavigationItemSelectedListener {
     private val myFriendFragment = MyFriendsFragment()
-    private val friendRequestsFragment = FriendRequestsFragment()
+    val friendRequestsFragment = FriendRequestsFragment()
     private val addFriendFragment = AddFriendFragment()
     private lateinit var currentFragment: Fragment
+    private lateinit var myUid: String
 
     private val friendListListener = object : ChildEventListener{
         override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
@@ -68,6 +70,8 @@ class FriendsFragment : Fragment(R.layout.fragment_friends), BottomNavigationVie
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        myUid = FirebaseAuth.getInstance().currentUser!!.uid
+
         val bottomNavigationView = view.findViewById<BottomNavigationView>(R.id.bottom_navigation_friends)
         bottomNavigationView.selectedItemId = R.id.action_friends
         childFragmentManager.beginTransaction().apply {
@@ -117,14 +121,12 @@ class FriendsFragment : Fragment(R.layout.fragment_friends), BottomNavigationVie
     }
 
     private fun addFriendsListListener() {
-        val uid = FirebaseAuth.getInstance().currentUser!!.uid
         FirebaseDatabase.getInstance().getReference("users")
-            .child(uid).child("friendsList").addChildEventListener(friendListListener)
+            .child(myUid).child("friendsList").addChildEventListener(friendListListener)
     }
     private fun removeFriendsListListener() {
-        val uid = FirebaseAuth.getInstance().currentUser!!.uid
         FirebaseDatabase.getInstance().getReference("users")
-            .child(uid).child("friendsList").removeEventListener(friendListListener)
+            .child(myUid).child("friendsList").removeEventListener(friendListListener)
     }
 
     private fun updateFriendToRView(uid: String, action : UpdateAction) {
@@ -137,7 +139,7 @@ class FriendsFragment : Fragment(R.layout.fragment_friends), BottomNavigationVie
                     when(action){
                         UpdateAction.Add -> myFriendFragment.addRView(friendRViewData)
                         UpdateAction.Update -> myFriendFragment.updateRView(friendRViewData)
-                        UpdateAction.Remove -> {}
+                        UpdateAction.Remove -> myFriendFragment.removeRView(friendRViewData)
                     }
                 }
                 override fun onCancelled(error: DatabaseError) {}
