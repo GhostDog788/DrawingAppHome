@@ -7,6 +7,7 @@ import android.view.MenuItem
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 
 class MainMenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationItemSelectedListener {
     private val homeFragment = HomeFragment()
@@ -21,6 +22,8 @@ class MainMenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationI
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main_menu)
 
+        FirebaseDatabase.getInstance().getReference("users")
+            .child(FirebaseAuth.getInstance().currentUser!!.uid).child("activeGame").removeValue()
         if(Constants.lastSeenServiceIntent == null){
             Constants.lastSeenServiceIntent = Intent(this, LastSeenService::class.java)
             Constants.lastSeenServiceIntent!!.putExtra("userId", FirebaseAuth.getInstance().currentUser!!.uid)

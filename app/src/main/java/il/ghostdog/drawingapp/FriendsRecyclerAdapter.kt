@@ -33,6 +33,11 @@ import kotlin.collections.ArrayList
 class FriendsRecyclerAdapter(private var data: ArrayList<FriendRViewData>, private var listener: RecyclerViewEvent) : RecyclerView.Adapter<FriendsRecyclerAdapter.ItemViewHolder>() {
 
     inner class ItemViewHolder(view: View): RecyclerView.ViewHolder(view), View.OnClickListener {
+        private val refUsers = FirebaseDatabase.getInstance().getReference("users")
+        private val refLobbies = FirebaseDatabase.getInstance().getReference("lobbies")
+        lateinit var userId: String
+        var activeGame: String? = null
+        var isActiveNow: Boolean = false
         val name: TextView = view.findViewById(R.id.tvName)
         val profilePic: ImageView = view.findViewById(R.id.ivProfilePic)
         val progressText: TextView = view.findViewById(R.id.tvProgress)
@@ -40,6 +45,7 @@ class FriendsRecyclerAdapter(private var data: ArrayList<FriendRViewData>, priva
         val llInactive: LinearLayout = view.findViewById(R.id.llInactive)
         val tvLastSeen: TextView = view.findViewById(R.id.tvLastSeen)
         val ivActive: ImageView = view.findViewById(R.id.ivActive)
+        val ivActiveGame: com.google.android.material.imageview.ShapeableImageView = view.findViewById(R.id.ivActiveGame)
 
         init {
             view.setOnClickListener(this)
@@ -61,8 +67,10 @@ class FriendsRecyclerAdapter(private var data: ArrayList<FriendRViewData>, priva
                 val difference = (localDateTime.toEpochSecond(ZoneOffset.UTC) - dateTimeLastLeader.toEpochSecond(
                     ZoneOffset.UTC))
                 withContext(Dispatchers.Main){
-                    if(difference > 90){
+                    if(difference > 10){
                         //not active
+                        isActiveNow = false
+                        ivActiveGame.visibility = View.GONE
                         ivActive.visibility = View.GONE
                         llInactive.visibility = View.VISIBLE
                         val finalString = if((difference / (60*60*24)).toInt() > 0){
@@ -71,15 +79,44 @@ class FriendsRecyclerAdapter(private var data: ArrayList<FriendRViewData>, priva
                         }else if((difference / (60*60)).toInt() > 0){
                             //hours
                             "${(difference / (60*60)).toInt()} hours"
-                        }else{
+                        }else if((difference / (60)).toInt() > 0){
                             //minutes
                             "${(difference / 60).toInt()} minutes"
+                        }else{
+                            //seconds
+                            "${(difference).toInt()} seconds"
                         }
                         tvLastSeen.text = finalString
                     }else{
                         //active
-                        ivActive.visibility = View.VISIBLE
+                        isActiveNow = true
                         llInactive.visibility = View.GONE
+                        refUsers.child(userId).child("activeGame")
+                            .addListenerForSingleValueEvent(object : ValueEventListener{
+                                override fun onDataChange(snapshot: DataSnapshot) {
+                                    val activeGame1 = snapshot.getValue(String::class.java)
+                                    if(activeGame1 == null){
+                                        ivActiveGame.visibility = View.GONE
+                                        ivActive.visibility = View.VISIBLE
+                                        return
+                                    }
+                                    activeGame = activeGame1
+                                    refLobbies.child(activeGame!!).child("playersStatus")
+                                        .child(userId).addListenerForSingleValueEvent(object : ValueEventListener{
+                                            override fun onDataChange(snapshot: DataSnapshot) {
+                                                if (snapshot.exists()) {
+                                                    ivActiveGame.visibility = View.VISIBLE
+                                                    ivActive.visibility = View.GONE
+                                                }else{
+                                                    ivActiveGame.visibility = View.GONE
+                                                    ivActive.visibility = View.VISIBLE
+                                                }
+                                            }
+                                            override fun onCancelled(error: DatabaseError) {}
+                                    })
+                                }
+                                override fun onCancelled(error: DatabaseError) {}
+                        })
                     }
                 }
             }
@@ -95,6 +132,8 @@ class FriendsRecyclerAdapter(private var data: ArrayList<FriendRViewData>, priva
 
     override fun onBindViewHolder(holder: ItemViewHolder, position: Int) {
         val friendRViewData: FriendRViewData = data[position]
+
+        holder.userId = friendRViewData.userId
 
         holder.name.text = friendRViewData.name
         if(friendRViewData.lastSeen != null){

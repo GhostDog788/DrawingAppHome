@@ -6,6 +6,7 @@ class UserData {
     var money: Int = 0
     var friendsList: ArrayList<String> = ArrayList()
     var lastSeen: String? = null
+    var activeGame: String? = null
 
     constructor() {}
 

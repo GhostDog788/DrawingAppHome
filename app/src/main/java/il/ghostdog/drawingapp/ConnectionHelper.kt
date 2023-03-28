@@ -27,6 +27,8 @@ class ConnectionHelper {
                             if (snapshot.childrenCount == 0L) {
                                 //all players left
                                 databaseMyLobby.removeValue()
+                                FirebaseDatabase.getInstance().getReference("users")
+                                    .child(playerId).child("activeGame").removeValue()
                             }
                         }
 

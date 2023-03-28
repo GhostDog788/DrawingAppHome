@@ -22,6 +22,11 @@ class JoinLobbyActivity : AppCompatActivity(), IProgressDialogUser {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_join_lobby)
 
+        mLobbyId = intent.getStringExtra("lobbyId")
+        if (mLobbyId != null){
+            findViewById<EditText>(R.id.etLobbyId).setText(mLobbyId!!)
+        }
+
         val btnJoinLobby = findViewById<Button>(R.id.btnJoinLobby)
         btnJoinLobby.setOnClickListener{ onJoinLobbyClicked()}
     }

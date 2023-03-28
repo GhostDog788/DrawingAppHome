@@ -67,8 +67,10 @@ class PlayerRecyclerAdapter(private var data: ArrayList<PlayerRViewData>, privat
         }
     }
     private fun getProfilePicAndUpdateView(userId: String, holder: ItemViewHolder) = CoroutineScope(Dispatchers.IO).launch{
-        holder.profilePic.visibility = View.GONE
-        holder.loadingBar.visibility = View.VISIBLE
+        withContext(Dispatchers.Main) {
+            holder.profilePic.visibility = View.GONE
+            holder.loadingBar.visibility = View.VISIBLE
+        }
         try {
             val reference = FirebaseStorage.getInstance().getReference("UsersData")
                 .child(userId).child("profilePic")

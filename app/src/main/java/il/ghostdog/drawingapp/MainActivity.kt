@@ -803,8 +803,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
         alertDialogBuilder.show()
     }
     private fun kickPlayer(player: PlayerRGameViewData) {
-        databaseMyLobby!!.child("players").child(player.userId).removeValue()
-        databaseMyLobby!!.child("playersStatus").child(player.userId).removeValue()
+        ConnectionHelper.disconnectPlayerFromLobby(databaseMyLobby!!, player.userId)
     }
     private fun exitGame(){
         removeAllListeners()

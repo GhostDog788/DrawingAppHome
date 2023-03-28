@@ -130,13 +130,15 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
         setContentView(R.layout.activity_create_lobby)
 
         sharedPref = applicationContext.getSharedPreferences(Constants.SHARED_LOBBIES_NAME, Context.MODE_PRIVATE)
-
+        mAuth = FirebaseAuth.getInstance()
         lobbyId = intent.getStringExtra("lobbyId")
 
         val dataBaseInstance = FirebaseDatabase.getInstance()
         val databaseLobbies = dataBaseInstance.getReference("lobbies")
         databaseUsers = dataBaseInstance.getReference("users")
         databaseMyLobby = databaseLobbies.child(lobbyId!!)
+
+        databaseUsers!!.child(mAuth!!.currentUser!!.uid).child("activeGame").setValue(lobbyId!!)
 
         //set lobby id display
         findViewById<TextView>(R.id.tvLobbyId).text = lobbyId
@@ -152,8 +154,6 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
             .setOnClickListener{ onAdditiveButtonClicked(minTime, maxTime, -timeJumps, tvTime)}
         findViewById<Button>(R.id.btnPlusTime)
             .setOnClickListener{ onAdditiveButtonClicked(minTime, maxTime, timeJumps, tvTime)}
-
-        mAuth = FirebaseAuth.getInstance()
 
         val btnExit = findViewById<Button>(R.id.btnExit)
         btnExit.setOnClickListener {exitLobby()}
@@ -309,8 +309,7 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
     }
 
     private fun kickPlayer(player: PlayerRViewData) {
-        databaseMyLobby!!.child("players").child(player.userId).removeValue()
-        databaseMyLobby!!.child("playersStatus").child(player.userId).removeValue()
+        ConnectionHelper.disconnectPlayerFromLobby(databaseMyLobby!!, player.userId)
     }
     private fun exitLobby(){
         ConnectionHelper.disconnectPlayerFromLobby(databaseMyLobby!!, mAuth!!.currentUser!!.uid)

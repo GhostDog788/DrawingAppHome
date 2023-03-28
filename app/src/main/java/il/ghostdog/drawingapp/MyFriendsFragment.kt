@@ -1,5 +1,6 @@
 package il.ghostdog.drawingapp
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.PopupMenu
@@ -77,9 +78,21 @@ class MyFriendsFragment : Fragment(R.layout.fragment_my_friends), FriendsRecycle
     }
 
     override fun onItemClicked(position: Int) {
-        val popupMenu = PopupMenu(activity!!, rvFriends.findViewHolderForAdapterPosition(position)!!.itemView)
+        val viewHolder = rvFriends.findViewHolderForAdapterPosition(position)!!
+        val popupMenu = PopupMenu(activity!!, viewHolder.itemView)
         popupMenu.setOnMenuItemClickListener { item ->
             when(item.itemId){
+                R.id.action_join_game ->{
+                    val intent = Intent(activity, JoinLobbyActivity::class.java)
+                    val lobbyId = (viewHolder as FriendsRecyclerAdapter.ItemViewHolder).activeGame
+                    if(lobbyId == null || !viewHolder.isActiveNow){
+                        Toast.makeText(activity, "No game detected", Toast.LENGTH_SHORT).show()
+                    }else {
+                        intent.putExtra("lobbyId", lobbyId)
+                        startActivity(intent)
+                    }
+                    true
+                }
                 R.id.action_remove_friend ->{
                     val ref = FirebaseDatabase.getInstance().getReference("users")
                     ref.child(FirebaseAuth.getInstance().currentUser!!.uid).addListenerForSingleValueEvent(object : ValueEventListener{
