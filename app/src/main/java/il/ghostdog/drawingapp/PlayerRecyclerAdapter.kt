@@ -23,7 +23,7 @@ import java.util.concurrent.Executors
 
 class PlayerRecyclerAdapter(private var data: ArrayList<PlayerRViewData>, private var listener: RecyclerViewEvent) : RecyclerView.Adapter<PlayerRecyclerAdapter.ItemViewHolder>() {
 
-    inner class ItemViewHolder(view: View): RecyclerView.ViewHolder(view), View.OnLongClickListener {
+    inner class ItemViewHolder(view: View): RecyclerView.ViewHolder(view), View.OnLongClickListener, View.OnClickListener {
         val name: TextView = view.findViewById(R.id.tvName)
         val profilePic: ImageView = view.findViewById(R.id.ivProfilePic)
         val leaderIcon: ImageView = view.findViewById(R.id.ivLeaderIcon)
@@ -32,14 +32,22 @@ class PlayerRecyclerAdapter(private var data: ArrayList<PlayerRViewData>, privat
 
         init {
             view.setOnLongClickListener(this)
+            view.setOnClickListener(this)
         }
 
         override fun onLongClick(p0: View?): Boolean {
             val position = adapterPosition
             if(position != RecyclerView.NO_POSITION){
-                listener.onItemClicked(position)
+                listener.onItemClickedLong(position)
             }
             return true
+        }
+
+        override fun onClick(p0: View?) {
+            val position = adapterPosition
+            if(position != RecyclerView.NO_POSITION){
+                listener.onItemClickedShort(position)
+            }
         }
     }
 
@@ -100,6 +108,7 @@ class PlayerRecyclerAdapter(private var data: ArrayList<PlayerRViewData>, privat
     }
 
     interface RecyclerViewEvent{
-        fun onItemClicked(position: Int)
+        fun onItemClickedShort(position: Int)
+        fun onItemClickedLong(position: Int)
     }
 }

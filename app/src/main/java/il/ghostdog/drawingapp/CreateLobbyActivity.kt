@@ -8,11 +8,7 @@ import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
-import android.widget.LinearLayout
-import android.widget.RadioGroup
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -290,7 +286,7 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
         removeGamePreferencesListener()
     }
 
-    override fun onItemClicked(position: Int) {
+    override fun onItemClickedLong(position: Int) {
         val player = playerRViewDataList[position]
 
         if(player.isLeader || mAuth!!.currentUser!!.uid != partyLeader) return
@@ -306,6 +302,71 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
             dialog.dismiss()
         }
         alertDialogBuilder.show()
+    }
+
+    override fun onItemClickedShort(position: Int) {
+        val player = playerRViewDataList[position]
+        if(player.userId == mAuth!!.currentUser!!.uid) return
+        val viewHolder = rvPlayers.findViewHolderForAdapterPosition(position)!!
+        val popupMenu = PopupMenu(this, viewHolder.itemView)
+        popupMenu.setOnMenuItemClickListener { item ->
+            when(item.itemId){
+                R.id.action_request_friend ->{
+                    FirebaseDatabase.getInstance().getReference("users")
+                        .child(player.userId).addListenerForSingleValueEvent(object : ValueEventListener{
+                            override fun onDataChange(snapshot: DataSnapshot) {
+                                val userData = snapshot.getValue(UserData::class.java)!!
+                                checkIfAllReadyAdded(player.userId, userData)
+                            }
+                            override fun onCancelled(error: DatabaseError) {}
+                        })
+                    true
+                }else ->{
+                    false
+                }
+            }
+        }
+        popupMenu.inflate(R.menu.popup_friend_request_menu)
+        popupMenu.show()
+    }
+    private fun checkIfAllReadyAdded(testId: String, userData: UserData){
+        val myUid = FirebaseAuth.getInstance().currentUser!!.uid
+        FirebaseDatabase.getInstance().getReference("users")
+            .child(testId).addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val friendList = snapshot.getValue(UserData::class.java)!!.friendsList
+                    for (item in friendList){
+                        if(item == myUid){
+                            Toast.makeText(this@CreateLobbyActivity, "This user has all ready been added as a friend", Toast.LENGTH_SHORT).show()
+                            return
+                        }
+                        else if(item.contains(myUid)){
+                            Toast.makeText(this@CreateLobbyActivity, "You have all ready sent a friend request", Toast.LENGTH_SHORT).show()
+                            return
+                        }
+                    }
+                    //doesn't contains
+                    makeRequestDialog(testId, userData)
+                }
+                override fun onCancelled(error: DatabaseError) {}
+            })
+    }
+
+    private fun makeRequestDialog(userId: String, userData: UserData) {
+        val dialog = Dialog(this)
+        dialog.setContentView(R.layout.send_friend_request_dialog)
+        dialog.setCancelable(true)
+        dialog.findViewById<TextView>(R.id.tvName).text = userData.nickname
+        dialog.findViewById<Button>(R.id.btnRequest).setOnClickListener{
+            userData.friendsList.add("request-${FirebaseAuth.getInstance().currentUser!!.uid}")
+            FirebaseDatabase.getInstance().getReference("users").child(userId).setValue(userData)
+            Toast.makeText(this, "The request has been sent to ${userData.nickname}", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
+        }
+        dialog.findViewById<Button>(R.id.btnCancel).setOnClickListener{
+            dialog.dismiss()
+        }
+        dialog.show()
     }
 
     private fun kickPlayer(player: PlayerRViewData) {
