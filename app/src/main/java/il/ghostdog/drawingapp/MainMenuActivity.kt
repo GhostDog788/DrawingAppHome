@@ -1,6 +1,6 @@
 package il.ghostdog.drawingapp
 
-import android.content.Intent
+
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.MenuItem
@@ -24,11 +24,6 @@ class MainMenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationI
 
         FirebaseDatabase.getInstance().getReference("users")
             .child(FirebaseAuth.getInstance().currentUser!!.uid).child("activeGame").removeValue()
-        if(Constants.lastSeenServiceIntent == null){
-            Constants.lastSeenServiceIntent = Intent(this, LastSeenService::class.java)
-            Constants.lastSeenServiceIntent!!.putExtra("userId", FirebaseAuth.getInstance().currentUser!!.uid)
-            startService(Constants.lastSeenServiceIntent)
-        }
 
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNavigationView.selectedItemId = R.id.action_home

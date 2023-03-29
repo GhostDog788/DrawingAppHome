@@ -31,5 +31,22 @@
         <item name="cornerSize">10dp</item>
     </style>
 
+
+    <style name="activityDialog" parent="@style/Theme.MaterialComponents.Light.Dialog">
+        <item name="windowNoTitle">true</item>
+
+        <item name="android:background">@drawable/dialog_background</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowCloseOnTouchOutside">true</item>
+        <item name="android:windowAnimationStyle">@style/DialogAnimation</item>
+    </style>
+
+    <style name="DialogAnimation">
+        <item name="android:windowEnterAnimation">@android:anim/slide_in_left</item>
+        <item name="android:windowExitAnimation">@android:anim/slide_out_right</item>
+    </style>
+
     <style name="Theme.DrawingApp.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 </resources>

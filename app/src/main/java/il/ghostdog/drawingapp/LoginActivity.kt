@@ -18,11 +18,6 @@ class  LoginActivity : AppCompatActivity() {
 
         mAuth = FirebaseAuth.getInstance()
 
-        if (mAuth!!.currentUser != null) {
-            startActivity(Intent(this, MainMenuActivity::class.java))
-            finish()
-        }
-
         setContentView(R.layout.activity_login)
         //can start code
 
@@ -46,7 +41,7 @@ class  LoginActivity : AppCompatActivity() {
         mAuth!!.signInWithEmailAndPassword(etEmail.text.toString(), etPassword.text.toString())
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
-                        startActivity(Intent(this, MainMenuActivity::class.java))
+                        startActivity(Intent(this, LaunchActivity::class.java))
                         finish()
                     }else{
                         Toast.makeText(this, "Authentication Failed", Toast.LENGTH_SHORT).show()

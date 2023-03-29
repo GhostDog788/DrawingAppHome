@@ -4,6 +4,7 @@ import android.app.Dialog
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.Window
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -20,6 +21,9 @@ class JoinLobbyActivity : AppCompatActivity(), IProgressDialogUser {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.requestFeature(Window.FEATURE_NO_TITLE)
+        title = ""
+
         setContentView(R.layout.activity_join_lobby)
 
         mLobbyId = intent.getStringExtra("lobbyId")

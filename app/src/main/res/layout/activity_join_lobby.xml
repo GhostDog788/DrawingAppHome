@@ -6,13 +6,16 @@
     android:layout_height="match_parent"
     tools:context=".JoinLobbyActivity"
     android:orientation="vertical"
-    android:gravity="center_horizontal">
+    android:gravity="center_horizontal"
+    android:paddingStart="10dp"
+    android:paddingBottom="10dp"
+    android:paddingEnd="10dp">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Join Lobby"
-        android:textSize="50dp"
+        android:textSize="40dp"
         android:layout_margin="30dp"/>
 
     <EditText

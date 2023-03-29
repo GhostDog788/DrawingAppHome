@@ -94,7 +94,7 @@ class RegisterActivity : AppCompatActivity(), IProgressDialogUser {
                         reference.putBytes(data).addOnCompleteListener{
                             cancelProgressDialog()
                             Toast.makeText(this, it.isSuccessful.toString(), Toast.LENGTH_SHORT).show()
-                            startActivity(Intent(this, MainMenuActivity::class.java))
+                            startActivity(Intent(this, LaunchActivity::class.java))
                             finish()
                         }
                     }else{

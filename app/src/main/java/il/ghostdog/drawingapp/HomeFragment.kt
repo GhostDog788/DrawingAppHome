@@ -5,9 +5,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
@@ -20,7 +18,6 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.*
-import kotlin.collections.ArrayList
 
 
 class HomeFragment : Fragment(R.layout.fragment_home) {
@@ -30,10 +27,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         if(!(activity as MainMenuActivity).checkedPastLobbies) {
             cleanPastLobbies()
             (activity as MainMenuActivity).checkedPastLobbies = true
-        }
-
-        if(Constants.GUESS_WORDS_MAP.isEmpty()) {
-            fillGuessWordMap()
         }
 
         val btnJoinLobby = view.findViewById<Button>(R.id.btnJoinLobby)
@@ -46,28 +39,12 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         btnSignOut.setOnClickListener{ onSignOut()}
     }
 
-    private fun fillGuessWordMap() {
-        val dbR = FirebaseDatabase.getInstance().getReference("guessWords")
-        dbR.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                for (child in snapshot.children) {
-                    val list = (child.value as ArrayList<String>?)!!
-                    Constants.GUESS_WORDS_MAP[child.key!!] = list
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
-            }
-        })
-    }
-
     private fun cleanPastLobbies() {
         val sharedPref = activity!!.getSharedPreferences(Constants.SHARED_LOBBIES_NAME, Context.MODE_PRIVATE)
         val lobbyIdToDeleteSet = sharedPref.getStringSet("lobbyIds", emptySet())
-        for (id in lobbyIdToDeleteSet!!){
+        /*for (id in lobbyIdToDeleteSet!!){
             Toast.makeText(activity!!, id, Toast.LENGTH_SHORT).show()
-        }
+        }*/
         if(lobbyIdToDeleteSet != null && lobbyIdToDeleteSet.isNotEmpty()) {
             for (lobbyIdToDelete in lobbyIdToDeleteSet) {
                 val dbLobby = FirebaseDatabase.getInstance().getReference("lobbies").child(lobbyIdToDelete)
