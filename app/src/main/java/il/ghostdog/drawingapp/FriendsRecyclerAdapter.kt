@@ -146,6 +146,10 @@ class FriendsRecyclerAdapter(private var data: ArrayList<FriendRViewData>, priva
             holder.profilePic.setImageBitmap(friendRViewData.profilePic)
             holder.loadingBar.visibility = View.GONE
         }
+        // Check if this is the last item in the list
+        if (position == itemCount - 1) {
+            listener.onAllViewsCreated()
+        }
     }
     private fun getProfilePicAndUpdateView(userId: String, holder: ItemViewHolder) = CoroutineScope(Dispatchers.IO).launch{
         withContext(Dispatchers.Main) {
@@ -208,5 +212,6 @@ class FriendsRecyclerAdapter(private var data: ArrayList<FriendRViewData>, priva
 
     interface RecyclerViewEvent{
         fun onItemClicked(position: Int)
+        fun onAllViewsCreated(){}
     }
 }

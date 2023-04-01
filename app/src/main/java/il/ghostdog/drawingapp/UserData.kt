@@ -7,6 +7,7 @@ class UserData {
     var friendsList: ArrayList<String> = ArrayList()
     var lastSeen: String? = null
     var activeGame: String? = null
+    var token: String = ""
 
     constructor() {}
 

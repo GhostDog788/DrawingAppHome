@@ -22,7 +22,7 @@ import kotlin.collections.LinkedHashMap
 
 class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, PlayerRecyclerAdapter.RecyclerViewEvent {
 
-    private var lobbyId: String? = null
+    var lobbyId: String? = null
 
     override var customProgressDialog: Dialog? = null
 
