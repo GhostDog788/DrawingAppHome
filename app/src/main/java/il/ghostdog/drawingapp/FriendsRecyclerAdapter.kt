@@ -144,6 +144,7 @@ class FriendsRecyclerAdapter(private var data: ArrayList<FriendRViewData>, priva
             getProfilePicAndUpdateView(friendRViewData.userId, holder)
         }else{
             holder.profilePic.setImageBitmap(friendRViewData.profilePic)
+            holder.loadingBar.visibility = View.GONE
         }
     }
     private fun getProfilePicAndUpdateView(userId: String, holder: ItemViewHolder) = CoroutineScope(Dispatchers.IO).launch{
@@ -161,6 +162,9 @@ class FriendsRecyclerAdapter(private var data: ArrayList<FriendRViewData>, priva
                 holder.profilePic.setImageBitmap(bitmap)
                 holder.profilePic.visibility = View.VISIBLE
                 holder.loadingBar.visibility = View.GONE
+
+                val myFriendRViewData = data[holder.adapterPosition]
+                myFriendRViewData.profilePic = bitmap
             }.addOnFailureListener {
                 //Handle failed download
             }.addOnProgressListener { taskSnapshot ->

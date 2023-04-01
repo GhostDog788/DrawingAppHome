@@ -168,7 +168,7 @@ class FriendsFragment : Fragment(R.layout.fragment_friends), BottomNavigationVie
         removeFriendsListListener()
     }
 
-    private enum class UpdateAction {
+    enum class UpdateAction {
         Add,
         Update,
         Remove

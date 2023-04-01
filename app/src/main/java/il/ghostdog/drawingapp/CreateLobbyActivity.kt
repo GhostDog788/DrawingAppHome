@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
+import com.google.firebase.database.ktx.getValue
 import kotlinx.coroutines.*
 import kotlinx.coroutines.android.awaitFrame
 import kotlin.collections.ArrayList
@@ -50,7 +51,9 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
 
     private var gamePreferences: GamePreferences = GamePreferences()
 
-    private var playersMap: LinkedHashMap<String, PlayerData> = LinkedHashMap()
+    var playersMap: LinkedHashMap<String, PlayerData> = LinkedHashMap()
+
+    private val myFriendsRViewDataMap = mutableMapOf<String,FriendRViewData>()
 
     private val playersChildListener = object : ChildEventListener{
         override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
@@ -154,6 +157,9 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
         val btnExit = findViewById<Button>(R.id.btnExit)
         btnExit.setOnClickListener {exitLobby()}
 
+        val btnInviteFriend = findViewById<Button>(R.id.btnInviteFriend)
+        btnInviteFriend.setOnClickListener{ showFriendsDialog()}
+
         rvPlayers = findViewById(R.id.rvPlayers)
         rvPlayers.adapter = PlayerRecyclerAdapter(playerRViewDataList, this)
         rvPlayers.layoutManager = GridLayoutManager(this@CreateLobbyActivity, 2)
@@ -161,6 +167,49 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
         lifecycleScope.launch {
             setUpLobby()
         }
+    }
+
+    private fun showFriendsDialog(){
+        val myUid = FirebaseAuth.getInstance().currentUser!!.uid
+        val myFriendsIdList = ArrayList<String>()
+
+        FirebaseDatabase.getInstance().getReference("users")
+            .child(myUid).child("friendsList").addListenerForSingleValueEvent(object : ValueEventListener{
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    for (ds in snapshot.children) {
+                        val potentialFriend = ds.getValue(String::class.java)
+                        if (potentialFriend != null && !potentialFriend.startsWith("request-")) {
+                            myFriendsIdList.add(potentialFriend)
+                        }
+                    }
+                    for(friendId in myFriendsIdList){
+                        if(myFriendsRViewDataMap.contains(friendId)) continue
+
+                        FirebaseDatabase.getInstance().getReference("users")
+                            .child(friendId).addListenerForSingleValueEvent(object : ValueEventListener {
+                                override fun onDataChange(snapshot: DataSnapshot) {
+                                    if (snapshot.value == null) return
+                                    val userData = snapshot.getValue(UserData::class.java)!!
+                                    val friendRViewData = FriendRViewData(friendId, userData, null)
+                                    myFriendsRViewDataMap[friendId] = friendRViewData
+                                }
+                                override fun onCancelled(error: DatabaseError) {}
+                            })
+                    }
+                    CoroutineScope(Dispatchers.Default).launch {
+                        while (myFriendsRViewDataMap.size < myFriendsIdList.size) {
+                            delay(50)
+                        }
+                    }.invokeOnCompletion {
+                        runOnUiThread {
+                            val arrayList = ArrayList<FriendRViewData>(myFriendsRViewDataMap.values)
+                            val dialogFragment = FriendsDialog(arrayList)
+                            dialogFragment.show(supportFragmentManager, "FriendsDialogFragment")
+                        }
+                    }
+                }
+                override fun onCancelled(error: DatabaseError) {}
+            })
     }
 
     private fun onStartGame() {
