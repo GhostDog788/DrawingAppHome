@@ -14,7 +14,7 @@ import com.google.firebase.messaging.FirebaseMessaging
 
 class LaunchActivity : AppCompatActivity() {
     companion object{
-        var extras: Bundle? = null
+        var lastExtras: Bundle? = null
     }
 
     private var mAuth: FirebaseAuth? = null
@@ -24,9 +24,11 @@ class LaunchActivity : AppCompatActivity() {
         setContentView(R.layout.activity_launch)
 
         mAuth = FirebaseAuth.getInstance()
+
+        Toast.makeText(applicationContext, "${intent.getStringExtra("lobbyId")}", Toast.LENGTH_SHORT).show()
         
         if (mAuth!!.currentUser == null) {
-            extras = intent.extras
+            lastExtras = intent.extras
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
             return
@@ -44,24 +46,27 @@ class LaunchActivity : AppCompatActivity() {
         }
         setToken()
         setUserNameInConstants()
-        if(extras == null) { //no extras from original intent
-            extras = intent.extras
+        var myExtras = lastExtras
+        if(lastExtras == null) { //no extras from original intent
+            myExtras = intent.extras
         }
-        if(extras == null) { //no extras from original AND current
+        if(myExtras == null) { //no extras from original AND current
             startActivity(Intent(this, MainMenuActivity::class.java))
             finish()
             return
         }
+        lastExtras = null//empty last cause the data is in myExtras
         //use extras
-        if(extras!!.containsKey("targetName")) {
+        if(myExtras.containsKey("targetName")) {
             Toast.makeText(
                 applicationContext,
-                "To: ${extras!!.getString("targetName")}",
+                "To: ${myExtras.getString("targetName")}",
                 Toast.LENGTH_LONG
             ).show()
-            if (extras!!.getString("targetName") == "JoinLobbyActivity"){
+            if (myExtras.getString("targetName") == "JoinLobbyActivity"){
                 val toSendIntent = Intent(this, JoinLobbyActivity::class.java)
-                toSendIntent.putExtra("lobbyId", extras!!.getString("lobbyId"))
+                toSendIntent.putExtra("lobbyId", myExtras.getString("lobbyId"))
+                toSendIntent.putExtra("startAuto", true)
                 startActivity(toSendIntent)
                 finish()
                 return

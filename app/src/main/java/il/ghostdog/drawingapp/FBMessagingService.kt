@@ -49,6 +49,8 @@ class FBMessagingService : FirebaseMessagingService() {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val notificationID = Random.nextInt()
 
+        Log.i("myMss", "notification received")
+
         // Get the notification data from the message
         val title = message.notification?.title ?: ""
         val bodyMessage = message.notification?.body ?: ""
@@ -64,9 +66,9 @@ class FBMessagingService : FirebaseMessagingService() {
 
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         val pendingIntent: PendingIntent? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+            PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         } else {
-            PendingIntent.getActivity(this, 0, intent, FLAG_ONE_SHOT)
+            PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT)
         }
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(title)

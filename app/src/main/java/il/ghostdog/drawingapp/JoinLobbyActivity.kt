@@ -33,6 +33,10 @@ class JoinLobbyActivity : AppCompatActivity(), IProgressDialogUser {
 
         val btnJoinLobby = findViewById<Button>(R.id.btnJoinLobby)
         btnJoinLobby.setOnClickListener{ onJoinLobbyClicked()}
+
+        if(intent.getBooleanExtra("startAuto", false)){
+            onJoinLobbyClicked()
+        }
     }
 
     private fun onJoinLobbyClicked() {
