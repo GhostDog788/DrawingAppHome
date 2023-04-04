@@ -160,6 +160,9 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
         val btnInviteFriend = findViewById<Button>(R.id.btnInviteFriend)
         btnInviteFriend.setOnClickListener{ showFriendsDialog()}
 
+        val swPublic = findViewById<Switch>(R.id.swPublic)
+        swPublic.setOnCheckedChangeListener{ _ , isChecked -> onPublicSwitchChanged(isChecked)}
+
         rvPlayers = findViewById(R.id.rvPlayers)
         rvPlayers.adapter = PlayerRecyclerAdapter(playerRViewDataList, this)
         rvPlayers.layoutManager = GridLayoutManager(this@CreateLobbyActivity, 2)
@@ -167,6 +170,11 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
         lifecycleScope.launch {
             setUpLobby()
         }
+    }
+
+    private fun onPublicSwitchChanged(checked: Boolean) {
+        gamePreferences.public = checked
+        databaseMyLobby!!.child("gamePreferences").setValue(gamePreferences)
     }
 
     private fun showFriendsDialog(){

@@ -190,11 +190,12 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="somthing1"
+                        android:text="public"
                         android:textSize="20dp"
                         android:layout_marginEnd="5dp"/>
 
                     <Switch
+                        android:id="@+id/swPublic"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"/>
 

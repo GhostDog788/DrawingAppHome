@@ -22,6 +22,14 @@
         android:text="Join Lobby"/>
 
     <Button
+        android:id="@+id/btnSearchLobby"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:textSize="30dp"
+        android:text="Search Lobby"/>
+
+    <Button
         android:id="@+id/btnCreateLobby"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

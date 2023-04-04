@@ -32,6 +32,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val btnJoinLobby = view.findViewById<Button>(R.id.btnJoinLobby)
         btnJoinLobby.setOnClickListener{ onJoinLobbyClicked()}
 
+        val btnSearchLobbyActivity = view.findViewById<Button>(R.id.btnSearchLobby)
+        btnSearchLobbyActivity.setOnClickListener { onSearchLobbyClicked()}
+
         val btnCreateLobby = view.findViewById<Button>(R.id.btnCreateLobby)
         btnCreateLobby.setOnClickListener{ onCreateLobbyClicked()}
 
@@ -106,6 +109,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private fun onJoinLobbyClicked() {
         startActivity(Intent(activity, JoinLobbyActivity::class.java))
         //activity!!.finish()
+    }
+
+    private fun onSearchLobbyClicked(){
+        startActivity(Intent(activity, SearchLobbyActivity::class.java))
     }
 
     private fun onCreateLobbyClicked() {
