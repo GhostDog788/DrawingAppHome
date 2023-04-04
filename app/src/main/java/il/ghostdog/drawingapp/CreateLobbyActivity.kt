@@ -469,4 +469,19 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
         }
         super.onResume()
     }
+
+    override fun onBackPressed() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Exit lobby")
+        builder.setMessage("Do you want to exit the lobby?")
+        builder.setPositiveButton("Yes") { dialog, which ->
+            ConnectionHelper.disconnectPlayerFromLobby(databaseMyLobby!!, mAuth!!.currentUser!!.uid)
+            finish()
+        }
+        builder.setNegativeButton("No") { dialog, which ->
+            dialog.cancel()
+        }
+        val dialog = builder.create()
+        dialog.show()
+    }
 }

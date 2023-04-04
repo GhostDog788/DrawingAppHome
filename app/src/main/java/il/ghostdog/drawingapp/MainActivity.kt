@@ -556,7 +556,6 @@ class MainActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
     }
 
     private fun turnEnded() {
-        Toast.makeText(applicationContext, "Turn Ended", Toast.LENGTH_LONG).show()
         mTurnTimerJob?.cancel() //cancels the timer if exists
 
         mTurnEndedDialog = Dialog(this)
@@ -925,5 +924,8 @@ class MainActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
             mImageButtonCurrentPaint?.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.pallet_normal))
             mImageButtonCurrentPaint = view
         }
+    }
+    override fun onBackPressed() {
+        //disabling the back button
     }
 }

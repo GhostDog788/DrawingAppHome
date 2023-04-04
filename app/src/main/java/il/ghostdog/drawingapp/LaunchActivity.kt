@@ -25,8 +25,6 @@ class LaunchActivity : AppCompatActivity() {
 
         mAuth = FirebaseAuth.getInstance()
 
-        Toast.makeText(applicationContext, "${intent.getStringExtra("lobbyId")}", Toast.LENGTH_SHORT).show()
-        
         if (mAuth!!.currentUser == null) {
             lastExtras = intent.extras
             startActivity(Intent(this, LoginActivity::class.java))
@@ -58,11 +56,6 @@ class LaunchActivity : AppCompatActivity() {
         lastExtras = null//empty last cause the data is in myExtras
         //use extras
         if(myExtras.containsKey("targetName")) {
-            Toast.makeText(
-                applicationContext,
-                "To: ${myExtras.getString("targetName")}",
-                Toast.LENGTH_LONG
-            ).show()
             if (myExtras.getString("targetName") == "JoinLobbyActivity"){
                 val toSendIntent = Intent(this, JoinLobbyActivity::class.java)
                 toSendIntent.putExtra("lobbyId", myExtras.getString("lobbyId"))

@@ -1,6 +1,9 @@
 package il.ghostdog.drawingapp
 
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.ArrayAdapter
@@ -26,6 +29,9 @@ class SearchLobbyActivity : AppCompatActivity(), LobbySearchAdapter.RecyclerView
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search_lobby)
+
+        val filter = IntentFilter(JoinLobbyActivity.JOINING_LOBBY_BROADCAST_FILTER)
+        registerReceiver(joinedLobbyReceiver, filter)
 
         val spinnerAdapter = ArrayAdapter.createFromResource(
             this,
@@ -55,6 +61,7 @@ class SearchLobbyActivity : AppCompatActivity(), LobbySearchAdapter.RecyclerView
                     if(lobbySp.child("players").childrenCount < 1) continue
                     if(!lobbySp.hasChild("playersStatus")) continue
                     val leader = lobbySp.child("leader").getValue(String::class.java)!!
+                    if(!lobbySp.child("playersStatus").hasChild(leader)) continue
                     val timeString = lobbySp.child("playersStatus").child(leader).getValue(String::class.java)!!
                     CoroutineScope(Dispatchers.Default).launch {
                         val difference = getDifferenceInSeconds(timeString)
@@ -91,7 +98,6 @@ class SearchLobbyActivity : AppCompatActivity(), LobbySearchAdapter.RecyclerView
             playerCount, gamePreferences.status, currentRound, gamePreferences.rounds)
         lobbySearchList.add(lobbySearchRViewData)
         rvLobbies.adapter!!.notifyItemInserted(lobbySearchList.lastIndex)
-        Toast.makeText(applicationContext, "added", Toast.LENGTH_SHORT).show()
     }
 
     private suspend fun getDifferenceInSeconds(timeString: String): Long {
@@ -133,5 +139,17 @@ class SearchLobbyActivity : AppCompatActivity(), LobbySearchAdapter.RecyclerView
         val intent = Intent(this, JoinLobbyActivity::class.java)
         intent.putExtra("lobbyId", myLobbyData.lobbyId)
         startActivity(intent)
+    }
+
+    private val joinedLobbyReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            // joined lobby
+            finish()
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(joinedLobbyReceiver)
     }
 }

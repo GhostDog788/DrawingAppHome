@@ -1,6 +1,7 @@
 package il.ghostdog.drawingapp
 
 
+import android.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.MenuItem
@@ -70,5 +71,18 @@ class MainMenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationI
             }
         }
         return true
+    }
+    override fun onBackPressed() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Exit game")
+        builder.setMessage("Do you want to exit the game?")
+        builder.setPositiveButton("Yes") { dialog, which ->
+            moveTaskToBack(true)
+        }
+        builder.setNegativeButton("No") { dialog, which ->
+            dialog.cancel()
+        }
+        val dialog = builder.create()
+        dialog.show()
     }
 }

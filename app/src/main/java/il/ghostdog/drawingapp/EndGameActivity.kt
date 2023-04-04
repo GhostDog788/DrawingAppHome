@@ -1,5 +1,6 @@
 package il.ghostdog.drawingapp
 
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -95,9 +96,7 @@ class EndGameActivity : AppCompatActivity(), ILobbyUser {
             return
         }
         ConnectionHelper.disconnectPlayerFromLobby(databaseMyLobby!!, uid)
-        val intent = Intent()
-        intent.setClass(this@EndGameActivity, MainMenuActivity::class.java)
-        startActivity(intent)
+
         finish()
     }
 
@@ -159,5 +158,8 @@ class EndGameActivity : AppCompatActivity(), ILobbyUser {
             updateMyStatus()
         }
         super.onResume()
+    }
+    override fun onBackPressed() {
+        exitGame()
     }
 }

@@ -8,6 +8,7 @@ import android.view.Window
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.lifecycle.MutableLiveData
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import java.util.*
@@ -18,6 +19,10 @@ class JoinLobbyActivity : AppCompatActivity(), IProgressDialogUser {
     private var mTempRequestingId: String? = null
 
     override var customProgressDialog: Dialog? = null
+
+    companion object{
+        const val JOINING_LOBBY_BROADCAST_FILTER = "joining_lobby_filter"  //just a random string
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,6 +85,8 @@ class JoinLobbyActivity : AppCompatActivity(), IProgressDialogUser {
                 }
                 cancelProgressDialog()
                 startActivity(intent)
+                val intent2 = Intent(JOINING_LOBBY_BROADCAST_FILTER)
+                sendBroadcast(intent2)
                 finish()
             }
             override fun onCancelled(error: DatabaseError) {}
