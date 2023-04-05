@@ -1,6 +1,7 @@
 package il.ghostdog.drawingapp
 
 import android.app.Activity
+import android.app.ActivityManager
 import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Context
@@ -807,9 +808,14 @@ class MainActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
     private fun exitGame(){
         removeAllListeners()
 
-        val intent = Intent()
-        intent.setClass(this@MainActivity, MainMenuActivity::class.java)
-        startActivity(intent)
+        //check if this is the last activity
+        val activityManager = getSystemService(ACTIVITY_SERVICE) as ActivityManager
+        val taskList = activityManager.getRunningTasks(10)
+        if (taskList[0].numActivities == 1 && taskList[0].topActivity!!.className == this.javaClass.name) {
+            startActivity(Intent(this, MainMenuActivity::class.java))
+            Toast.makeText(applicationContext, "Start Main Menu", Toast.LENGTH_SHORT).show()
+        }
+        
         finish()
     }
     

@@ -35,6 +35,13 @@
             android:layout_height="wrap_content"
             android:text="Invite Friend"/>
 
+        <Button
+            android:id="@+id/btnSendLink"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Send link"
+            android:layout_marginStart="10dp"/>
+
     </LinearLayout>
 
     <LinearLayout

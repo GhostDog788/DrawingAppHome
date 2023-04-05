@@ -4,12 +4,14 @@ import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.dynamiclinks.FirebaseDynamicLinks
 import com.google.firebase.messaging.FirebaseMessaging
 
 class LaunchActivity : AppCompatActivity() {
@@ -44,6 +46,26 @@ class LaunchActivity : AppCompatActivity() {
         }
         setToken()
         setUserNameInConstants()
+
+        //handle dynamic link
+        FirebaseDynamicLinks.getInstance().getDynamicLink(intent)
+            .addOnSuccessListener { pendingDynamicLinkData ->
+                // Get the deep link from the result
+                val deepLink = pendingDynamicLinkData?.link
+                if (deepLink != null) {
+                    val lobbyId = deepLink.getQueryParameter("lobbyId")
+                    if (lobbyId != null) {
+                        Log.i("Dynamic", "find id $lobbyId")
+                        val toSendIntent = Intent(this, JoinLobbyActivity::class.java)
+                        toSendIntent.putExtra("lobbyId", lobbyId)
+                        toSendIntent.putExtra("startAuto", true)
+                        startActivity(toSendIntent)
+                        finish()
+                    }
+                }
+            }
+            .addOnFailureListener { e -> Log.e("Dynamic link", "Error getting dynamic link: $e") }
+
         var myExtras = lastExtras
         if(lastExtras == null) { //no extras from original intent
             myExtras = intent.extras

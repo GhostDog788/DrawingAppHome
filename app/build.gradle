@@ -52,6 +52,8 @@ dependencies {
     implementation 'com.github.Dhaval2404:ColorPicker:2.3'
     implementation 'com.google.firebase:firebase-storage-ktx:20.1.0'
     implementation 'com.google.firebase:firebase-messaging-ktx:23.1.2'
+    implementation 'com.google.firebase:firebase-dynamic-links:21.1.0'
+    implementation 'com.google.firebase:firebase-core:21.1.1'
     // Retrofit
     implementation 'com.squareup.retrofit2:retrofit:2.6.2'
     implementation 'com.squareup.retrofit2:converter-gson:2.6.0'

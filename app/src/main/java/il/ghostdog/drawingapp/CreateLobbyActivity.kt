@@ -2,11 +2,12 @@ package il.ghostdog.drawingapp
 
 import android.app.AlertDialog
 import android.app.Dialog
-import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.*
 import androidx.lifecycle.lifecycleScope
@@ -14,7 +15,8 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
-import com.google.firebase.database.ktx.getValue
+import com.google.firebase.dynamiclinks.DynamicLink
+import com.google.firebase.dynamiclinks.FirebaseDynamicLinks
 import kotlinx.coroutines.*
 import kotlinx.coroutines.android.awaitFrame
 import kotlin.collections.ArrayList
@@ -128,7 +130,7 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_create_lobby)
 
-        sharedPref = applicationContext.getSharedPreferences(Constants.SHARED_LOBBIES_NAME, Context.MODE_PRIVATE)
+        sharedPref = applicationContext.getSharedPreferences(Constants.SHARED_LOBBIES_NAME, MODE_PRIVATE)
         mAuth = FirebaseAuth.getInstance()
         lobbyId = intent.getStringExtra("lobbyId")
 
@@ -160,6 +162,9 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
         val btnInviteFriend = findViewById<Button>(R.id.btnInviteFriend)
         btnInviteFriend.setOnClickListener{ showFriendsDialog()}
 
+        val btnSendLink = findViewById<Button>(R.id.btnSendLink)
+        btnSendLink.setOnClickListener{ createDynamicLinkGameInvitation()}
+
         val swPublic = findViewById<Switch>(R.id.swPublic)
         swPublic.setOnCheckedChangeListener{ _ , isChecked -> onPublicSwitchChanged(isChecked)}
 
@@ -170,6 +175,30 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
         lifecycleScope.launch {
             setUpLobby()
         }
+    }
+
+    private fun createDynamicLinkGameInvitation() {
+        // In the Activity where you want to create the dynamic link:
+        FirebaseDynamicLinks.getInstance().createDynamicLink()
+            .setLink(Uri.parse("https://ghostdog.page.link/?lobbyId=$lobbyId"))
+            .setDomainUriPrefix("https://ghostdog.page.link")
+            .setAndroidParameters(DynamicLink.AndroidParameters.Builder().build())
+            .setIosParameters(DynamicLink.IosParameters.Builder("com.example.ios").build())
+            .buildShortDynamicLink()
+            .addOnSuccessListener { shortDynamicLink ->
+                // Handle the short dynamic link
+                val dynamicLinkUri = shortDynamicLink.shortLink
+                Log.d("TAG", "Dynamic Link: $dynamicLinkUri")
+                Toast.makeText(applicationContext, "$dynamicLinkUri", Toast.LENGTH_SHORT).show()
+                // Share the dynamic link with users
+                val sendIntent = Intent()
+                sendIntent.action = Intent.ACTION_SEND
+                sendIntent.putExtra(Intent.EXTRA_TEXT, dynamicLinkUri.toString())
+                sendIntent.type = "text/plain"
+                startActivity(sendIntent)
+            }
+            .addOnFailureListener { e -> Log.e("TAG", "Error creating dynamic link: $e") }
+
     }
 
     private fun onPublicSwitchChanged(checked: Boolean) {
