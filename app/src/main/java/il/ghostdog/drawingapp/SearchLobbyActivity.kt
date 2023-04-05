@@ -6,7 +6,10 @@ import android.content.Intent
 import android.content.IntentFilter
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.SearchView
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -25,6 +28,7 @@ class SearchLobbyActivity : AppCompatActivity(), LobbySearchAdapter.RecyclerView
 
     private lateinit var rvLobbies: RecyclerView
     private var lobbySearchList = ArrayList<LobbySearchRViewData>()
+    private var tempSearchList = ArrayList<LobbySearchRViewData>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,6 +37,27 @@ class SearchLobbyActivity : AppCompatActivity(), LobbySearchAdapter.RecyclerView
         val filter = IntentFilter(JoinLobbyActivity.JOINING_LOBBY_BROADCAST_FILTER)
         registerReceiver(joinedLobbyReceiver, filter)
 
+        rvLobbies = findViewById(R.id.rvLobbies)
+        rvLobbies.adapter = LobbySearchAdapter(tempSearchList, this)
+        rvLobbies.layoutManager = LinearLayoutManager(this)
+        setLobbySearchView()
+
+        setSortingSpinner() //after recycler view
+        val searchView = findViewById<androidx.appcompat.widget.SearchView>(R.id.swSearchByName)
+        searchView.setOnQueryTextListener(object : androidx.appcompat.widget.SearchView.OnQueryTextListener{
+            override fun onQueryTextChange(leaderName: String?): Boolean {
+                if (leaderName == null) return false
+                val tempList = lobbySearchList.filter{ item -> item.leaderName.contains(leaderName) } as ArrayList<LobbySearchRViewData>
+                tempSearchList.clear()
+                tempSearchList.addAll(tempList)
+                rvLobbies.adapter!!.notifyDataSetChanged()
+                return true
+            }
+            override fun onQueryTextSubmit(p0: String?): Boolean { return true }
+        })
+    }
+
+    private fun setSortingSpinner() {
         val spinnerAdapter = ArrayAdapter.createFromResource(
             this,
             R.array.searchByOptions,
@@ -41,12 +66,22 @@ class SearchLobbyActivity : AppCompatActivity(), LobbySearchAdapter.RecyclerView
         spinnerAdapter.setDropDownViewResource(R.layout.search_by_spinner_dropdown_item)
         val spSortBy = findViewById<Spinner>(R.id.spSortBy)
         spSortBy.adapter = spinnerAdapter
-
-
-        rvLobbies = findViewById(R.id.rvLobbies)
-        rvLobbies.adapter = LobbySearchAdapter(lobbySearchList, this)
-        rvLobbies.layoutManager = LinearLayoutManager(this)
-        setLobbySearchView()
+        spSortBy.onItemSelectedListener = object : AdapterView.OnItemSelectedListener{
+            override fun onItemSelected(adapterView: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                val keyName = adapterView?.getItemAtPosition(position).toString()
+                when(keyName){
+                    "in game" -> {
+                        tempSearchList.sortBy { item -> item.status == GameStatus.active }
+                    }
+                    "players" -> {
+                        tempSearchList.sortBy { item -> item.playersCount }
+                    }
+                }
+                tempSearchList.reverse()
+                rvLobbies.adapter!!.notifyDataSetChanged()
+            }
+            override fun onNothingSelected(p0: AdapterView<*>?) {}
+        }
     }
 
     private fun setLobbySearchView(){
@@ -97,6 +132,7 @@ class SearchLobbyActivity : AppCompatActivity(), LobbySearchAdapter.RecyclerView
             leaderName,
             playerCount, gamePreferences.status, currentRound, gamePreferences.rounds)
         lobbySearchList.add(lobbySearchRViewData)
+        tempSearchList.add(lobbySearchRViewData)
         rvLobbies.adapter!!.notifyItemInserted(lobbySearchList.lastIndex)
     }
 
