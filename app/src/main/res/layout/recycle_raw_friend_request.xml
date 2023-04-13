@@ -7,8 +7,10 @@
     android:layout_marginBottom="10dp"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/player_recycler_card"
-    android:padding="7dp">
+    android:background="@drawable/primary_color_rec"
+    android:paddingHorizontal="10dp"
+    android:paddingTop="7dp"
+    android:paddingBottom="15dp">
 
 
     <com.google.android.material.imageview.ShapeableImageView
@@ -60,34 +62,47 @@
 
     <TextView
         android:id="@+id/tvName"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="45dp"
+        android:gravity="center"
+        android:layout_marginStart="3dp"
+        android:layout_marginEnd="3dp"
         android:layout_marginTop="8dp"
         android:text="123456789123456"
         android:textColor="@color/white"
-        android:textSize="20dp"
+        android:autoSizeMaxTextSize="35dp"
+        android:autoSizeMinTextSize="15dp"
+        android:autoSizeTextType="uniform"
+        android:maxLines="1"
+        android:fontFamily="@font/unicorn_scribbles"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ivProfilePic" />
+        app:layout_constraintTop_toBottomOf="@+id/ivProfilePic"/>
 
-    <ImageButton
+    <ImageView
         android:id="@+id/btnApprove"
-        android:layout_width="60dp"
-        android:layout_height="50dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:layout_marginTop="8dp"
+        android:background="@drawable/green_circle"
         android:src="@drawable/ic_approve"
+        android:backgroundTint="@color/colorPrimaryVariant"
         app:layout_constraintEnd_toStartOf="@id/btnDecline"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvName" />
+        app:layout_constraintTop_toBottomOf="@+id/tvName"
+        app:tint="#0DC70D"/>
 
-    <ImageButton
+    <ImageView
         android:id="@+id/btnDecline"
-        android:layout_width="60dp"
-        android:layout_height="50dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:layout_marginTop="8dp"
         android:src="@drawable/ic_decline"
+        android:background="@drawable/green_circle"
+        android:backgroundTint="@color/colorPrimaryVariant"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/btnApprove"
-        app:layout_constraintTop_toBottomOf="@+id/tvName" />
+        app:layout_constraintTop_toBottomOf="@+id/tvName"
+        app:tint="#E00000" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -129,7 +129,7 @@ class PhotoMakerFragment : Fragment(R.layout.fragment_photo_maker) {
             .setDefaultColor(Color.BLACK)
             .setColorListener { color, colorHex ->
                 drawingView.setColor(colorHex)
-                mBtnColor.setBackgroundColor(color)
+                mBtnColor.setColorFilter(color)
             }
             .show()
     }

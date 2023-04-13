@@ -19,6 +19,10 @@
     <color name="gold">#FFD700</color>
     <color name="silver">#C0C0C0</color>
     <color name="bronze">#cd7f32</color>
+    <color name="colorOnPrimary">#EE7220</color>
+    <color name="darkWhite">#EFEFEF</color>
+    <color name="colorPrimary">#205375</color>
+    <color name="colorPrimaryVariant">#112B3C</color>
 
 
 </resources>

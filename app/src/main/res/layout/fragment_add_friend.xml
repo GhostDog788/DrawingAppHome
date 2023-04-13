@@ -3,8 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".AddFriendFragment">
+    android:layout_height="wrap_content"
+    android:paddingBottom="20dp"
+    android:paddingTop="10dp"
+    android:layout_marginStart="10dp"
+    android:layout_marginEnd="10dp"
+    tools:context=".AddFriendFragment"
+    android:background="@drawable/primary_color_rec">
 
     <TextView
         android:id="@+id/tvHeader"
@@ -13,16 +18,24 @@
         android:layout_marginTop="16dp"
         android:text="Enter player id"
         android:textSize="40dp"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:shadowColor="@color/darkWhite"
+        android:shadowDy="1.2"
+        android:shadowRadius="1"
+        android:textColor="@color/colorOnPrimary"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <EditText
         android:id="@+id/etIdSearch"
-        android:layout_width="300dp"
+        android:layout_width="340dp"
         android:layout_height="wrap_content"
         android:textAlignment="center"
         android:layout_marginTop="32dp"
+        android:textColor="@color/darkWhite"
+        android:textSize="25dp"
+        android:fontFamily="@font/unicorn_scribbles"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvHeader" />
@@ -34,6 +47,12 @@
         android:layout_marginTop="16dp"
         android:text="Search"
         android:textSize="30dp"
+        android:padding="10dp"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:shadowColor="@color/darkWhite"
+        android:shadowDy="1"
+        android:shadowRadius="0.6"
+        android:backgroundTint="#0D3E5E"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/etIdSearch" />

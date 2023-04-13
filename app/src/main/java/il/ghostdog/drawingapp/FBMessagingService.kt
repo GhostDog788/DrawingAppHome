@@ -38,6 +38,7 @@ class FBMessagingService : FirebaseMessagingService() {
     override fun onNewToken(newToken: String) {
         super.onNewToken(newToken)
         token = newToken
+        if (FirebaseAuth.getInstance().currentUser == null) return
         val uid = FirebaseAuth.getInstance().currentUser!!.uid
         val ref = FirebaseDatabase.getInstance().getReference("users").child(uid)
         ref.child("token").setValue(newToken)

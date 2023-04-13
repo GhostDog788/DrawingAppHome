@@ -8,49 +8,58 @@
     android:orientation="vertical"
     tools:context=".AccountFragment">
 
-    <TextView
-        android:id="@+id/tvManageAccount"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="Manage Account"
-        android:textSize="40dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/textView"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/clSettings"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="NickName: "
-        android:textSize="25dp"
-        app:layout_constraintEnd_toStartOf="@+id/etNickname"
-        app:layout_constraintHorizontal_chainStyle="packed"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvManageAccount" />
-
-    <EditText
-        android:id="@+id/etNickname"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:textSize="25dp"
-        app:layout_constraintBottom_toBottomOf="@+id/textView"
+        android:background="@drawable/primary_color_rec"
+        android:padding="20dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/textView"
-        app:layout_constraintTop_toBottomOf="@+id/tvManageAccount" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/unicorn_scribbles"
+            android:shadowColor="@color/darkWhite"
+            android:shadowDy="0.5"
+            android:shadowRadius="0.3"
+            android:text="NickName: "
+            android:textColor="@color/colorOnPrimary"
+            android:textSize="30dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/etNickname"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <EditText
+            android:id="@+id/etNickname"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/unicorn_scribbles"
+            android:textColor="@color/darkWhite"
+            android:textSize="30dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/textView"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <FrameLayout
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
         app:layout_constraintBottom_toTopOf="@+id/btnApplyChanges"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/etNickname">
+        app:layout_constraintTop_toBottomOf="@+id/clSettings">
 
         <fragment
             android:id="@+id/my_fragment"
@@ -60,13 +69,32 @@
     </FrameLayout>
 
     <Button
+        android:id="@+id/btnSignOut"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:text="Sign Out"
+        android:textSize="25dp"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:shadowColor="@color/darkWhite"
+        android:shadowDy="1.5"
+        android:shadowRadius="0.8"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
         android:id="@+id/btnApplyChanges"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
         android:text="Apply Changes"
-        android:textSize="25dp"
-        android:layout_margin="5dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:textSize="30dp"
+        android:shadowColor="@color/darkWhite"
+        android:shadowDy="1.5"
+        android:shadowRadius="1"
+        app:layout_constraintBottom_toTopOf="@+id/btnSignOut"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 

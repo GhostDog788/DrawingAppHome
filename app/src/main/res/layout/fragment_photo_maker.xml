@@ -4,52 +4,71 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".PhotoMakerFragment">
+    tools:context=".PhotoMakerFragment"
+    android:paddingStart="30dp">
 
     <Button
         android:id="@+id/btnUploadPhoto"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:text="Upload Photo"
-        app:layout_constraintBottom_toTopOf="@+id/flDrawingViewContainer"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="4dp"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:shadowColor="@color/darkWhite"
+        android:shadowDy="0.5"
+        android:shadowRadius="0.3"
+        android:text="Upload"
+        android:textSize="25dp"
         app:layout_constraintEnd_toStartOf="@id/btnClear"
         app:layout_constraintHorizontal_chainStyle="packed"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/flDrawingViewContainer" />
 
     <Button
         android:id="@+id/btnClear"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="70dp"
         android:text="Clear"
-        app:layout_constraintBottom_toTopOf="@+id/flDrawingViewContainer"
+        android:textSize="25dp"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:shadowColor="@color/darkWhite"
+        android:shadowDy="0.5"
+        android:shadowRadius="0.3"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/btnUploadPhoto"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintTop_toBottomOf="@+id/flDrawingViewContainer" />
 
     <FrameLayout
         android:id="@+id/flDrawingViewContainer"
-        android:layout_width="255dp"
-        android:layout_height="255dp"
+        android:layout_width="275dp"
+        android:layout_height="275dp"
         android:layout_margin="5dp"
-        android:background="@drawable/background_drawing_view_layout"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnUploadPhoto">
+        android:layout_marginStart="32dp"
+        android:foreground="@drawable/background_profile_drawing_view_layout"
+        android:background="@drawable/background_profile_drawing_view_layout"
+        app:layout_constraintEnd_toStartOf="@+id/llActionButtons"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
-        <ImageView
+        <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/ivBackground"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scaleType="centerCrop" />
+            android:scaleType="centerCrop"
+            android:adjustViewBounds="true"
+            app:shapeAppearance="@style/roundImageView"
+            android:layout_margin="8dp"/>
 
         <il.ghostdog.drawingapp.DrawingView
             android:id="@+id/dvDrawingView"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:layout_margin="8dp"/>
 
     </FrameLayout>
 
@@ -57,39 +76,42 @@
         android:id="@+id/llActionButtons"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
         android:gravity="center"
-        android:orientation="horizontal"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toTopOf="@+id/btnClear"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/flDrawingViewContainer">
+        app:layout_constraintStart_toEndOf="@+id/flDrawingViewContainer"
+        app:layout_constraintTop_toTopOf="parent">
 
         <ImageButton
             android:id="@+id/ibBrush"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_margin="5dp"
-            android:background="@color/teal_200"
-            android:scaleType="fitXY"
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:layout_margin="7dp"
+            android:background="@drawable/primary_color_circle"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
             android:src="@drawable/ic_brush" />
 
         <ImageButton
             android:id="@+id/ibColor"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_margin="5dp"
-            android:background="#ABABAB"
-            android:scaleType="fitXY"
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:layout_margin="7dp"
+            android:background="@drawable/primary_color_circle"
+            android:scaleType="fitCenter"
+            android:padding="3dp"
             android:src="@drawable/ic_color_picker" />
 
         <ImageButton
             android:id="@+id/ibUndo"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_margin="5dp"
-            android:background="@color/yellow"
-            android:scaleType="fitXY"
-            android:src="@drawable/ic_undo" />
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:layout_margin="7dp"
+            android:background="@drawable/primary_color_circle"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_undo"/>
 
     </LinearLayout>
 

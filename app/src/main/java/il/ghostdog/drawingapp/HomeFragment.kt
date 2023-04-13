@@ -7,17 +7,24 @@ import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.View
 import android.widget.Button
+import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import java.io.InputStream
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.*
+import android.content.res.AssetManager
+import android.graphics.drawable.Animatable
+import android.graphics.drawable.PictureDrawable
+import com.bumptech.glide.Glide
 
 
 class HomeFragment : Fragment(R.layout.fragment_home) {
@@ -38,8 +45,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val btnCreateLobby = view.findViewById<Button>(R.id.btnCreateLobby)
         btnCreateLobby.setOnClickListener{ onCreateLobbyClicked()}
 
-        val btnSignOut = view.findViewById<Button>(R.id.btnSignOut)
-        btnSignOut.setOnClickListener{ onSignOut()}
+        //Glide.with(activity!!).load(R.drawable.gifmaker_me).into(ivGif)
     }
 
     private fun cleanPastLobbies() {
@@ -126,12 +132,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val intent = Intent(activity, CreateLobbyActivity::class.java)
         intent.putExtra("lobbyId", lobbyId)
         startActivity(intent)
-        activity!!.finish()
-    }
-
-    private fun onSignOut(){
-        FirebaseAuth.getInstance().signOut()
-        startActivity(Intent(activity, LoginActivity::class.java))
         activity!!.finish()
     }
 }

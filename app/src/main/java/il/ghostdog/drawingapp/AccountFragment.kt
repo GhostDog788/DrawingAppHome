@@ -1,6 +1,7 @@
 package il.ghostdog.drawingapp
 
 import android.app.Dialog
+import android.content.Intent
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -28,6 +29,9 @@ class AccountFragment : Fragment(R.layout.fragment_account), IProgressDialogUser
         photoMakerFragment = childFragmentManager.findFragmentById(R.id.my_fragment) as PhotoMakerFragment
         val btnApplyChanges: Button = view.findViewById(R.id.btnApplyChanges)
         btnApplyChanges.setOnClickListener{ checkChanges()}
+
+        val btnSignOut = view.findViewById<Button>(R.id.btnSignOut)
+        btnSignOut.setOnClickListener{ onSignOut()}
 
         etNickName = view.findViewById(R.id.etNickname)
         updateUIFromDB()
@@ -101,5 +105,11 @@ class AccountFragment : Fragment(R.layout.fragment_account), IProgressDialogUser
             }
             override fun onCancelled(error: DatabaseError) {}
         })
+    }
+
+    private fun onSignOut(){
+        FirebaseAuth.getInstance().signOut()
+        startActivity(Intent(activity, LoginActivity::class.java))
+        activity!!.finish()
     }
 }

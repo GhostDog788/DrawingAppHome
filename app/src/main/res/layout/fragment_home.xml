@@ -1,48 +1,79 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".HomeFragment"
+    android:gravity="center_horizontal"
     android:orientation="vertical"
-    android:gravity="center_horizontal">
+    tools:context=".HomeFragment">
 
     <TextView
+        android:id="@+id/textView4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_margin="50dp"
+        android:fontFamily="@font/unicorn_scribbles"
         android:text="Main Menu"
-        android:textSize="50dp"
-        android:layout_margin="50dp"/>
+        android:textSize="70dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/btnJoinLobby"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="30dp"
-        android:text="Join Lobby"/>
+        android:layout_marginBottom="24dp"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:shadowColor="@color/darkWhite"
+        android:shadowDy="1.5"
+        android:shadowRadius="1"
+        android:text="Join"
+        android:textSize="50dp"
+        app:layout_constraintBottom_toTopOf="@+id/btnSearchLobby"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView4"
+        app:layout_constraintVertical_bias="0.19999999"
+        app:layout_constraintVertical_chainStyle="packed" />
 
     <Button
         android:id="@+id/btnSearchLobby"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:textSize="30dp"
-        android:text="Search Lobby"/>
+        android:layout_marginBottom="8dp"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:shadowColor="@color/darkWhite"
+        android:shadowDy="1.5"
+        android:shadowRadius="1"
+        android:text="Search"
+        android:textSize="45dp"
+        app:layout_constraintBottom_toTopOf="@+id/btnCreateLobby"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnJoinLobby" />
 
     <Button
         android:id="@+id/btnCreateLobby"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="20dp"
-        android:textSize="30dp"
-        android:text="Create Lobby"/>
+        android:fontFamily="@font/unicorn_scribbles"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:shadowColor="@color/darkWhite"
+        android:shadowDy="1.5"
+        android:shadowRadius="1"
+        android:text="Create"
+        android:textSize="52dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnSearchLobby" />
 
-    <Button
-        android:id="@+id/btnSignOut"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="20dp"
-        android:textSize="30dp"
-        android:text="Sign Out"/>
-
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

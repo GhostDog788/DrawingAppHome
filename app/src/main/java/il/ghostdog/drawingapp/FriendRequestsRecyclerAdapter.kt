@@ -30,8 +30,8 @@ class FriendRequestsRecyclerAdapter(private var data: ArrayList<FriendRequestRVi
         val profilePic: ImageView = view.findViewById(R.id.ivProfilePic)
         val progressText: TextView = view.findViewById(R.id.tvProgress)
         val loadingBar: ProgressBar = view.findViewById(R.id.pbLoading)
-        private val btnApprove: ImageButton = view.findViewById(R.id.btnApprove)
-        private val btnDecline: ImageButton = view.findViewById(R.id.btnDecline)
+        private val btnApprove: ImageView = view.findViewById(R.id.btnApprove)
+        private val btnDecline: ImageView = view.findViewById(R.id.btnDecline)
 
         init {
             btnApprove.setOnClickListener{
