@@ -3,6 +3,10 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:textAppearance="?android:attr/textAppearanceMedium"
-    android:textSize="24sp"
-    android:textColor="@color/black"
+    android:textSize="30sp"
+    android:textColor="@color/darkWhite"
+    android:fontFamily="@font/unicorn_scribbles"
+    android:shadowColor="@color/darkWhite"
+    android:shadowDy="1.5"
+    android:shadowRadius="1"
     android:gravity="center_vertical" />

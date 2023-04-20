@@ -170,7 +170,7 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
 
         rvPlayers = findViewById(R.id.rvPlayers)
         rvPlayers.adapter = PlayerRecyclerAdapter(playerRViewDataList, this)
-        rvPlayers.layoutManager = GridLayoutManager(this@CreateLobbyActivity, 2)
+        rvPlayers.layoutManager = GridLayoutManager(this@CreateLobbyActivity, 1)
 
         lifecycleScope.launch {
             setUpLobby()

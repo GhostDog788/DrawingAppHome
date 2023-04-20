@@ -4,7 +4,8 @@
     android:layout_height="match_parent"
     android:orientation="horizontal"
     android:padding="10dp"
-    android:gravity="center">
+    android:gravity="center"
+    android:background="@drawable/primary_variant_color_rec">
 
     <ProgressBar
         android:layout_width="50dp"
@@ -15,7 +16,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Please wait..."
-        android:textColor="@color/black"
-        android:textSize="16sp"/>
+        android:textColor="@color/darkWhite"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:textSize="25sp"/>
 
 </LinearLayout>

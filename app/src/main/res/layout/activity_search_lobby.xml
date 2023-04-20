@@ -2,9 +2,19 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:scrolling_image_view="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".SearchLobbyActivity">
+
+    <com.q42.android.scrollingimageview.ScrollingImageView
+        android:id="@+id/ivBackground"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        scrolling_image_view:speed="15dp"
+        scrolling_image_view:contiguous="false"
+        scrolling_image_view:source="@drawable/main_menu_background" />
+
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/frameLayout"
@@ -13,7 +23,8 @@
         android:layout_marginStart="4dp"
         android:layout_marginTop="4dp"
         android:layout_marginEnd="4dp"
-        android:background="@drawable/score_board_normal"
+        android:paddingBottom="5dp"
+        android:background="@drawable/primary_variant_color_rec"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -25,7 +36,9 @@
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
             android:layout_marginEnd="8dp"
+            android:fontFamily="@font/unicorn_scribbles"
             app:defaultQueryHint="Search by name"
+            android:background="@drawable/primary_color_rec"
             app:iconifiedByDefault="false"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -39,8 +52,12 @@
             android:layout_marginTop="10dp"
             android:layout_marginBottom="8dp"
             android:text="sort by: "
-            android:textColor="@color/black"
-            android:textSize="24sp"
+            android:textColor="@color/darkWhite"
+            android:fontFamily="@font/unicorn_scribbles"
+            android:shadowColor="@color/darkWhite"
+            android:shadowDy="1.5"
+            android:shadowRadius="1"
+            android:textSize="30sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/tvSortBy"
             app:layout_constraintStart_toStartOf="parent"

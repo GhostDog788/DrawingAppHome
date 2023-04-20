@@ -9,13 +9,20 @@
     android:gravity="center_horizontal"
     android:paddingStart="10dp"
     android:paddingBottom="10dp"
-    android:paddingEnd="10dp">
+    android:paddingEnd="10dp"
+    android:background="@drawable/primary_color_rec">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Join Lobby"
-        android:textSize="40dp"
+        android:textSize="50dp"
+        android:background="@color/colorPrimary"
+        android:textColor="@color/colorOnPrimary"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:shadowColor="@color/darkWhite"
+        android:shadowDy="1.5"
+        android:shadowRadius="1"
         android:layout_margin="30dp"/>
 
     <EditText
@@ -24,13 +31,23 @@
         android:layout_height="wrap_content"
         android:layout_margin="30dp"
         android:textAlignment="center"
+        android:textColor="@color/darkWhite"
+        android:textSize="25dp"
+        android:fontFamily="@font/unicorn_scribbles"
         android:hint="enter lobby id"/>
 
     <Button
         android:id="@+id/btnJoinLobby"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="40dp"
+        android:textSize="30dp"
+        android:padding="10dp"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:shadowColor="@color/darkWhite"
+        android:shadowDy="1"
+        android:shadowRadius="0.6"
+        android:backgroundTint="#0D3E5E"
+        android:textColor="@color/colorOnPrimary"
         android:text="Join"/>
 
 </LinearLayout>

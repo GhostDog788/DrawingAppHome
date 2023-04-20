@@ -5,8 +5,8 @@
     android:id="@+id/clMain"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/player_game_card"
-    android:padding="5dp"
+    android:background="@drawable/primary_color_rec"
+    android:padding="10dp"
     android:layout_marginBottom="10dp">
 
     <TextView
@@ -15,7 +15,12 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:text="-Leader Name-"
-        android:textSize="25dp"
+        android:textSize="28dp"
+        android:textColor="@color/darkWhite"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:shadowColor="@color/darkWhite"
+        android:shadowDy="1.5"
+        android:shadowRadius="1"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -26,7 +31,12 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:text="players: "
-        android:textSize="25dp"
+        android:textSize="28dp"
+        android:textColor="@color/darkWhite"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:shadowColor="@color/darkWhite"
+        android:shadowDy="1.5"
+        android:shadowRadius="1"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@+id/tvLeaderName"
         app:layout_constraintTop_toTopOf="parent" />
@@ -37,6 +47,11 @@
         android:layout_height="wrap_content"
         android:text="2"
         android:textSize="25dp"
+        android:textColor="@color/darkWhite"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:shadowColor="@color/darkWhite"
+        android:shadowDy="1.5"
+        android:shadowRadius="1"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@+id/tvPl"
         app:layout_constraintTop_toTopOf="parent" />
@@ -66,27 +81,47 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="rounds: "
-            android:textSize="18dp"/>
+            android:textSize="22dp"
+            android:textColor="@color/darkWhite"
+            android:fontFamily="@font/unicorn_scribbles"
+            android:shadowColor="@color/darkWhite"
+            android:shadowDy="1.5"
+            android:shadowRadius="1"/>
 
         <TextView
             android:id="@+id/tvCurrentRounds"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="2"
-            android:textSize="18dp"/>
+            android:textSize="20dp"
+            android:textColor="@color/darkWhite"
+            android:fontFamily="@font/unicorn_scribbles"
+            android:shadowColor="@color/darkWhite"
+            android:shadowDy="1.5"
+            android:shadowRadius="1"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="/"
-            android:textSize="18dp"/>
+            android:textSize="18dp"
+            android:textColor="@color/darkWhite"
+            android:fontFamily="@font/unicorn_scribbles"
+            android:shadowColor="@color/darkWhite"
+            android:shadowDy="1.5"
+            android:shadowRadius="1"/>
 
         <TextView
             android:id="@+id/tvRounds"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="3"
-            android:textSize="18dp"/>
+            android:textSize="20dp"
+            android:textColor="@color/darkWhite"
+            android:fontFamily="@font/unicorn_scribbles"
+            android:shadowColor="@color/darkWhite"
+            android:shadowDy="1.5"
+            android:shadowRadius="1"/>
 
     </LinearLayout>
 
