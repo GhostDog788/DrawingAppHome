@@ -423,7 +423,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
 
         val linearLayoutPaintColors = findViewById<LinearLayout>(R.id.llPaintColors)
         mImageButtonCurrentPaint = linearLayoutPaintColors.findViewWithTag("#ff000000") as ImageButton
-        mImageButtonCurrentPaint!!.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.pallet_selected))
+        mImageButtonCurrentPaint!!.foreground = ContextCompat.getDrawable(this, R.drawable.pallet_selected)
 
         val ibBrush: ImageButton = findViewById(R.id.ibBrush)
         ibBrush.setOnClickListener{
@@ -564,7 +564,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
         mTurnEndedDialog!!.setTitle("Turn Ended")
         mTurnEndedDialog!!.setCancelable(false)
         val tvWord = mTurnEndedDialog!!.findViewById<TextView>(R.id.tvGuessWord)
-        tvWord.text = "${tvWord.text} $mGuessWord"
+        tvWord.text = "$mGuessWord"
         val rvScoreBoard: RecyclerView = mTurnEndedDialog!!.findViewById(R.id.rvScoreBoard)
         val boardList : ArrayList<ScoreBoardRViewData> = ArrayList()
         val orderedByPoints = mPlayersMap.toList().sortedBy { pair -> pair.second.points }.reversed()
@@ -926,8 +926,8 @@ class MainActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
             val colorTag = imageButton.tag.toString()
             drawingView?.setColor(colorTag)
 
-            imageButton.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.pallet_selected))
-            mImageButtonCurrentPaint?.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.pallet_normal))
+            imageButton.foreground = ContextCompat.getDrawable(this, R.drawable.pallet_selected)
+            mImageButtonCurrentPaint?.foreground = ContextCompat.getDrawable(this, R.drawable.pallet_normal)
             mImageButtonCurrentPaint = view
         }
     }

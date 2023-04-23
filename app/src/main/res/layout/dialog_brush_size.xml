@@ -1,57 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/colorPrimaryVariant"
+    android:padding="15dp">
+
+    <TextView
+        android:id="@+id/tvChooseSize"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:shadowColor="@color/darkWhite"
+        android:shadowDy="1.5"
+        android:shadowRadius="1"
+        android:text="Choose size"
+        android:textColor="@color/colorOnPrimary"
+        android:textSize="45dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ImageButton
         android:id="@+id/ibBrush1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@color/colorPrimaryVariant"
         android:src="@drawable/brush_size1"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/ibBrush2"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/ibBrush2"/>
+        app:layout_constraintTop_toBottomOf="@id/tvChooseSize" />
 
     <ImageButton
         android:id="@+id/ibBrush2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:background="@color/colorPrimaryVariant"
         android:src="@drawable/brush_size2"
-        app:layout_constraintTop_toBottomOf="@+id/ibBrush1"
+        app:layout_constraintBottom_toTopOf="@id/ibBrush3"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/ibBrush3"/>
+        app:layout_constraintTop_toBottomOf="@+id/ibBrush1" />
 
     <ImageButton
         android:id="@+id/ibBrush3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:background="@color/colorPrimaryVariant"
         android:src="@drawable/brush_size3"
-        app:layout_constraintTop_toBottomOf="@+id/ibBrush2"
+        app:layout_constraintBottom_toTopOf="@id/ibBrush4"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/ibBrush4"/>
+        app:layout_constraintTop_toBottomOf="@+id/ibBrush2" />
 
     <ImageButton
         android:id="@+id/ibBrush4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:background="@color/colorPrimaryVariant"
         android:src="@drawable/brush_size4"
-        app:layout_constraintTop_toBottomOf="@+id/ibBrush3"
+        app:layout_constraintBottom_toTopOf="@id/ibBrush5"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/ibBrush5"/>
+        app:layout_constraintTop_toBottomOf="@+id/ibBrush3" />
 
     <ImageButton
         android:id="@+id/ibBrush5"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"
+        android:background="@color/colorPrimaryVariant"
         android:src="@drawable/brush_size5"
-        app:layout_constraintTop_toBottomOf="@+id/ibBrush4"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"/>
+        app:layout_constraintTop_toBottomOf="@+id/ibBrush4" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

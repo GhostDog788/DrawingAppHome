@@ -2,18 +2,24 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_margin="20dp"
-    android:padding="10dp"
+    android:padding="15dp"
     android:layout_gravity="center"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@color/colorPrimaryVariant">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="30dp"
+        android:textSize="40dp"
         android:gravity="center"
         android:maxLines="2"
-        android:text="Choose a word"/>
+        android:text="Choose a word"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:textColor="@color/colorOnPrimary"
+        android:shadowColor="@color/darkWhite"
+        android:shadowRadius="1"
+        android:layout_marginBottom="5dp"
+        android:shadowDy="1.5"/>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -28,12 +34,17 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:layout_margin="3dp"
-            android:autoSizeMaxTextSize="20dp"
-            android:autoSizeMinTextSize="10dp"
+            android:autoSizeMaxTextSize="25dp"
+            android:autoSizeMinTextSize="9dp"
             android:autoSizeTextType="uniform"
             android:gravity="center"
             android:maxLines="1"
-            android:text="Mobr"/>
+            android:fontFamily="@font/unicorn_scribbles"
+            android:textColor="@color/darkWhite"
+            android:shadowColor="@color/darkWhite"
+            android:shadowRadius="1"
+            android:shadowDy="1.5"
+            android:text="Danker"/>
 
         <Button
             android:id="@+id/btnTwo"
@@ -41,11 +52,16 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:layout_margin="3dp"
-            android:autoSizeMaxTextSize="20dp"
-            android:autoSizeMinTextSize="10dp"
+            android:autoSizeMaxTextSize="25dp"
+            android:autoSizeMinTextSize="9dp"
             android:autoSizeTextType="uniform"
             android:gravity="center"
             android:maxLines="1"
+            android:fontFamily="@font/unicorn_scribbles"
+            android:textColor="@color/darkWhite"
+            android:shadowColor="@color/darkWhite"
+            android:shadowRadius="1"
+            android:shadowDy="1.5"
             android:text="MobDor"/>
 
         <Button
@@ -54,11 +70,16 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:layout_margin="3dp"
-            android:autoSizeMaxTextSize="20dp"
-            android:autoSizeMinTextSize="10dp"
+            android:autoSizeMaxTextSize="25dp"
+            android:autoSizeMinTextSize="9dp"
             android:autoSizeTextType="uniform"
             android:gravity="center"
             android:maxLines="1"
+            android:fontFamily="@font/unicorn_scribbles"
+            android:textColor="@color/darkWhite"
+            android:shadowColor="@color/darkWhite"
+            android:shadowRadius="1"
+            android:shadowDy="1.5"
             android:text="Classical Concert"/>
 
     </LinearLayout>

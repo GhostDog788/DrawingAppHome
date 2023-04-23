@@ -4,18 +4,19 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"
+    android:background="@drawable/main_menu_background">
 
     <LinearLayout
         android:id="@+id/llGameData"
         android:layout_width="match_parent"
         android:layout_height="35dp"
         android:orientation="horizontal"
-        app:layout_constraintBottom_toTopOf="@+id/llChatAndPlayers"
+        app:layout_constraintBottom_toTopOf="@+id/flDrawingViewContainer"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:background="@color/teal_700"
+        android:background="@color/colorPrimaryVariant"
         android:paddingStart="5dp"
         android:paddingEnd="5dp">
 
@@ -25,6 +26,11 @@
             android:text="Rounds:"
             android:layout_weight="1.8"
             android:gravity="center"
+            android:shadowColor="@color/darkWhite"
+            android:shadowDy="1"
+            android:shadowRadius="0.5"
+            android:fontFamily="@font/unicorn_scribbles"
+            android:textColor="@color/colorOnPrimary"
             android:autoSizeMaxTextSize="30dp"
             android:autoSizeMinTextSize="2dp"
             android:autoSizeTextType="uniform"
@@ -35,8 +41,10 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:text="2/3"
+            android:textColor="@color/darkWhite"
+            android:fontFamily="@font/unicorn_scribbles"
             android:layout_weight="1.9"
-            android:autoSizeMaxTextSize="15dp"
+            android:autoSizeMaxTextSize="20dp"
             android:autoSizeMinTextSize="2dp"
             android:autoSizeTextType="uniform"
             android:maxLines="1"
@@ -49,6 +57,11 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:text="Time:"
+            android:shadowColor="@color/darkWhite"
+            android:shadowDy="1"
+            android:shadowRadius="0.5"
+            android:fontFamily="@font/unicorn_scribbles"
+            android:textColor="@color/colorOnPrimary"
             android:layout_weight="1.9"
             android:autoSizeMaxTextSize="30dp"
             android:autoSizeMinTextSize="2dp"
@@ -61,9 +74,11 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:text="120"
+            android:fontFamily="@font/unicorn_scribbles"
+            android:textColor="@color/darkWhite"
             android:layout_weight="1.95"
             android:gravity="center"
-            android:autoSizeMaxTextSize="15dp"
+            android:autoSizeMaxTextSize="20dp"
             android:autoSizeMinTextSize="2dp"
             android:autoSizeTextType="uniform"
             android:maxLines="1"
@@ -73,99 +88,125 @@
             android:id="@+id/tvGuessWord"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:layout_weight="1"
             android:autoSizeMaxTextSize="30dp"
             android:autoSizeMinTextSize="2dp"
             android:autoSizeTextType="uniform"
-            android:layout_weight="1"
             android:gravity="center"
-            android:padding="5dp"
             android:maxLines="1"
+            android:shadowColor="@color/darkWhite"
+            android:shadowDy="1"
+            android:shadowRadius="0.5"
+            android:fontFamily="@font/unicorn_scribbles"
+            android:textColor="@color/colorOnPrimary"
+            android:padding="5dp"
             android:paddingStart="5dp"
-            android:paddingEnd="5dp"/>
+            android:paddingEnd="5dp" />
 
         <ImageView
             android:id="@+id/ivPopupOptions"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1.9"
-            android:src="@drawable/ic_save"/>
+            android:padding="5dp"
+            android:src="@drawable/ic_menu_in_game"
+            app:tint="@color/colorOnPrimary" />
 
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/llChatAndPlayers"
         android:layout_width="match_parent"
-        android:layout_height="120dp"
+        android:layout_height="0dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginBottom="8dp"
         android:orientation="horizontal"
-        app:layout_constraintBottom_toTopOf="@+id/flDrawingViewContainer"
+        app:layout_constraintBottom_toTopOf="@+id/llGuessField"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/llGameData"
+        app:layout_constraintTop_toBottomOf="@+id/flDrawingViewContainer"
         app:layout_constraintVertical_chainStyle="spread_inside">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvPlayers"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="6"/>
+            android:layout_weight="6" />
 
-        <LinearLayout
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvChat"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:layout_marginStart="8dp"
             android:layout_weight="5"
-            android:orientation="vertical">
+            android:background="@drawable/primary_color_rec"
+            android:padding="10dp" />
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvChat"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="#7676FF" />
+    </LinearLayout>
 
-            <LinearLayout
-                android:id="@+id/llGuessField"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="2 "
-                android:background="#ECBD78"
-                android:visibility="visible">
+    <LinearLayout
+        android:id="@+id/llGuessField"
+        android:layout_width="match_parent"
+        android:layout_height="70dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:layout_weight="2 "
+        android:background="@drawable/primary_variant_color_rec"
+        android:visibility="visible"
+        app:layout_constraintBottom_toTopOf="@+id/llPaintColors"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
-                <TextView
-                    android:id="@+id/tvUserName"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_weight="2"
-                    android:autoSizeMaxTextSize="20dp"
-                    android:autoSizeMinTextSize="2dp"
-                    android:autoSizeTextType="uniform"
-                    android:gravity="center_vertical"
-                    android:maxLines="1"
-                    android:text="121324324"
-                    android:textColor="@color/black"/>
+        <TextView
+            android:id="@+id/tvUserName"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="2dp"
+            android:layout_weight="2"
+            android:autoSizeMaxTextSize="25dp"
+            android:autoSizeMinTextSize="2dp"
+            android:autoSizeTextType="uniform"
+            android:fontFamily="@font/unicorn_scribbles"
+            android:gravity="center_vertical"
+            android:maxLines="1"
+            android:shadowColor="@color/darkWhite"
+            android:shadowDy="1.5"
+            android:shadowRadius="1"
+            android:text="121324324"
+            android:textColor="@color/colorOnPrimary"
+            android:textDirection="rtl" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=":"
-                    android:layout_gravity="center"
-                    android:textColor="@color/black"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginEnd="5dp"
+            android:layout_marginBottom="4dp"
+            android:fontFamily="@font/unicorn_scribbles"
+            android:shadowColor="@color/darkWhite"
+            android:shadowDy="1.5"
+            android:shadowRadius="1"
+            android:text=":"
+            android:textColor="@color/colorOnPrimary"
+            android:textSize="35dp" />
 
-                <EditText
-                    android:id="@+id/etGuessField"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:hint="Enter your guess"
-                    android:inputType="text"
-                    android:autoSizeMaxTextSize="30dp"
-                    android:autoSizeMinTextSize="2dp"
-                    android:autoSizeTextType="uniform"
-                    android:gravity="center_vertical"
-                    android:maxLines="1"/>
-
-            </LinearLayout>
-
-        </LinearLayout>
+        <EditText
+            android:id="@+id/etGuessField"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:fontFamily="@font/unicorn_scribbles"
+            android:gravity="center_vertical"
+            android:hint="Enter your guess"
+            android:inputType="text"
+            android:maxLines="1"
+            android:textColor="@color/darkWhite"
+            android:textColorHighlight="@color/darkWhite"
+            android:textColorHint="@color/darkWhite"
+            android:textSize="30dp" />
 
     </LinearLayout>
 
@@ -177,7 +218,8 @@
         android:background="@drawable/background_drawing_view_layout"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/llChatAndPlayers">
+        android:padding="5dp"
+        app:layout_constraintTop_toBottomOf="@id/llGameData">
 
         <ImageView
             android:id="@+id/ivBackground"
@@ -212,90 +254,100 @@
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_margin="4dp"
-            android:background="@color/yellow"
+            android:foreground="@drawable/pallet_normal"
             android:onClick="paintClicked"
-            android:src="@drawable/pallet_normal"
+            android:src="@color/yellow"
+            android:padding="2dp"
             android:tag="@color/yellow" />
 
         <ImageButton
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_margin="4dp"
-            android:background="@color/black"
+            android:foreground="@drawable/pallet_normal"
             android:onClick="paintClicked"
-            android:src="@drawable/pallet_normal"
+            android:padding="2dp"
+            android:src="@color/black"
             android:tag="@color/black" />
 
         <ImageButton
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_margin="4dp"
-            android:background="@color/blue"
+            android:foreground="@drawable/pallet_normal"
             android:onClick="paintClicked"
-            android:src="@drawable/pallet_normal"
+            android:padding="2dp"
+            android:src="@color/blue"
             android:tag="@color/blue" />
 
         <ImageButton
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_margin="4dp"
-            android:background="@color/azure"
+            android:foreground="@drawable/pallet_normal"
             android:onClick="paintClicked"
-            android:src="@drawable/pallet_normal"
+            android:padding="2dp"
+            android:src="@color/azure"
             android:tag="@color/azure" />
 
         <ImageButton
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_margin="4dp"
-            android:background="@color/green"
+            android:foreground="@drawable/pallet_normal"
+            android:padding="2dp"
             android:onClick="paintClicked"
-            android:src="@drawable/pallet_normal"
+            android:src="@color/green"
             android:tag="@color/green" />
 
         <ImageButton
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_margin="4dp"
-            android:background="@color/red"
+            android:foreground="@drawable/pallet_normal"
+            android:padding="2dp"
             android:onClick="paintClicked"
-            android:src="@drawable/pallet_normal"
+            android:src="@color/red"
             android:tag="@color/red" />
 
         <ImageButton
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_margin="4dp"
-            android:background="@color/orange"
+            android:foreground="@drawable/pallet_normal"
+            android:padding="2dp"
             android:onClick="paintClicked"
-            android:src="@drawable/pallet_normal"
+            android:src="@color/orange"
             android:tag="@color/orange" />
 
         <ImageButton
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_margin="4dp"
-            android:background="@color/brown"
+            android:foreground="@drawable/pallet_normal"
+            android:padding="2dp"
             android:onClick="paintClicked"
-            android:src="@drawable/pallet_normal"
+            android:src="@color/brown"
             android:tag="@color/brown" />
 
         <ImageButton
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_margin="4dp"
-            android:background="@color/pink"
+            android:foreground="@drawable/pallet_normal"
+            android:padding="2dp"
             android:onClick="paintClicked"
-            android:src="@drawable/pallet_normal"
+            android:src="@color/pink"
             android:tag="@color/pink" />
 
         <ImageButton
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_margin="4dp"
-            android:background="@color/purple"
+            android:foreground="@drawable/pallet_normal"
+            android:padding="2dp"
             android:onClick="paintClicked"
-            android:src="@drawable/pallet_normal"
+            android:src="@color/purple"
             android:tag="@color/purple" />
 
     </LinearLayout>
@@ -314,21 +366,24 @@
 
         <ImageButton
             android:id="@+id/ibBrush"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_margin="5dp"
-            android:background="@color/teal_200"
-            android:scaleType="fitXY"
-            android:src="@drawable/ic_brush" />
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:layout_margin="7dp"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_brush"
+            android:background="@drawable/primary_color_circle"
+            />
 
         <ImageButton
             android:id="@+id/ibUndo"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_margin="5dp"
-            android:background="@color/yellow"
-            android:scaleType="fitXY"
-            android:src="@drawable/ic_undo" />
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:layout_margin="7dp"
+            android:background="@drawable/primary_color_circle"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_undo"/>
 
     </LinearLayout>
 

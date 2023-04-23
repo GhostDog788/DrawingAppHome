@@ -2,24 +2,38 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_margin="20dp"
-    android:padding="10dp"
+    android:paddingVertical="15dp"
+    android:paddingHorizontal="20dp"
     android:layout_gravity="center"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@color/colorPrimaryVariant">
 
     <TextView
+        android:id="@+id/tvTheWord"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Turn ended"
-        android:textSize="35dp"
+        android:text="The word was:"
+        android:textSize="40dp"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:textColor="@color/colorOnPrimary"
+        android:shadowColor="@color/darkWhite"
+        android:shadowRadius="1"
+        android:shadowDy="1.5"
         android:layout_gravity="center"
-        android:gravity="center"/>
+        android:gravity="center"
+        android:layout_marginBottom="5dp"/>
+
     <TextView
         android:id="@+id/tvGuessWord"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="the word was:"
-        android:textSize="25dp"
+        android:text="Cat"
+        android:textSize="45dp"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:textColor="@color/darkWhite"
+        android:shadowColor="@color/darkWhite"
+        android:shadowRadius="1"
+        android:shadowDy="1.5"
         android:layout_gravity="center"
         android:gravity="center"
         android:layout_marginBottom="10dp"/>

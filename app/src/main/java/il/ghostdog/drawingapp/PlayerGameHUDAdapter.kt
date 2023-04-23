@@ -44,7 +44,7 @@ class PlayerGameHUDAdapter(private var data: ArrayList<PlayerRGameViewData>, pri
         holder.points.text = playerGameData.points.toString()
         if(playerGameData.isDrawer){
             holder.drawerIcon.visibility = View.VISIBLE
-            holder.itemView.findViewById<ConstraintLayout>(R.id.clMain).setBackgroundResource(R.drawable.player_game_card_drawer)
+            holder.itemView.findViewById<ConstraintLayout>(R.id.clMain).setBackgroundResource(R.drawable.primary_variant_color_rec)
             return
         }else{
             holder.drawerIcon.visibility = View.INVISIBLE
@@ -52,7 +52,7 @@ class PlayerGameHUDAdapter(private var data: ArrayList<PlayerRGameViewData>, pri
         if(playerGameData.answeredCorrectly){
             holder.itemView.findViewById<ConstraintLayout>(R.id.clMain).setBackgroundResource(R.drawable.player_game_card_correct)
         }else{
-            holder.itemView.findViewById<ConstraintLayout>(R.id.clMain).setBackgroundResource(R.drawable.player_game_card)
+            holder.itemView.findViewById<ConstraintLayout>(R.id.clMain).setBackgroundResource(R.drawable.primary_color_rec)
 
         }
     }

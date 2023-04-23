@@ -7,7 +7,7 @@
     android:layout_marginEnd="5dp"
     android:layout_marginBottom="5dp"
     android:padding="4dp"
-    android:background="#FF7E7E">
+    android:background="@drawable/primary_variant_color_rec">
 
     <TextView
         android:id="@+id/tvName"
@@ -15,14 +15,18 @@
         android:layout_height="match_parent"
         android:gravity="center_vertical"
         android:maxLines="1"
-        android:textSize="15dp"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:textColor="@color/darkWhite"
+        android:textSize="20dp"
         android:text="121324423"/>
 
     <TextView
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:gravity="center_vertical"
-        android:textSize="15dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="25dp"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:textColor="@color/darkWhite"
         android:paddingStart="5dp"
         android:paddingEnd="10dp"
         android:text=":"/>
@@ -31,7 +35,11 @@
         android:id="@+id/tvGuess"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:text="guess"
-        android:textSize="15dp"/>
+        android:gravity="center_vertical"
+        android:maxLines="1"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:textColor="@color/darkWhite"
+        android:textSize="20dp"
+        android:text="guess"/>
 
 </LinearLayout>
