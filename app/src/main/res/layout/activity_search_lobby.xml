@@ -13,7 +13,7 @@
         android:layout_height="match_parent"
         scrolling_image_view:speed="15dp"
         scrolling_image_view:contiguous="false"
-        scrolling_image_view:source="@drawable/main_menu_background" />
+        scrolling_image_view:source="@drawable/larger_background" />
 
 
     <androidx.constraintlayout.widget.ConstraintLayout

@@ -8,7 +8,6 @@ import android.view.Window
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
-import androidx.lifecycle.MutableLiveData
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import java.util.*
@@ -68,7 +67,7 @@ class JoinLobbyActivity : AppCompatActivity(), IProgressDialogUser {
                 intent.putExtra("lobbyId", mLobbyId!!)
                 when (gamePreferences!!.status) {
                     GameStatus.active -> {
-                        intent.setClass(this@JoinLobbyActivity, MainActivity::class.java)
+                        intent.setClass(this@JoinLobbyActivity, GameActivity::class.java)
                         intent.putExtra("reEntering", true)
                         intent.putExtra("language", gamePreferences.language)
                         intent.putExtra("rounds", gamePreferences.rounds)

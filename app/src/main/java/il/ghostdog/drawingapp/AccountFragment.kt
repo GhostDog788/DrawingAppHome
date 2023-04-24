@@ -1,6 +1,9 @@
 package il.ghostdog.drawingapp
 
 import android.app.Dialog
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.os.Bundle
@@ -32,6 +35,9 @@ class AccountFragment : Fragment(R.layout.fragment_account), IProgressDialogUser
 
         val btnSignOut = view.findViewById<Button>(R.id.btnSignOut)
         btnSignOut.setOnClickListener{ onSignOut()}
+
+        val btnCopyMyFriendCode = view.findViewById<Button>(R.id.btnCopyMyCode)
+        btnCopyMyFriendCode.setOnClickListener{ copyFriendCode()}
 
         etNickName = view.findViewById(R.id.etNickname)
         updateUIFromDB()
@@ -105,6 +111,14 @@ class AccountFragment : Fragment(R.layout.fragment_account), IProgressDialogUser
             }
             override fun onCancelled(error: DatabaseError) {}
         })
+    }
+
+    private fun copyFriendCode() {
+        val myFriendCode = FirebaseAuth.getInstance().currentUser!!.uid
+        val clipboardManager = activity?.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager?
+        val clip = ClipData.newPlainText("label", "My friend code is: $myFriendCode")
+        clipboardManager?.setPrimaryClip(clip)
+        Toast.makeText(activity, "Friend code copied", Toast.LENGTH_SHORT).show()
     }
 
     private fun onSignOut(){

@@ -51,8 +51,12 @@ class EndGameActivity : AppCompatActivity(), ILobbyUser {
         val orderedByPoints = mPlayersMap.toList().sortedBy { pair -> pair.second.points }
         setUpWinners(orderedByPoints)
 
-        findViewById<Button>(R.id.btnToMainMenu).setOnClickListener { exitGame() }
-        findViewById<Button>(R.id.btnBackToLobby).setOnClickListener { backToLobby()}
+        val btnToMain = findViewById<Button>(R.id.btnToMainMenu)
+        btnToMain.visibility = View.INVISIBLE
+        btnToMain.setOnClickListener { exitGame() }
+        val btnBack = findViewById<Button>(R.id.btnBackToLobby)
+        btnBack.visibility = View.INVISIBLE
+        btnBack.setOnClickListener { backToLobby()}
     }
 
     private fun setUpWinners(orderedByPoints: List<Pair<String, PlayerData>>) {
@@ -85,7 +89,7 @@ class EndGameActivity : AppCompatActivity(), ILobbyUser {
         findViewById<LinearLayout>(R.id.llSecond).visibility = View.INVISIBLE
         findViewById<LinearLayout>(R.id.llFirst).visibility = View.INVISIBLE
         lifecycleScope.launch {
-            delay(1000)
+            delay(1500)
             if(!excludeThird) {
                 findViewById<LinearLayout>(R.id.llThird).visibility = View.VISIBLE
                 YoYo.with(Techniques.FadeInLeft).duration(2000).onEnd {
@@ -103,7 +107,16 @@ class EndGameActivity : AppCompatActivity(), ILobbyUser {
             findViewById<LinearLayout>(R.id.llFirst).visibility = View.VISIBLE
             YoYo.with(Techniques.FadeInDown).duration(2000).onEnd{
                 YoYo.with(Techniques.Tada).onEnd{
+                    val btnToMain = findViewById<Button>(R.id.btnToMainMenu)
+                    val btnBack = findViewById<Button>(R.id.btnBackToLobby)
+                    btnBack.visibility = View.VISIBLE
+                    YoYo.with(Techniques.FadeIn).duration(1500).onEnd{
+                        btnToMain.visibility = View.VISIBLE
+                        YoYo.with(Techniques.FadeIn).duration(1500).playOn(btnToMain)
+                    }.playOn(btnBack)
                     lifecycleScope.launch{
+                        delay(1500)
+
                         var countT = 10000
                         while (countT > 0){
                             if(!excludeThird) {

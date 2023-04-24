@@ -49,9 +49,21 @@ class AddFriendFragment : Fragment(R.layout.fragment_add_friend) {
     private fun checkIfAllReadyAdded(testId: String, userData: UserData){
         val myUid = FirebaseAuth.getInstance().currentUser!!.uid
         FirebaseDatabase.getInstance().getReference("users")
-            .child(testId).addListenerForSingleValueEvent(object : ValueEventListener {
+            .child(myUid).addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    val friendList = snapshot.getValue(UserData::class.java)!!.friendsList
+                    val myFriendList = snapshot.getValue(UserData::class.java)!!.friendsList
+                    for (item in myFriendList){
+                        if(item == testId){
+                            Toast.makeText(activity, "This user has all ready been added as a friend", Toast.LENGTH_SHORT).show()
+                            return
+                        }
+                        else if(item.contains(testId)){
+                            Toast.makeText(activity, "You all ready have a request from this user. please check your requests", Toast.LENGTH_LONG).show()
+                            return
+                        }
+                    }
+                    //doesn't contains
+                    val friendList = userData.friendsList
                     for (item in friendList){
                         if(item == myUid){
                             Toast.makeText(activity, "This user has all ready been added as a friend", Toast.LENGTH_SHORT).show()

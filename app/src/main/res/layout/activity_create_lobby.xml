@@ -13,9 +13,13 @@
         android:id="@+id/ivBackground"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        scrolling_image_view:speed="15dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         scrolling_image_view:contiguous="false"
-        scrolling_image_view:source="@drawable/main_menu_background" />
+        scrolling_image_view:source="@drawable/larger_background"
+        scrolling_image_view:speed="15dp" />
 
 
     <LinearLayout

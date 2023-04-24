@@ -255,7 +255,7 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
             return
         }
 
-        val intent = Intent(this, MainActivity::class.java)
+        val intent = Intent(this, GameActivity::class.java)
         if(mAuth!!.currentUser!!.uid == partyLeader) {
             updateGamePreferences()
             databaseMyLobby!!.child("gamePreferences").setValue(gamePreferences)
@@ -418,9 +418,21 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
     private fun checkIfAllReadyAdded(testId: String, userData: UserData){
         val myUid = FirebaseAuth.getInstance().currentUser!!.uid
         FirebaseDatabase.getInstance().getReference("users")
-            .child(testId).addListenerForSingleValueEvent(object : ValueEventListener {
+            .child(myUid).addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    val friendList = snapshot.getValue(UserData::class.java)!!.friendsList
+                    val myFriendList = snapshot.getValue(UserData::class.java)!!.friendsList
+                    for (item in myFriendList){
+                        if(item == testId){
+                            Toast.makeText(this@CreateLobbyActivity, "This user has all ready been added as a friend", Toast.LENGTH_SHORT).show()
+                            return
+                        }
+                        else if(item.contains(testId)){
+                            Toast.makeText(this@CreateLobbyActivity, "You all ready have a request from this user. please check your requests", Toast.LENGTH_LONG).show()
+                            return
+                        }
+                    }
+                    //doesn't contains
+                    val friendList = userData.friendsList
                     for (item in friendList){
                         if(item == myUid){
                             Toast.makeText(this@CreateLobbyActivity, "This user has all ready been added as a friend", Toast.LENGTH_SHORT).show()

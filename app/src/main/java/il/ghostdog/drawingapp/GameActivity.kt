@@ -33,7 +33,7 @@ import kotlin.random.Random
 
 
 @Suppress("DEPRECATION")
-class MainActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, PlayerGameHUDAdapter.RecyclerViewEvent {
+class GameActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, PlayerGameHUDAdapter.RecyclerViewEvent {
 
     private var drawingView: DrawingView? = null
     private var mImageButtonCurrentPaint: ImageButton? = null
@@ -149,6 +149,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
 
             if(playerData.answeredCorrectly){
                 mHaveNotGuessedList.remove(snapshot.key)
+                Toast.makeText(applicationContext, "${mHaveNotGuessedList.size}", Toast.LENGTH_LONG).show()
                 if(mHaveNotGuessedList.isEmpty()){
                     turnEnded()
                 }
@@ -163,7 +164,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
         override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
             if(snapshot.key!!.startsWith(Constants.REQUESTING_PLAYER_NODE_NAME)){
                 if(mAuth!!.currentUser!!.uid != partyLeader) return
-                val alertDialogBuilder = AlertDialog.Builder(this@MainActivity)
+                val alertDialogBuilder = AlertDialog.Builder(this@GameActivity)
                 alertDialogBuilder.setTitle("Player join request")
                 alertDialogBuilder.setCancelable(false)
                 alertDialogBuilder.setMessage("${snapshot.value} want's to join the game")
@@ -234,7 +235,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
 
             if(mPlayersMap.keys.count() < 2){
                 mTurnTimerJob?.cancel()
-                val alertDialogBuilder = AlertDialog.Builder(this@MainActivity)
+                val alertDialogBuilder = AlertDialog.Builder(this@GameActivity)
                 alertDialogBuilder.setCancelable(false)
                 alertDialogBuilder.setTitle("All players had exit")
                 alertDialogBuilder.setMessage("You are the only one left")
@@ -243,7 +244,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
                         ,mAuth!!.currentUser!!.uid)
                     removeAllListeners()
                     val intent = Intent()
-                    intent.setClass(this@MainActivity, MainMenuActivity::class.java)
+                    intent.setClass(this@GameActivity, MainMenuActivity::class.java)
                     startActivity(intent)
                     finish()
                     dialog.dismiss()
@@ -340,7 +341,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_game)
 
         sharedPref = applicationContext.getSharedPreferences(Constants.SHARED_LOBBIES_NAME, Context.MODE_PRIVATE)
 
@@ -389,7 +390,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
         mflDrawingView = findViewById(R.id.flDrawingViewContainer)
 
         lifecycleScope.launch {
-            showProgressDialog(this@MainActivity)
+            showProgressDialog(this@GameActivity)
             addPlayersListener()
             addDrawerIdListener()
             addGuessWordListener()
@@ -402,7 +403,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
             addPathsValueListener()
             addPathsCountListener()
             if(mReEntering){
-                delay(200L)
+                delay(400L)
                 rejoinGame()
             }
         }
@@ -569,15 +570,18 @@ class MainActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
         val boardList : ArrayList<ScoreBoardRViewData> = ArrayList()
         val orderedByPoints = mPlayersMap.toList().sortedBy { pair -> pair.second.points }.reversed()
         rvScoreBoard.adapter = ScoreBoardRecyclerAdapter(boardList)
-        rvScoreBoard.layoutManager = LinearLayoutManager(this@MainActivity)
+        rvScoreBoard.layoutManager = LinearLayoutManager(this@GameActivity)
         mTurnEndedDialog!!.show()
 
-        for (player in orderedByPoints){
-            boardList.add(ScoreBoardRViewData(player.second))
-            rvScoreBoard.adapter!!.notifyItemInserted(boardList.size - 1)
-        }
         lifecycleScope.launch(Dispatchers.Default){
-            delay(3000)
+            for (player in orderedByPoints){
+                runOnUiThread {
+                    boardList.add(ScoreBoardRViewData(player.second))
+                    rvScoreBoard.adapter!!.notifyItemInserted(boardList.size - 1)
+                }
+                delay(500L)
+            }
+            delay(2000)
             nextTurn()
         }
     }
@@ -590,7 +594,7 @@ class MainActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
 
         removeAllListeners()
 
-        intent.setClass(this@MainActivity, EndGameActivity::class.java)
+        intent.setClass(this@GameActivity, EndGameActivity::class.java)
         startActivity(intent)
         finish()
     }

@@ -23,6 +23,7 @@
             android:id="@+id/textView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
             android:fontFamily="@font/unicorn_scribbles"
             android:shadowColor="@color/darkWhite"
             android:shadowDy="0.5"
@@ -30,7 +31,6 @@
             android:text="NickName: "
             android:textColor="@color/colorOnPrimary"
             android:textSize="30dp"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/etNickname"
             app:layout_constraintHorizontal_chainStyle="packed"
             app:layout_constraintStart_toStartOf="parent"
@@ -43,10 +43,26 @@
             android:fontFamily="@font/unicorn_scribbles"
             android:textColor="@color/darkWhite"
             android:textSize="30dp"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/textView"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/btnCopyMyCode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="@color/colorPrimaryVariant"
+            android:text="Copy my friend code"
+            android:fontFamily="@font/unicorn_scribbles"
+            android:textSize="20dp"
+            android:shadowColor="@color/darkWhite"
+            android:shadowDy="1.5"
+            android:shadowRadius="1"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/etNickname" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
