@@ -1,14 +1,21 @@
 package il.ghostdog.drawingapp
 
+import android.animation.ValueAnimator
 import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.opengl.Visibility
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.daimajia.androidanimations.library.Techniques
+import com.daimajia.androidanimations.library.YoYo
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import kotlinx.coroutines.Job
@@ -43,32 +50,9 @@ class EndGameActivity : AppCompatActivity(), ILobbyUser {
 
         val orderedByPoints = mPlayersMap.toList().sortedBy { pair -> pair.second.points }
         setUpWinners(orderedByPoints)
-        giveMoney(orderedByPoints)
 
         findViewById<Button>(R.id.btnToMainMenu).setOnClickListener { exitGame() }
         findViewById<Button>(R.id.btnBackToLobby).setOnClickListener { backToLobby()}
-    }
-
-    private fun giveMoney(orderedByPoints: List<Pair<String, PlayerData>>) {
-        val uid = FirebaseAuth.getInstance().currentUser!!.uid
-        val myPair = orderedByPoints.find { p -> p.first == uid }
-        val ref = FirebaseDatabase.getInstance().getReference("users").child(uid)
-        var placeMultiplayer = 1.0
-        when(orderedByPoints.indexOf(myPair)){
-            0 -> placeMultiplayer = 1.3
-            1 -> placeMultiplayer = 1.2
-            2 -> placeMultiplayer = 1.1
-        }
-        val money = (((myPair!!.second.points / 300) * 5.432) * placeMultiplayer).roundToInt() + 1
-        findViewById<TextView>(R.id.tvMoneyEarned).text = money.toString()
-        ref.addListenerForSingleValueEvent(object : ValueEventListener{
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val userData = snapshot.getValue(UserData::class.java)!!
-                userData.money += money
-                ref.setValue(userData)
-            }
-            override fun onCancelled(error: DatabaseError) {}
-        })
     }
 
     private fun setUpWinners(orderedByPoints: List<Pair<String, PlayerData>>) {
@@ -86,6 +70,56 @@ class EndGameActivity : AppCompatActivity(), ILobbyUser {
             val thirdPlayer = orderedByPoints[orderedByPoints.lastIndex - 2]
             findViewById<TextView>(R.id.tvName3).text = thirdPlayer.second.name
             findViewById<TextView>(R.id.tvPoints3).text = thirdPlayer.second.points.toString()
+        }
+
+        showAnim(orderedByPoints.size)
+    }
+
+    private fun showAnim(size: Int) {
+        val excludeThird = size < 3
+        if(excludeThird) {
+            findViewById<LinearLayout>(R.id.llThird).visibility = View.GONE
+        }else{
+            findViewById<LinearLayout>(R.id.llThird).visibility = View.INVISIBLE
+        }
+        findViewById<LinearLayout>(R.id.llSecond).visibility = View.INVISIBLE
+        findViewById<LinearLayout>(R.id.llFirst).visibility = View.INVISIBLE
+        lifecycleScope.launch {
+            delay(1000)
+            if(!excludeThird) {
+                findViewById<LinearLayout>(R.id.llThird).visibility = View.VISIBLE
+                YoYo.with(Techniques.FadeInLeft).duration(2000).onEnd {
+                    YoYo.with(Techniques.Bounce).playOn(findViewById(R.id.llThird))
+                }.playOn(findViewById(R.id.llThird))
+                delay(3000)
+            }
+            findViewById<LinearLayout>(R.id.llSecond).visibility = View.VISIBLE
+            var technique = Techniques.FadeInRight
+            if(excludeThird) technique = Techniques.FadeInUp
+            YoYo.with(technique).duration(2000).onEnd{
+                YoYo.with(Techniques.Pulse).playOn(findViewById(R.id.llSecond))
+            }.playOn(findViewById(R.id.llSecond))
+            delay(3000)
+            findViewById<LinearLayout>(R.id.llFirst).visibility = View.VISIBLE
+            YoYo.with(Techniques.FadeInDown).duration(2000).onEnd{
+                YoYo.with(Techniques.Tada).onEnd{
+                    lifecycleScope.launch{
+                        var countT = 10000
+                        while (countT > 0){
+                            if(!excludeThird) {
+                                YoYo.with(Techniques.Swing).duration(1500)
+                                    .playOn(findViewById(R.id.llThird))
+                                delay(1500)
+                            }
+                            YoYo.with(Techniques.Swing).duration(1500).playOn(findViewById(R.id.llSecond))
+                            delay(1500)
+                            YoYo.with(Techniques.Swing).playOn(findViewById(R.id.llFirst))
+                            delay(2000)
+                            countT--
+                        }
+                    }
+                }.playOn(findViewById(R.id.llFirst))
+            }.playOn(findViewById(R.id.llFirst))
         }
     }
 
