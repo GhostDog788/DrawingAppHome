@@ -6,13 +6,19 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center_horizontal"
-    tools:context=".LoginActivity">
+    tools:context=".LoginActivity"
+    android:background="@color/colorPrimaryVariant">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Log In"
-        android:textSize="50dp"
+        android:textSize="60dp"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:textColor="@color/colorOnPrimary"
+        android:shadowColor="@color/darkWhite"
+        android:shadowDy="1.5"
+        android:shadowRadius="1"
         android:layout_margin="20dp"/>
 
     <EditText
@@ -20,6 +26,11 @@
         android:layout_width="match_parent"
         android:layout_height="70dp"
         android:hint="Email"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:textColorHint="@color/darkWhite"
+        android:textColor="@color/darkWhite"
+        android:textSize="25dp"
+        android:textAlignment="center"
         android:layout_margin="30dp"/>
 
     <EditText
@@ -27,6 +38,12 @@
         android:layout_width="match_parent"
         android:layout_height="70dp"
         android:hint="Password"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:textColorHint="@color/darkWhite"
+        android:textColor="@color/darkWhite"
+        android:textSize="25dp"
+        android:inputType="textPassword"
+        android:textAlignment="center"
         android:layout_margin="30dp"/>
 
     <Button
@@ -34,7 +51,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Login"
-        android:textSize="30dp"/>
+        android:fontFamily="@font/unicorn_scribbles"
+        android:textColor="@color/colorOnPrimary"
+        android:shadowColor="@color/darkWhite"
+        android:shadowDy="1.5"
+        android:shadowRadius="1"
+        android:textSize="35dp"/>
 
     <TextView
         android:id="@+id/tvRegisterButton"
@@ -42,6 +64,8 @@
         android:layout_height="wrap_content"
         android:layout_margin="50dp"
         android:text="Press here to register"
-        android:textSize="20dp"/>
+        android:textSize="30dp"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:textColor="@color/darkWhite"/>
 
 </LinearLayout>

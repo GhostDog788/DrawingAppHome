@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".RegisterProfilePicFragment">
+
+    <TextView
+        android:id="@+id/tvId"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:text="Create your profile picture"
+        android:textColor="@color/darkWhite"
+        android:textSize="30dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="10dp"/>
+
+    <TextView
+        android:id="@+id/tvId2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="7dp"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:text="Drag your finger inside the frame to draw or add a photo from your gallery"
+        android:textAlignment="center"
+        android:textColor="@color/darkWhite"
+        android:paddingHorizontal="20dp"
+        android:textSize="23dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvId" />
+
+    <fragment
+        android:id="@+id/my_fragment"
+        android:name="il.ghostdog.drawingapp.PhotoMakerFragment"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvId2"
+        android:layout_marginTop="15dp"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

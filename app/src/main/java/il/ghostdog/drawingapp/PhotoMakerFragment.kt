@@ -23,8 +23,12 @@ import com.github.dhaval2404.colorpicker.model.ColorShape
 class PhotoMakerFragment : Fragment(R.layout.fragment_photo_maker) {
 
     private lateinit var drawingView: DrawingView
+    private lateinit var ivBackground: com.google.android.material.imageview.ShapeableImageView
     private lateinit var mflDrawingView: FrameLayout
     private lateinit var mBtnColor: ImageButton
+
+    val mOnDrawChange : Event<Unit> = Event()
+    val mOnPhotoChange : Event<Unit> = Event()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -32,6 +36,8 @@ class PhotoMakerFragment : Fragment(R.layout.fragment_photo_maker) {
         drawingView = view.findViewById(R.id.dvDrawingView)
         drawingView.setSizeForBrush(6.toFloat())
         drawingView.canDraw = true
+
+        ivBackground = view.findViewById(R.id.ivBackground)
 
         mflDrawingView = view.findViewById(R.id.flDrawingViewContainer)
 
@@ -49,6 +55,8 @@ class PhotoMakerFragment : Fragment(R.layout.fragment_photo_maker) {
 
         val btnClear : Button = view.findViewById(R.id.btnClear)
         btnClear.setOnClickListener{ clear()}
+
+        drawingView.mOnDrawChange.plusAssign { mOnDrawChange.invoke(Unit) }
     }
 
     private fun clear() {
@@ -58,6 +66,12 @@ class PhotoMakerFragment : Fragment(R.layout.fragment_photo_maker) {
     }
     fun getBackgroundImageView() : ImageView{
         return mflDrawingView.findViewById(R.id.ivBackground)
+    }
+    fun isBackgroundEmpty(): Boolean{
+        return ivBackground.drawable == null
+    }
+    fun isCanvasEmpty(): Boolean{
+        return drawingView.mPaths.isEmpty()
     }
 
     private fun uploadPhoto() {
@@ -109,6 +123,7 @@ class PhotoMakerFragment : Fragment(R.layout.fragment_photo_maker) {
             if (result.resultCode == AppCompatActivity.RESULT_OK && result.data != null){
                 val imageBackground: ImageView = mflDrawingView.findViewById(R.id.ivBackground)
                 imageBackground.setImageURI(result.data?.data)
+                mOnPhotoChange.invoke(Unit)
             }
         }
     private fun showRationalDialog(title: String, message: String){

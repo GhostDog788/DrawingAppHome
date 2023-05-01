@@ -4,6 +4,7 @@ import android.app.Dialog
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -17,9 +18,11 @@ class RegisterActivity : AppCompatActivity(), IProgressDialogUser {
     private var mAuth: FirebaseAuth? = null
 
     private lateinit var userTextFieldsFragment: UserTextFieldsFragment
-    private lateinit var photoMakerFragment: PhotoMakerFragment
+    lateinit var profilePicFragment: RegisterProfilePicFragment
     private lateinit var currentFragment: Fragment
     override var customProgressDialog: Dialog? = null
+
+    private lateinit var btnRegister: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,14 +31,15 @@ class RegisterActivity : AppCompatActivity(), IProgressDialogUser {
         mAuth = FirebaseAuth.getInstance()
 
         userTextFieldsFragment = UserTextFieldsFragment()
-        photoMakerFragment = PhotoMakerFragment()
+        profilePicFragment = RegisterProfilePicFragment()
 
-        val btnRegister = findViewById<Button>(R.id.btnRegister)
+        btnRegister = findViewById(R.id.btnRegister)
         btnRegister.setOnClickListener { onRegisterClicked() }
+        btnRegister.visibility = View.INVISIBLE
 
         supportFragmentManager.beginTransaction()
-            .add(R.id.flFragmentContainer, photoMakerFragment)
-            .hide(photoMakerFragment)
+            .add(R.id.flFragmentContainer, profilePicFragment)
+            .hide(profilePicFragment)
             .add(R.id.flFragmentContainer, userTextFieldsFragment)
             .commit()
         currentFragment = userTextFieldsFragment
@@ -45,17 +49,30 @@ class RegisterActivity : AppCompatActivity(), IProgressDialogUser {
             if (currentFragment == userTextFieldsFragment) {
                 supportFragmentManager.beginTransaction()
                     .hide(userTextFieldsFragment)
-                    .show(photoMakerFragment)
+                    .show(profilePicFragment)
                     .commit()
-                currentFragment = photoMakerFragment
+                currentFragment = profilePicFragment
+                btnNext.text = "Back"
             } else {
                 supportFragmentManager.beginTransaction()
-                    .hide(photoMakerFragment)
+                    .hide(profilePicFragment)
                     .show(userTextFieldsFragment)
                     .commit()
                 currentFragment = userTextFieldsFragment
+                btnNext.text = "Next"
             }
         }
+
+        profilePicFragment.mOnPhotoMakerCreated.plusAssign {
+            profilePicFragment.photoMakerFragment.mOnDrawChange.plusAssign(::showFinishButton)
+            profilePicFragment.photoMakerFragment.mOnPhotoChange.plusAssign(::showFinishButton)
+        }
+    }
+
+    private fun showFinishButton(unit: Unit){
+        if(btnRegister.visibility == View.VISIBLE) return
+
+        btnRegister.visibility = View.VISIBLE
     }
 
     private fun onRegisterClicked() {
@@ -80,6 +97,12 @@ class RegisterActivity : AppCompatActivity(), IProgressDialogUser {
             return
         }
 
+        if (profilePicFragment.photoMakerFragment.isBackgroundEmpty()
+            && profilePicFragment.photoMakerFragment.isCanvasEmpty()){
+            Toast.makeText(this, "Please draw a profile picture or add one from your gallery", Toast.LENGTH_LONG).show()
+            return
+        }
+
         showProgressDialog(this@RegisterActivity)
         mAuth!!.createUserWithEmailAndPassword(etEmail.text.toString(), etPassword.text.toString())
                 .addOnCompleteListener(this) { task ->
@@ -88,12 +111,11 @@ class RegisterActivity : AppCompatActivity(), IProgressDialogUser {
                         databaseUsers.child(mAuth!!.currentUser!!.uid).setValue(
                             UserData(etNickname.text.toString(), etEmail.text.toString())
                         )
-                        val data = SerializationHelper.compressBitmap(photoMakerFragment.getBitmapFromView())
+                        val data = SerializationHelper.compressBitmap(profilePicFragment.photoMakerFragment.getBitmapFromView())
                         val reference = FirebaseStorage.getInstance().getReference("UsersData")
                             .child(mAuth!!.currentUser!!.uid).child("profilePic")
                         reference.putBytes(data).addOnCompleteListener{
                             cancelProgressDialog()
-                            Toast.makeText(this, it.isSuccessful.toString(), Toast.LENGTH_SHORT).show()
                             startActivity(Intent(this, LaunchActivity::class.java))
                             finish()
                         }

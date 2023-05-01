@@ -11,20 +11,36 @@
         android:layout_width="match_parent"
         android:layout_height="70dp"
         android:hint="Nickname (e.g smiling ball)"
-        android:layout_margin="30dp"/>
+        android:layout_margin="30dp"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:textColorHint="@color/darkWhite"
+        android:textColor="@color/darkWhite"
+        android:textSize="25dp"
+        android:textAlignment="center"/>
 
     <EditText
         android:id="@+id/etEmail"
         android:layout_width="match_parent"
         android:layout_height="70dp"
         android:hint="Email (e.g test@example.com)"
-        android:layout_margin="30dp"/>
+        android:layout_margin="30dp"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:textColorHint="@color/darkWhite"
+        android:textColor="@color/darkWhite"
+        android:textSize="25dp"
+        android:textAlignment="center"/>
 
     <EditText
         android:id="@+id/etPassword"
         android:layout_width="match_parent"
         android:layout_height="70dp"
         android:hint="Password (at least 6 characters)"
-        android:layout_margin="30dp"/>
+        android:layout_margin="30dp"
+        android:fontFamily="@font/unicorn_scribbles"
+        android:textColorHint="@color/darkWhite"
+        android:textColor="@color/darkWhite"
+        android:textSize="25dp"
+        android:inputType="textPassword"
+        android:textAlignment="center"/>
 
 </LinearLayout>

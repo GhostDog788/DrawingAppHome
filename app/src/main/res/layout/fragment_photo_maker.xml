@@ -11,19 +11,19 @@
         android:id="@+id/btnUploadPhoto"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="4dp"
+        android:layout_marginStart="8dp"
         android:layout_marginTop="4dp"
         android:layout_marginEnd="4dp"
         android:fontFamily="@font/unicorn_scribbles"
         android:shadowColor="@color/darkWhite"
         android:shadowDy="0.5"
         android:shadowRadius="0.3"
-        android:text="Upload"
+        android:text="Add Photo"
         android:textSize="25dp"
         app:layout_constraintEnd_toStartOf="@id/btnClear"
         app:layout_constraintHorizontal_chainStyle="packed"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/flDrawingViewContainer" />
+        app:layout_constraintTop_toBottomOf="@+id/flDrawingViewContainer2" />
 
     <Button
         android:id="@+id/btnClear"
@@ -40,35 +40,41 @@
         android:shadowRadius="0.3"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/btnUploadPhoto"
-        app:layout_constraintTop_toBottomOf="@+id/flDrawingViewContainer" />
+        app:layout_constraintTop_toBottomOf="@+id/flDrawingViewContainer2" />
 
     <FrameLayout
-        android:id="@+id/flDrawingViewContainer"
+        android:id="@+id/flDrawingViewContainer2"
         android:layout_width="275dp"
         android:layout_height="275dp"
         android:layout_margin="5dp"
         android:layout_marginStart="32dp"
         android:foreground="@drawable/background_profile_drawing_view_layout"
-        android:background="@drawable/background_profile_drawing_view_layout"
         app:layout_constraintEnd_toStartOf="@+id/llActionButtons"
         app:layout_constraintHorizontal_chainStyle="packed"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/ivBackground"
+        <FrameLayout
+            android:id="@+id/flDrawingViewContainer"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scaleType="centerCrop"
-            android:adjustViewBounds="true"
-            app:shapeAppearance="@style/roundImageView"
-            android:layout_margin="8dp"/>
+            android:layout_height="match_parent">
 
-        <il.ghostdog.drawingapp.DrawingView
-            android:id="@+id/dvDrawingView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_margin="8dp"/>
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivBackground"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:adjustViewBounds="true"
+                app:shapeAppearance="@style/roundImageView"
+                android:layout_margin="8dp"/>
+
+            <il.ghostdog.drawingapp.DrawingView
+                android:id="@+id/dvDrawingView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="8dp"/>
+
+        </FrameLayout>
 
     </FrameLayout>
 
@@ -80,7 +86,7 @@
         android:orientation="vertical"
         app:layout_constraintBottom_toTopOf="@+id/btnClear"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/flDrawingViewContainer"
+        app:layout_constraintStart_toEndOf="@+id/flDrawingViewContainer2"
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageButton

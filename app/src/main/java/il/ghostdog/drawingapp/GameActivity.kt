@@ -456,6 +456,8 @@ class GameActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
     }
 
     private fun onSubmitGuess() {
+        if(!mCanGuess) return//to prevent submitting after turn ended
+
         val guess = etGuessField.text.toString()
         etGuessField.text.clear()
 
