@@ -172,14 +172,13 @@
             android:autoSizeMinTextSize="2dp"
             android:autoSizeTextType="uniform"
             android:fontFamily="@font/unicorn_scribbles"
-            android:gravity="center_vertical"
+            android:gravity="center_vertical|end"
             android:maxLines="1"
             android:shadowColor="@color/darkWhite"
             android:shadowDy="1.5"
             android:shadowRadius="1"
             android:text="121324324"
-            android:textColor="@color/colorOnPrimary"
-            android:textDirection="rtl" />
+            android:textColor="@color/colorOnPrimary"/>
 
         <TextView
             android:layout_width="wrap_content"

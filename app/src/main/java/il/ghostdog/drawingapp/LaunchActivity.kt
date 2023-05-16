@@ -88,7 +88,7 @@ class LaunchActivity : AppCompatActivity() {
             }
         }
 
-        //will change when intent is introduced
+        //to ensure there will always be a main activity in the background
         startActivity(Intent(this, MainMenuActivity::class.java))
         finish()
     }

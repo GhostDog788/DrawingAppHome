@@ -150,6 +150,7 @@ class GameActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
             if(playerData.answeredCorrectly){
                 mHaveNotGuessedList.remove(snapshot.key)
                 Toast.makeText(applicationContext, "${mHaveNotGuessedList.size}", Toast.LENGTH_LONG).show()
+
                 if(mHaveNotGuessedList.isEmpty()){
                     turnEnded()
                 }
@@ -243,9 +244,12 @@ class GameActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
                     ConnectionHelper.disconnectPlayerFromLobby(databaseMyLobby!!
                         ,mAuth!!.currentUser!!.uid)
                     removeAllListeners()
-                    val intent = Intent()
-                    intent.setClass(this@GameActivity, MainMenuActivity::class.java)
-                    startActivity(intent)
+                    //check if this is the last activity
+                    val activityManager = getSystemService(ACTIVITY_SERVICE) as ActivityManager
+                    val taskList = activityManager.getRunningTasks(10)
+                    if (taskList[0].numActivities == 1 && taskList[0].topActivity!!.className == this.javaClass.name) {
+                        startActivity(Intent(this@GameActivity, MainMenuActivity::class.java))
+                    }
                     finish()
                     dialog.dismiss()
                 }
@@ -260,6 +264,7 @@ class GameActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
         override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
         override fun onCancelled(error: DatabaseError) {}
     }
+
     private val pathCountListener = object : ValueEventListener{
         override fun onDataChange(snapshot: DataSnapshot) {
             dbPathsCount = snapshot.getValue(Long::class.java)!!.toInt()
@@ -819,7 +824,6 @@ class GameActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
         val taskList = activityManager.getRunningTasks(10)
         if (taskList[0].numActivities == 1 && taskList[0].topActivity!!.className == this.javaClass.name) {
             startActivity(Intent(this, MainMenuActivity::class.java))
-            Toast.makeText(applicationContext, "Start Main Menu", Toast.LENGTH_SHORT).show()
         }
         
         finish()

@@ -160,9 +160,12 @@ class EndGameActivity : AppCompatActivity(), ILobbyUser {
         databaseMyLobby!!.child("leader")
             .setValue(mPlayersMap.keys.first()).addOnCompleteListener{
                 ConnectionHelper.disconnectPlayerFromLobby(databaseMyLobby!!, uid)
-                val intent = Intent()
-                intent.setClass(this@EndGameActivity, MainMenuActivity::class.java)
-                startActivity(intent)
+                //check if this is the last activity
+                val activityManager = getSystemService(ACTIVITY_SERVICE) as ActivityManager
+                val taskList = activityManager.getRunningTasks(10)
+                if (taskList[0].numActivities == 1 && taskList[0].topActivity!!.className == this.javaClass.name) {
+                    startActivity(Intent(this, MainMenuActivity::class.java))
+                }
                 finish()
             }
     }

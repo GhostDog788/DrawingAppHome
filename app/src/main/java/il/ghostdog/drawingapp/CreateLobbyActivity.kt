@@ -58,9 +58,7 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
     private val myFriendsRViewDataMap = mutableMapOf<String,FriendRViewData>()
 
     private val playersChildListener = object : ChildEventListener{
-        override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
-            //some time called for some reason
-        }
+        override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
         override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
             val playerData = snapshot.getValue(PlayerData::class.java)!!
             playersMap[snapshot.key!!] = playerData
@@ -80,7 +78,6 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
             if(snapshot.key == mAuth!!.currentUser!!.uid){
                 //player have been kicked or exit
                 removeAllListeners()
-                startActivity(Intent(this@CreateLobbyActivity, MainMenuActivity::class.java))
                 finish()
             }
 
