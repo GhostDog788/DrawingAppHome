@@ -6,6 +6,8 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.media.AudioAttributes
+import android.media.SoundPool
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.View
@@ -21,10 +23,15 @@ import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.*
 import kotlinx.coroutines.tasks.await
 
-class AccountFragment : Fragment(R.layout.fragment_account), IProgressDialogUser {
+class AccountFragment : Fragment(R.layout.fragment_account), IProgressDialogUser, IAudioUser {
     private lateinit var photoMakerFragment: PhotoMakerFragment
     private lateinit var etNickName: EditText
     override var customProgressDialog: Dialog? = null
+    override lateinit var soundPool: SoundPool
+    override var clickSoundId: Int = -1
+    override var errorSoundId: Int = -1
+    override var softClickSoundId: Int = -1
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -41,6 +48,9 @@ class AccountFragment : Fragment(R.layout.fragment_account), IProgressDialogUser
 
         etNickName = view.findViewById(R.id.etNickname)
         updateUIFromDB()
+
+        //create sound player
+        setUpSoundPool(context!!)
     }
 
     private fun updateUIFromDB()  = CoroutineScope(Dispatchers.IO).launch{
@@ -75,8 +85,10 @@ class AccountFragment : Fragment(R.layout.fragment_account), IProgressDialogUser
     private fun checkChanges() {
         if(etNickName.text.length !in 2..15){
             Toast.makeText(activity!!, "Name size is too long or too short", Toast.LENGTH_SHORT).show()
+            soundPool.play(errorSoundId, 1F, 1F,0,0, 1F)
             return
         }
+        soundPool.play(clickSoundId, 1F, 1F,0,0, 1F)
         applyChanges(etNickName.text.toString())
     }
 
@@ -114,6 +126,7 @@ class AccountFragment : Fragment(R.layout.fragment_account), IProgressDialogUser
     }
 
     private fun copyFriendCode() {
+        soundPool.play(clickSoundId, 1F, 1F,0,0, 1F)
         val myFriendCode = FirebaseAuth.getInstance().currentUser!!.uid
         val clipboardManager = activity?.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager?
         val clip = ClipData.newPlainText("label", "My friend code is: $myFriendCode")
@@ -122,6 +135,7 @@ class AccountFragment : Fragment(R.layout.fragment_account), IProgressDialogUser
     }
 
     private fun onSignOut(){
+        soundPool.play(clickSoundId, 1F, 1F,0,0, 1F)
         FirebaseAuth.getInstance().signOut()
         startActivity(Intent(activity, LoginActivity::class.java))
         activity!!.finish()

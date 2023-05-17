@@ -7,31 +7,32 @@
         <deviceKey>
           <Key>
             <type value="VIRTUAL_DEVICE_PATH" />
-            <value value="C:\Users\urigr\.android\avd\Pixel_4_API_31_-_Android_12_test.avd" />
+            <value value="C:\Users\urigr\.android\avd\Pixel_4_API_31_-_Android_12_test2.avd" />
           </Key>
         </deviceKey>
       </Target>
     </runningDeviceTargetSelectedWithDropDown>
-    <timeTargetWasSelectedWithDropDown value="2023-05-01T20:22:59.672829Z" />
-    <targetsSelectedWithDialog>
+    <timeTargetWasSelectedWithDropDown value="2023-05-17T11:07:27.621748100Z" />
+    <multipleDevicesSelectedInDropDown value="true" />
+    <runningDeviceTargetsSelectedWithDialog>
       <Target>
-        <type value="QUICK_BOOT_TARGET" />
+        <type value="RUNNING_DEVICE_TARGET" />
         <deviceKey>
           <Key>
-            <type value="VIRTUAL_DEVICE_PATH" />
-            <value value="C:\Users\urigr\.android\avd\Pixel_4_XL_API_31.avd" />
+            <type value="SERIAL_NUMBER" />
+            <value value="dq4x6h7xcupnlrkv" />
           </Key>
         </deviceKey>
       </Target>
       <Target>
-        <type value="QUICK_BOOT_TARGET" />
+        <type value="RUNNING_DEVICE_TARGET" />
         <deviceKey>
           <Key>
             <type value="VIRTUAL_DEVICE_PATH" />
-            <value value="C:\Users\urigr\.android\avd\Pixel_4_API_31_-_Android_12_test.avd" />
+            <value value="C:\Users\urigr\.android\avd\Pixel_4_API_31_-_Android_12_test2.avd" />
           </Key>
         </deviceKey>
       </Target>
-    </targetsSelectedWithDialog>
+    </runningDeviceTargetsSelectedWithDialog>
   </component>
 </project>

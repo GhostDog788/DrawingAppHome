@@ -5,6 +5,8 @@ import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.media.MediaPlayer
+import android.media.SoundPool
 import android.opengl.Visibility
 import android.os.Bundle
 import android.view.View
@@ -24,7 +26,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 
-class EndGameActivity : AppCompatActivity(), ILobbyUser {
+class EndGameActivity : AppCompatActivity(), ILobbyUser, IAudioUser {
 
     private var mPlayersMap: HashMap<String, PlayerData> = HashMap()
     private var lobbyId: String? = null
@@ -36,6 +38,15 @@ class EndGameActivity : AppCompatActivity(), ILobbyUser {
     override var partyLeader: String? = null
     override var databaseMyLobby: DatabaseReference? = null
     override var sharedPref: SharedPreferences? = null
+
+    override lateinit var soundPool: SoundPool
+    override var clickSoundId: Int = -1
+    override var errorSoundId: Int = -1
+    override var softClickSoundId: Int = -1
+    private var taDaSoundId: Int = -1
+    private var taDa2SoundId: Int = -1
+    private var taDa3SoundId: Int = -1
+    private var drumRollSoundId: Int = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,12 +62,22 @@ class EndGameActivity : AppCompatActivity(), ILobbyUser {
         val orderedByPoints = mPlayersMap.toList().sortedBy { pair -> pair.second.points }
         setUpWinners(orderedByPoints)
 
+        setUpSoundPool(this)
+        taDaSoundId = soundPool.load(this, R.raw.tada, 1)
+        taDa2SoundId = soundPool.load(this, R.raw.tada2, 1)
+        taDa3SoundId = soundPool.load(this, R.raw.tada3, 1)
+        drumRollSoundId = soundPool.load(this, R.raw.drum_roll, 1)
+
         val btnToMain = findViewById<Button>(R.id.btnToMainMenu)
         btnToMain.visibility = View.INVISIBLE
-        btnToMain.setOnClickListener { exitGame() }
+        btnToMain.setOnClickListener {
+            soundPool.play(clickSoundId, 1F, 1F,0,0, 1F)
+            exitGame() }
         val btnBack = findViewById<Button>(R.id.btnBackToLobby)
         btnBack.visibility = View.INVISIBLE
-        btnBack.setOnClickListener { backToLobby()}
+        btnBack.setOnClickListener {
+            soundPool.play(clickSoundId, 1F, 1F,0,0, 1F)
+            backToLobby()}
     }
 
     private fun setUpWinners(orderedByPoints: List<Pair<String, PlayerData>>) {
@@ -91,12 +112,16 @@ class EndGameActivity : AppCompatActivity(), ILobbyUser {
         lifecycleScope.launch {
             delay(1500)
             if(!excludeThird) {
+                //anim of 3trd place
+                soundPool.play(taDa3SoundId, 1F, 1F,0,0, 1F)
                 findViewById<LinearLayout>(R.id.llThird).visibility = View.VISIBLE
                 YoYo.with(Techniques.FadeInLeft).duration(2000).onEnd {
                     YoYo.with(Techniques.Bounce).playOn(findViewById(R.id.llThird))
                 }.playOn(findViewById(R.id.llThird))
                 delay(3000)
             }
+            //anim of 2scd place
+            soundPool.play(taDa2SoundId, 1F, 1F,0,0, 1F)
             findViewById<LinearLayout>(R.id.llSecond).visibility = View.VISIBLE
             var technique = Techniques.FadeInRight
             if(excludeThird) technique = Techniques.FadeInUp
@@ -104,8 +129,11 @@ class EndGameActivity : AppCompatActivity(), ILobbyUser {
                 YoYo.with(Techniques.Pulse).playOn(findViewById(R.id.llSecond))
             }.playOn(findViewById(R.id.llSecond))
             delay(3000)
+            //anim of 1fst first place
             findViewById<LinearLayout>(R.id.llFirst).visibility = View.VISIBLE
-            YoYo.with(Techniques.FadeInDown).duration(2000).onEnd{
+            soundPool.play(drumRollSoundId, 1F, 1F,0,0, 1F)
+            YoYo.with(Techniques.FadeInDown).duration(3000).onEnd{
+                soundPool.play(taDaSoundId, 1F, 1F,0,0, 1F)
                 YoYo.with(Techniques.Tada).onEnd{
                     val btnToMain = findViewById<Button>(R.id.btnToMainMenu)
                     val btnBack = findViewById<Button>(R.id.btnBackToLobby)
@@ -143,14 +171,7 @@ class EndGameActivity : AppCompatActivity(), ILobbyUser {
             return
         }
         ConnectionHelper.disconnectPlayerFromLobby(databaseMyLobby!!, uid)
-
-        //check if this is the last activity
-        val activityManager = getSystemService(ACTIVITY_SERVICE) as ActivityManager
-        val taskList = activityManager.getRunningTasks(10)
-        if (taskList[0].numActivities == 1 && taskList[0].topActivity!!.className == this.javaClass.name) {
-            startActivity(Intent(this, MainMenuActivity::class.java))
-        }
-
+        startActivity(Intent(this, MainMenuActivity::class.java))
         finish()
     }
 

@@ -1,33 +1,30 @@
 package il.ghostdog.drawingapp
 
-import android.content.Context
-import android.content.Intent
-import android.content.SharedPreferences
+import android.content.*
+import android.media.AudioAttributes
+import android.media.SoundPool
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.View
 import android.widget.Button
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.Toast
+import androidx.fragment.app.Fragment
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import java.io.InputStream
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.*
-import android.content.res.AssetManager
-import android.graphics.drawable.Animatable
-import android.graphics.drawable.PictureDrawable
-import com.bumptech.glide.Glide
 
 
-class HomeFragment : Fragment(R.layout.fragment_home) {
+class HomeFragment : Fragment(R.layout.fragment_home), IAudioUser {
+    override lateinit var soundPool: SoundPool
+    override var clickSoundId: Int = -1
+    override var errorSoundId: Int = -1
+    override var softClickSoundId: Int = -1
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -45,7 +42,11 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val btnCreateLobby = view.findViewById<Button>(R.id.btnCreateLobby)
         btnCreateLobby.setOnClickListener{ onCreateLobbyClicked()}
 
-        //Glide.with(activity!!).load(R.drawable.gifmaker_me).into(ivGif)
+        val filter = IntentFilter(JoinLobbyActivity.JOINING_LOBBY_BROADCAST_FILTER)
+        activity?.registerReceiver(joinedLobbyReceiver, filter)
+
+        //create sound player
+        setUpSoundPool(context!!)
     }
 
     private fun cleanPastLobbies() {
@@ -114,14 +115,22 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private fun onJoinLobbyClicked() {
         startActivity(Intent(activity, JoinLobbyActivity::class.java))
-        //activity!!.finish()
+        soundPool.play(clickSoundId!!, 1F, 1F,0,0, 1F)
+    }
+    private val joinedLobbyReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            // joined lobby
+            activity?.finish()
+        }
     }
 
     private fun onSearchLobbyClicked(){
         startActivity(Intent(activity, SearchLobbyActivity::class.java))
+        soundPool.play(clickSoundId!!, 1F, 1F,0,0, 1F)
     }
 
     private fun onCreateLobbyClicked() {
+        soundPool.play(clickSoundId!!, 1F, 1F,0,0, 1F)
         val dataBaseInstance = FirebaseDatabase.getInstance()
         val databaseLobbies = dataBaseInstance.getReference("lobbies")
         val lobbyId = UUID.randomUUID().toString().substring(0,4) //unique id of the lobby and join code
@@ -133,5 +142,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         intent.putExtra("lobbyId", lobbyId)
         startActivity(intent)
         activity!!.finish()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        activity?.unregisterReceiver(joinedLobbyReceiver)
     }
 }

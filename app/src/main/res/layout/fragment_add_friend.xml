@@ -36,6 +36,7 @@
         android:textColor="@color/darkWhite"
         android:textSize="25dp"
         android:hint="Enter friend code"
+        android:gravity="center"
         android:fontFamily="@font/unicorn_scribbles"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

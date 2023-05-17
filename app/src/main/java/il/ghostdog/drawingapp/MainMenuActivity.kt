@@ -2,9 +2,11 @@ package il.ghostdog.drawingapp
 
 
 import android.app.AlertDialog
+import android.media.MediaPlayer
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.MenuItem
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
@@ -18,6 +20,8 @@ class MainMenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationI
 
     //home fragment
     var checkedPastLobbies = false
+
+    private var musicPlayer: MediaPlayer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +43,11 @@ class MainMenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationI
         currentFragment = homeFragment
         bottomNavigationView.setOnNavigationItemSelectedListener(this)
         friendsFragment.friendRequestsFragment.rvMain = bottomNavigationView
+
+        musicPlayer = MediaPlayer.create(this, R.raw.awesomeness)
+        musicPlayer!!.isLooping = true
+        musicPlayer!!.setVolume(0.5f,0.5f)
+
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
@@ -84,5 +93,21 @@ class MainMenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationI
         }
         val dialog = builder.create()
         dialog.show()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        musicPlayer?.start()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        musicPlayer?.pause()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        musicPlayer?.release()
+        Toast.makeText(applicationContext, "Main Menu Destroyed", Toast.LENGTH_SHORT).show()
     }
 }

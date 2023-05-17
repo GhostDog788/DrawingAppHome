@@ -2,11 +2,19 @@ package il.ghostdog.drawingapp
 
 import android.app.AlertDialog
 import android.app.Dialog
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.database.ContentObserver
+import android.media.AudioAttributes
+import android.media.AudioManager
+import android.media.MediaPlayer
+import android.media.SoundPool
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
+import android.provider.Settings
 import android.util.Log
 import android.view.View
 import android.widget.*
@@ -22,7 +30,7 @@ import kotlinx.coroutines.android.awaitFrame
 import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashMap
 
-class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, PlayerRecyclerAdapter.RecyclerViewEvent {
+class CreateLobbyActivity : AppCompatActivity(),IAudioUser, ILobbyUser, IProgressDialogUser, PlayerRecyclerAdapter.RecyclerViewEvent {
 
     var lobbyId: String? = null
 
@@ -51,6 +59,12 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
     private var maxTime: Int = 150
     private var timeJumps: Int = 15
 
+    private var musicPlayer: MediaPlayer? = null
+    override lateinit var soundPool: SoundPool
+    override var clickSoundId: Int = -1
+    override var softClickSoundId: Int = -1
+    override var errorSoundId: Int = -1
+
     private var gamePreferences: GamePreferences = GamePreferences()
 
     var playersMap: LinkedHashMap<String, PlayerData> = LinkedHashMap()
@@ -78,6 +92,7 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
             if(snapshot.key == mAuth!!.currentUser!!.uid){
                 //player have been kicked or exit
                 removeAllListeners()
+                startActivity(Intent(this@CreateLobbyActivity, MainMenuActivity::class.java))
                 finish()
             }
 
@@ -138,6 +153,9 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
 
         databaseUsers!!.child(mAuth!!.currentUser!!.uid).child("activeGame").setValue(lobbyId!!)
 
+        //create sound player
+        setUpSoundPool(this)
+
         //set lobby id display
         findViewById<TextView>(R.id.tvLobbyId).text = lobbyId
 
@@ -169,12 +187,18 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
         rvPlayers.adapter = PlayerRecyclerAdapter(playerRViewDataList, this)
         rvPlayers.layoutManager = GridLayoutManager(this@CreateLobbyActivity, 1)
 
+        musicPlayer = MediaPlayer.create(this, R.raw.beautiful_dead)
+        musicPlayer!!.isLooping = true
+        musicPlayer!!.setVolume(0.5f,0.5f)
+
         lifecycleScope.launch {
             setUpLobby()
         }
     }
 
     private fun createDynamicLinkGameInvitation() {
+        soundPool.play(clickSoundId!!, 1F, 1F,0,0, 1F)
+
         // In the Activity where you want to create the dynamic link:
         FirebaseDynamicLinks.getInstance().createDynamicLink()
             .setLink(Uri.parse("https://ghostdog.page.link/?lobbyId=$lobbyId"))
@@ -204,6 +228,8 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
     }
 
     private fun showFriendsDialog(){
+        soundPool.play(clickSoundId!!, 1F, 1F,0,0, 1F)
+
         val myUid = FirebaseAuth.getInstance().currentUser!!.uid
         val myFriendsIdList = ArrayList<String>()
 
@@ -248,9 +274,11 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
 
     private fun onStartGame() {
         if(playersMap.size < 2){
+            soundPool.play(errorSoundId!!, 1F, 1F,0,0, 1F)
             Toast.makeText(applicationContext, "Need at least two players", Toast.LENGTH_SHORT).show()
             return
         }
+        soundPool.play(clickSoundId!!, 1F, 1F,0,0, 1F)
 
         val intent = Intent(this, GameActivity::class.java)
         if(mAuth!!.currentUser!!.uid == partyLeader) {
@@ -468,12 +496,18 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
         ConnectionHelper.disconnectPlayerFromLobby(databaseMyLobby!!, player.userId)
     }
     private fun exitLobby(){
+        soundPool.play(clickSoundId!!, 1F, 1F,0,0, 1F)
+
         ConnectionHelper.disconnectPlayerFromLobby(databaseMyLobby!!, mAuth!!.currentUser!!.uid)
     }
 
     private fun onAdditiveButtonClicked(minRange: Int, maxRange: Int, amount: Int, display: TextView?) {
         var value = display!!.text.toString().toInt()
-        if(value + amount > maxRange || value + amount < minRange) return
+        if(value + amount > maxRange || value + amount < minRange) {
+            soundPool.play(errorSoundId!!, 1F, 1F,0,0, 1F)
+            return
+        }
+        soundPool.play(softClickSoundId!!, 1F, 1F,0,0, 1F)
 
         value += amount
         display!!.text = value.toString()
@@ -496,6 +530,11 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
         super.onStop()
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        musicPlayer?.release()
+    }
+
     override fun onResume() {
         lifecycleScope.launch {
             while (databaseMyLobby == null || partyLeader == null) {
@@ -506,6 +545,12 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
             updateMyStatus()
         }
         super.onResume()
+        musicPlayer?.start()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        musicPlayer?.pause()
     }
 
     override fun onBackPressed() {
@@ -514,6 +559,7 @@ class CreateLobbyActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser
         builder.setMessage("Do you want to exit the lobby?")
         builder.setPositiveButton("Yes") { dialog, which ->
             ConnectionHelper.disconnectPlayerFromLobby(databaseMyLobby!!, mAuth!!.currentUser!!.uid)
+            startActivity(Intent(this@CreateLobbyActivity, MainMenuActivity::class.java))
             finish()
         }
         builder.setNegativeButton("No") { dialog, which ->

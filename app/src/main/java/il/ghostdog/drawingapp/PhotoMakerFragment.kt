@@ -7,6 +7,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.media.SoundPool
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
@@ -20,7 +21,7 @@ import com.github.dhaval2404.colorpicker.ColorPickerDialog
 import com.github.dhaval2404.colorpicker.model.ColorShape
 
 
-class PhotoMakerFragment : Fragment(R.layout.fragment_photo_maker) {
+class PhotoMakerFragment : Fragment(R.layout.fragment_photo_maker), IAudioUser {
 
     private lateinit var drawingView: DrawingView
     private lateinit var ivBackground: com.google.android.material.imageview.ShapeableImageView
@@ -29,6 +30,11 @@ class PhotoMakerFragment : Fragment(R.layout.fragment_photo_maker) {
 
     val mOnDrawChange : Event<Unit> = Event()
     val mOnPhotoChange : Event<Unit> = Event()
+
+    override lateinit var soundPool: SoundPool
+    override var clickSoundId: Int = -1
+    override var errorSoundId: Int = -1//temp
+    override var softClickSoundId: Int = -1
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -41,11 +47,15 @@ class PhotoMakerFragment : Fragment(R.layout.fragment_photo_maker) {
 
         mflDrawingView = view.findViewById(R.id.flDrawingViewContainer)
 
+        setUpSoundPool(context!!)
+
         val btnBrushSize = view.findViewById<ImageButton>(R.id.ibBrush)
         btnBrushSize.setOnClickListener{ showBrushSizeChooserDialog() }
 
         val ibUndo: ImageButton = view.findViewById(R.id.ibUndo)
-        ibUndo.setOnClickListener { drawingView.onClickUndo() }
+        ibUndo.setOnClickListener {
+            soundPool.play(clickSoundId!!, 1F, 1F,0,0, 1F)
+            drawingView.onClickUndo() }
 
         mBtnColor = view.findViewById(R.id.ibColor)
         mBtnColor.setOnClickListener { showColorPickerDialog() }
@@ -60,6 +70,7 @@ class PhotoMakerFragment : Fragment(R.layout.fragment_photo_maker) {
     }
 
     private fun clear() {
+        soundPool.play(clickSoundId!!, 1F, 1F,0,0, 1F)
         val imageBackground: ImageView = mflDrawingView.findViewById(R.id.ivBackground)
         imageBackground.setImageResource(0)
         drawingView.clear()
@@ -75,6 +86,7 @@ class PhotoMakerFragment : Fragment(R.layout.fragment_photo_maker) {
     }
 
     private fun uploadPhoto() {
+        soundPool.play(clickSoundId!!, 1F, 1F,0,0, 1F)
         requestStoragePermission()
     }
     private fun requestStoragePermission() {
@@ -137,6 +149,7 @@ class PhotoMakerFragment : Fragment(R.layout.fragment_photo_maker) {
     }
 
     private fun showColorPickerDialog(){
+        soundPool.play(clickSoundId!!, 1F, 1F,0,0, 1F)
         ColorPickerDialog
             .Builder(activity!!)
             .setTitle("Pick Theme")
@@ -150,6 +163,8 @@ class PhotoMakerFragment : Fragment(R.layout.fragment_photo_maker) {
     }
 
     private fun showBrushSizeChooserDialog(){
+        soundPool.play(clickSoundId!!, 1F, 1F,0,0, 1F)
+
         val brushDialog = Dialog(activity!!)
         brushDialog.setContentView(R.layout.dialog_brush_size)
         brushDialog.setTitle("Brush size: ")

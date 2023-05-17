@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.media.MediaPlayer
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
@@ -30,6 +31,8 @@ class SearchLobbyActivity : AppCompatActivity(), LobbySearchAdapter.RecyclerView
     private var lobbySearchList = ArrayList<LobbySearchRViewData>()
     private var tempSearchList = ArrayList<LobbySearchRViewData>()
 
+    private var musicPlayer: MediaPlayer? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search_lobby)
@@ -55,6 +58,11 @@ class SearchLobbyActivity : AppCompatActivity(), LobbySearchAdapter.RecyclerView
             }
             override fun onQueryTextSubmit(p0: String?): Boolean { return true }
         })
+
+        musicPlayer = MediaPlayer.create(this, R.raw.beautiful_dead)
+        musicPlayer!!.isLooping = true
+        musicPlayer!!.setVolume(0.5f,0.5f)
+
     }
 
     private fun setSortingSpinner() {
@@ -184,8 +192,19 @@ class SearchLobbyActivity : AppCompatActivity(), LobbySearchAdapter.RecyclerView
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        musicPlayer?.start()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        musicPlayer?.pause()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
+        musicPlayer?.release()
         unregisterReceiver(joinedLobbyReceiver)
     }
 }

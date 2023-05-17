@@ -7,6 +7,8 @@ import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.media.MediaPlayer
+import android.media.SoundPool
 import android.os.Bundle
 import android.util.DisplayMetrics
 import android.view.KeyEvent
@@ -33,7 +35,7 @@ import kotlin.random.Random
 
 
 @Suppress("DEPRECATION")
-class GameActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, PlayerGameHUDAdapter.RecyclerViewEvent {
+class GameActivity : AppCompatActivity(),IAudioUser, ILobbyUser, IProgressDialogUser, PlayerGameHUDAdapter.RecyclerViewEvent {
 
     private var drawingView: DrawingView? = null
     private var mImageButtonCurrentPaint: ImageButton? = null
@@ -49,6 +51,17 @@ class GameActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
     override var databaseMyLobby : DatabaseReference? = null
     override var partyLeader : String? = null
 
+    override lateinit var soundPool: SoundPool
+    override var clickSoundId: Int = -1
+    override var errorSoundId: Int = -1
+    override var softClickSoundId: Int = -1
+    private var lowOnTimeSoundId: Int = -1
+    private var startTurnSoundId: Int = -1
+    private var sendSoundId: Int = -1
+    private var successSoundId: Int = -1
+    private var endTurnSoundId: Int = -1
+    private var timeEndedSoundId: Int = -1
+
     private var mDatabaseInstance: FirebaseDatabase? = null
     private var mPathDatabase: DatabaseReference? = null
     private var mChatDatabase: DatabaseReference? = null
@@ -56,6 +69,7 @@ class GameActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
     private var count : Int = 0
     private var dbPathsCount : Int = 0
     private var mAuth : FirebaseAuth? = null
+    private var mMusicPlayer: MediaPlayer? = null
     private var mDrawerUid: String? = null
     private var mGuessWord: String? = null
     private var mWaitForDrawerDialog: Dialog? = null
@@ -283,8 +297,16 @@ class GameActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
 
             tvTurnTimer.text = mTimeLeft.toString()
 
-            if(mTimeLeft == 0){
-                turnEnded()
+            when (mTimeLeft) {
+                in 2..10 -> {
+                    soundPool.play(lowOnTimeSoundId, 1F, 1F,0,0, 1F)
+                }
+                1 -> {
+                    soundPool.play(timeEndedSoundId, 1F, 1F,0,0, 1F)
+                }
+                0 -> {
+                    turnEnded()
+                }
             }
         }
         override fun onCancelled(error: DatabaseError) {}
@@ -314,6 +336,7 @@ class GameActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
                 }
                 mCanGuess = true
                 mWaitForDrawerDialog?.dismiss()
+                soundPool.play(startTurnSoundId, 1F, 1F,0,0, 1F)
             }
         }
         override fun onCancelled(error: DatabaseError) {}
@@ -373,6 +396,13 @@ class GameActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
         linearLayoutManager.stackFromEnd = true
         rvChat.layoutManager = linearLayoutManager
 
+        setUpSoundPool(this)
+        lowOnTimeSoundId = soundPool.load(this, R.raw.low_on_time_louder, 1)
+        startTurnSoundId =soundPool.load(this, R.raw.start_turn, 1)
+        sendSoundId = soundPool.load(this, R.raw.send, 1)
+        successSoundId = soundPool.load(this, R.raw.success_louder, 1)
+        endTurnSoundId = soundPool.load(this, R.raw.end_turn, 1)
+        timeEndedSoundId = soundPool.load(this, R.raw.time_ended, 1)
 
         val displayMetrics = DisplayMetrics()
         windowManager.defaultDisplay.getMetrics(displayMetrics)
@@ -393,6 +423,11 @@ class GameActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
         mPathDatabase = databaseMyLobby!!.child("paths")
         mChatDatabase = databaseMyLobby!!.child("guessChat")
         mflDrawingView = findViewById(R.id.flDrawingViewContainer)
+
+        mMusicPlayer = MediaPlayer.create(this, R.raw.ikoroshia)
+        mMusicPlayer!!.isLooping = true
+        mMusicPlayer!!.setVolume(0.1f,0.1f)
+
 
         lifecycleScope.launch {
             showProgressDialog(this@GameActivity)
@@ -425,7 +460,10 @@ class GameActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
             false
         }
         val ivOptions: ImageView = findViewById(R.id.ivPopupOptions)
-        ivOptions.setOnClickListener{ showPopupGameMenu(it)}
+        ivOptions.setOnClickListener{
+            soundPool.play(clickSoundId, 1F, 1F,0,0, 1F)
+            showPopupGameMenu(it)
+        }
 
         val linearLayoutPaintColors = findViewById<LinearLayout>(R.id.llPaintColors)
         mImageButtonCurrentPaint = linearLayoutPaintColors.findViewWithTag("#ff000000") as ImageButton
@@ -433,11 +471,13 @@ class GameActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
 
         val ibBrush: ImageButton = findViewById(R.id.ibBrush)
         ibBrush.setOnClickListener{
+            soundPool.play(clickSoundId, 1F, 1F,0,0, 1F)
             showBrushSizeChooserDialog()
         }
         val ibUndo: ImageButton = findViewById(R.id.ibUndo)
         ibUndo.setOnClickListener {
             if (mAuth!!.currentUser!!.uid == mDrawerUid){
+                soundPool.play(clickSoundId, 1F, 1F,0,0, 1F)
                 drawingView?.onClickUndo()
             }
         }
@@ -458,6 +498,7 @@ class GameActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
             updateMyStatus()
         }
         super.onResume()
+        mMusicPlayer?.start()
     }
 
     private fun onSubmitGuess() {
@@ -467,6 +508,7 @@ class GameActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
         etGuessField.text.clear()
 
         if (guess == mGuessWord){
+            soundPool.play(successSoundId, 1F, 1F,0,0, 1F)
             val playerData = mPlayersMap[mAuth!!.currentUser!!.uid]
             if(playerData!!.answeredCorrectly || !mCanGuess) return
 
@@ -482,6 +524,7 @@ class GameActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
             playerData.points += points
             updatePlayerData(mAuth!!.currentUser!!.uid, playerData)
         }else{
+            soundPool.play(sendSoundId, 1F, 1F,0,0, 1F)
             val name = mPlayersMap[mAuth!!.currentUser!!.uid]!!.name
             val guessMessageRData = GuessMessageRData(name, guess)
             mChatDatabase!!.push().setValue(guessMessageRData) }
@@ -556,6 +599,8 @@ class GameActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
 
             val selectedPlayerKey = mHaveNotDrawnList[0]
             databaseMyLobby!!.child("drawerID").setValue(selectedPlayerKey)
+            //the problem is that the player gets notified for the end pof the turn just here and that
+            //is why the other player reacts even when it didn't empty the guess list
         }
 
         mHaveNotGuessedList.clear()
@@ -579,6 +624,8 @@ class GameActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
         rvScoreBoard.adapter = ScoreBoardRecyclerAdapter(boardList)
         rvScoreBoard.layoutManager = LinearLayoutManager(this@GameActivity)
         mTurnEndedDialog!!.show()
+
+        soundPool.play(endTurnSoundId, 1F, 1F,0,0, 1F)
 
         lifecycleScope.launch(Dispatchers.Default){
             for (player in orderedByPoints){
@@ -941,6 +988,17 @@ class GameActivity : AppCompatActivity(), ILobbyUser, IProgressDialogUser, Playe
             mImageButtonCurrentPaint = view
         }
     }
+
+    override fun onPause() {
+        super.onPause()
+        mMusicPlayer?.pause()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mMusicPlayer?.release()
+    }
+
     override fun onBackPressed() {
         //disabling the back button
     }
