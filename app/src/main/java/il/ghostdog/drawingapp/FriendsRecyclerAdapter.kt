@@ -57,7 +57,15 @@ class FriendsRecyclerAdapter(private var data: ArrayList<FriendRViewData>, priva
                 listener.onItemClicked(position)
             }
         }
-        fun calculateTimeDifAndUpdate(timeString: String){
+        fun calculateTimeDifAndUpdate(timeString: String?){
+            if(timeString == null){
+                isActiveNow = false
+                ivActiveGame.visibility = View.GONE
+                ivActive.visibility = View.GONE
+                llInactive.visibility = View.VISIBLE
+                tvLastSeen.text = "No data"
+                return
+            }
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
             val dateTimeLastLeader = LocalDateTime.parse(timeString, formatter)
             GlobalScope.launch(Dispatchers.Default){

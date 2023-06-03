@@ -40,7 +40,7 @@ class MyFriendsFragment : Fragment(R.layout.fragment_my_friends), FriendsRecycle
                         .child(myFriendData.userId).child("lastSeen")
                         .addListenerForSingleValueEvent(object : ValueEventListener{
                             override fun onDataChange(snapshot: DataSnapshot) {
-                                val timeString = snapshot.getValue(String::class.java)!!
+                                val timeString = snapshot.getValue(String::class.java)
                                 viewHolder.calculateTimeDifAndUpdate(timeString)
                             }
                             override fun onCancelled(error: DatabaseError) {}
