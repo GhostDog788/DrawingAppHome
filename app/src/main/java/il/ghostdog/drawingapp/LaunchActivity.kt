@@ -2,10 +2,15 @@ package il.ghostdog.drawingapp
 
 import android.content.Context
 import android.content.Intent
+import android.media.SoundPool
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
+import android.widget.ImageView
 import android.widget.Toast
+import androidx.core.graphics.scaleMatrix
+import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -13,19 +18,53 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.dynamiclinks.FirebaseDynamicLinks
 import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
-class LaunchActivity : AppCompatActivity() {
+class LaunchActivity : AppCompatActivity(), IAudioUser {
     companion object{
         var lastExtras: Bundle? = null
     }
 
     private var mAuth: FirebaseAuth? = null
+    private val splashScreenTime = 2200L
+
+    override lateinit var soundPool: SoundPool
+    override var clickSoundId: Int = -1
+    override var errorSoundId: Int = -1
+    override var softClickSoundId: Int = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setTheme(R.style.splashScreenTheme)
         setContentView(R.layout.activity_launch)
 
         mAuth = FirebaseAuth.getInstance()
+
+        setUpSoundPool(this)
+        val woof1ID = soundPool.load(this, R.raw.woof1, 1)
+        //animation
+        lifecycleScope.launch {
+            delay(200)
+            soundPool.play(woof1ID, 1F,1F,0,0,1F)
+        }
+        val iv = findViewById<ImageView>(R.id.ivLogo)
+        iv.animate()
+            .scaleX(1.25f)
+            .scaleY(1.25f)
+            .translationY(-100f)
+            .setDuration(1000)
+            .withEndAction {
+                iv.animate()
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .translationY(0f)
+                    .setDuration(1000)
+                    .start()
+            }
+            .start()
 
         if (mAuth!!.currentUser == null) {
             lastExtras = intent.extras
@@ -71,8 +110,10 @@ class LaunchActivity : AppCompatActivity() {
             myExtras = intent.extras
         }
         if(myExtras == null) { //no extras from original AND current
-            startActivity(Intent(this, MainMenuActivity::class.java))
-            finish()
+            Handler().postDelayed({
+                startActivity(Intent(this, MainMenuActivity::class.java))
+                finish()
+            }, splashScreenTime)
             return
         }
         lastExtras = null//empty last cause the data is in myExtras
@@ -89,8 +130,10 @@ class LaunchActivity : AppCompatActivity() {
         }
 
         //to ensure there will always be a main activity in the background
-        startActivity(Intent(this, MainMenuActivity::class.java))
-        finish()
+        Handler().postDelayed({
+            startActivity(Intent(this, MainMenuActivity::class.java))
+            finish()
+        }, splashScreenTime)
     }
 
     private fun setUserNameInConstants() {
@@ -126,5 +169,4 @@ class LaunchActivity : AppCompatActivity() {
             override fun onCancelled(error: DatabaseError) {}
         })
     }
-
 }
