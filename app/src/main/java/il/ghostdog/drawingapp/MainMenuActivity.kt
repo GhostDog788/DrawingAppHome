@@ -44,7 +44,7 @@ class MainMenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationI
         bottomNavigationView.setOnNavigationItemSelectedListener(this)
         friendsFragment.friendRequestsFragment.rvMain = bottomNavigationView
 
-        musicPlayer = MediaPlayer.create(this, R.raw.awesomeness)
+        musicPlayer = MediaPlayer.create(this, R.raw.royal_days)
         musicPlayer!!.isLooping = true
         musicPlayer!!.setVolume(0.5f,0.5f)
 
@@ -108,6 +108,5 @@ class MainMenuActivity : AppCompatActivity(), BottomNavigationView.OnNavigationI
     override fun onDestroy() {
         super.onDestroy()
         musicPlayer?.release()
-        Toast.makeText(applicationContext, "Main Menu Destroyed", Toast.LENGTH_SHORT).show()
     }
 }

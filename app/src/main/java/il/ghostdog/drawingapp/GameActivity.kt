@@ -155,6 +155,16 @@ class GameActivity : AppCompatActivity(),IAudioUser, ILobbyUser, IProgressDialog
         }
         override fun onCancelled(error: DatabaseError) {}
     }
+    private val endTurnTriggerListener = object : ValueEventListener {
+        override fun onDataChange(snapshot: DataSnapshot) {
+            val shouldEndTurn = snapshot.getValue(Boolean::class.java) ?: return
+            if(shouldEndTurn) {
+                //Toast.makeText(applicationContext, "End Triggered", Toast.LENGTH_SHORT).show()
+                turnEnded()
+            }
+        }
+        override fun onCancelled(error: DatabaseError) {}
+    }
     private val playersListener = object : ChildEventListener{
         override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
             if(snapshot.key!!.startsWith(Constants.REQUESTING_PLAYER_NODE_NAME)) return
@@ -163,10 +173,11 @@ class GameActivity : AppCompatActivity(),IAudioUser, ILobbyUser, IProgressDialog
 
             if(playerData.answeredCorrectly){
                 mHaveNotGuessedList.remove(snapshot.key)
-                Toast.makeText(applicationContext, "${mHaveNotGuessedList.size}", Toast.LENGTH_LONG).show()
+                //Toast.makeText(applicationContext, "${mHaveNotGuessedList.size}", Toast.LENGTH_LONG).show()
 
                 if(mHaveNotGuessedList.isEmpty()){
-                    turnEnded()
+                    //turnEnded()
+                    databaseMyLobby!!.child("endTurnTrigger").setValue(true)
                 }
             }
 
@@ -258,12 +269,7 @@ class GameActivity : AppCompatActivity(),IAudioUser, ILobbyUser, IProgressDialog
                     ConnectionHelper.disconnectPlayerFromLobby(databaseMyLobby!!
                         ,mAuth!!.currentUser!!.uid)
                     removeAllListeners()
-                    //check if this is the last activity
-                    val activityManager = getSystemService(ACTIVITY_SERVICE) as ActivityManager
-                    val taskList = activityManager.getRunningTasks(10)
-                    if (taskList[0].numActivities == 1 && taskList[0].topActivity!!.className == this.javaClass.name) {
-                        startActivity(Intent(this@GameActivity, MainMenuActivity::class.java))
-                    }
+                    startActivity(Intent(this@GameActivity, MainMenuActivity::class.java))
                     finish()
                     dialog.dismiss()
                 }
@@ -424,9 +430,9 @@ class GameActivity : AppCompatActivity(),IAudioUser, ILobbyUser, IProgressDialog
         mChatDatabase = databaseMyLobby!!.child("guessChat")
         mflDrawingView = findViewById(R.id.flDrawingViewContainer)
 
-        mMusicPlayer = MediaPlayer.create(this, R.raw.ikoroshia)
+        mMusicPlayer = MediaPlayer.create(this, R.raw.life_goes_on)
         mMusicPlayer!!.isLooping = true
-        mMusicPlayer!!.setVolume(0.1f,0.1f)
+        mMusicPlayer!!.setVolume(0.5f,0.5f)
 
 
         lifecycleScope.launch {
@@ -436,6 +442,7 @@ class GameActivity : AppCompatActivity(),IAudioUser, ILobbyUser, IProgressDialog
             addGuessWordListener()
             addGuessChatListener()
             addTurnTimerListener()
+            addEndTurnTriggerListener()
             addPartyLeaderListener()
             if(!mReEntering) {
                 setupGame() //have to be before listeners
@@ -662,6 +669,7 @@ class GameActivity : AppCompatActivity(),IAudioUser, ILobbyUser, IProgressDialog
         removeTurnTimerListener()
         removePathsCountListener()
         removePartyLeaderListener()
+        removeEndTurnTriggerListener()
     }
 
     private fun chooseWord() {
@@ -710,6 +718,9 @@ class GameActivity : AppCompatActivity(),IAudioUser, ILobbyUser, IProgressDialog
     }
 
     private fun setGuessWord(word: String, dialog: Dialog) {
+        //reset end turn trigger
+        databaseMyLobby!!.child("endTurnTrigger").setValue(false)
+
         databaseMyLobby!!.child("guessWord").setValue(word).addOnCompleteListener{
             dialog.dismiss()
         }
@@ -809,6 +820,13 @@ class GameActivity : AppCompatActivity(),IAudioUser, ILobbyUser, IProgressDialog
     }
     private fun removeTurnTimerListener() {
         databaseMyLobby!!.child("turnTimeLeft").removeEventListener(turnTimerListener)
+    }
+
+    private fun addEndTurnTriggerListener() {
+        databaseMyLobby!!.child("endTurnTrigger").addValueEventListener(endTurnTriggerListener)
+    }
+    private fun removeEndTurnTriggerListener() {
+        databaseMyLobby!!.child("endTurnTrigger").removeEventListener(endTurnTriggerListener)
     }
 
     private fun addPlayersListener() {

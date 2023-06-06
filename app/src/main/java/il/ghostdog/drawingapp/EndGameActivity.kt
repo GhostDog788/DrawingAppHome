@@ -193,6 +193,8 @@ class EndGameActivity : AppCompatActivity(), ILobbyUser, IAudioUser {
 
     private fun backToLobby() {
         databaseMyLobby!!.child("drawerID").removeValue()
+        databaseMyLobby!!.child("endTurnTrigger").removeValue()
+        databaseMyLobby!!.child("turnTimeLeft").removeValue()
 
         val intent = Intent()
         intent.putExtra("lobbyId", lobbyId)

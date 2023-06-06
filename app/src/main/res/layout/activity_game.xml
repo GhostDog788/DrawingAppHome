@@ -168,7 +168,7 @@
             android:layout_height="match_parent"
             android:layout_marginEnd="2dp"
             android:layout_weight="2"
-            android:autoSizeMaxTextSize="25dp"
+            android:autoSizeMaxTextSize="32dp"
             android:autoSizeMinTextSize="2dp"
             android:autoSizeTextType="uniform"
             android:fontFamily="@font/unicorn_scribbles"
@@ -178,6 +178,7 @@
             android:shadowDy="1.5"
             android:shadowRadius="1"
             android:text="121324324"
+            android:paddingStart="5dp"
             android:textColor="@color/colorOnPrimary"/>
 
         <TextView
@@ -191,6 +192,7 @@
             android:shadowDy="1.5"
             android:shadowRadius="1"
             android:text=":"
+            android:paddingTop="3dp"
             android:textColor="@color/colorOnPrimary"
             android:textSize="35dp" />
 
@@ -226,8 +228,7 @@
             android:id="@+id/ivBackground"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scaleType="centerCrop"
-            tools:src="@drawable/mountains" />
+            android:scaleType="centerCrop"/>
 
         <il.ghostdog.drawingapp.DrawingView
             android:id="@+id/dvDrawingView"

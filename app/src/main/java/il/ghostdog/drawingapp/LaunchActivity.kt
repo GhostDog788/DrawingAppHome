@@ -26,6 +26,7 @@ import kotlinx.coroutines.runBlocking
 class LaunchActivity : AppCompatActivity(), IAudioUser {
     companion object{
         var lastExtras: Bundle? = null
+        var gotDeepLink: Boolean = false
     }
 
     private var mAuth: FirebaseAuth? = null
@@ -98,6 +99,7 @@ class LaunchActivity : AppCompatActivity(), IAudioUser {
                         val toSendIntent = Intent(this, JoinLobbyActivity::class.java)
                         toSendIntent.putExtra("lobbyId", lobbyId)
                         toSendIntent.putExtra("startAuto", true)
+                        gotDeepLink = true
                         startActivity(toSendIntent)
                         finish()
                     }
@@ -131,8 +133,11 @@ class LaunchActivity : AppCompatActivity(), IAudioUser {
 
         //to ensure there will always be a main activity in the background
         Handler().postDelayed({
-            startActivity(Intent(this, MainMenuActivity::class.java))
-            finish()
+            if(!gotDeepLink) {
+                gotDeepLink = false
+                startActivity(Intent(this, MainMenuActivity::class.java))
+                finish()
+            }
         }, splashScreenTime)
     }
 
